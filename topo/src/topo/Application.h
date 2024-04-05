@@ -13,6 +13,9 @@ namespace topo
 		TOPO_API Application();
 		TOPO_API virtual ~Application();
 		TOPO_API int Run();
+		
+		void LaunchWindow(std::string_view title, unsigned int width, unsigned int height);
+		ND constexpr bool ApplicationShutdownRequested() const noexcept { return m_applicationShutdownRequested; }
 
 	private:
 		// Window Event Handlers
@@ -53,6 +56,8 @@ namespace topo
 
 	private:
 		std::unique_ptr<Window> m_window;
+		std::vector<std::thread> m_childWindowThreads;
+		bool m_applicationShutdownRequested;
 	};
 
 	std::unique_ptr<Application> CreateApplication();
