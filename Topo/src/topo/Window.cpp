@@ -10,9 +10,10 @@ namespace topo
 // =======================================================================
 // Window
 // =======================================================================
-Window::Window(Application* app, std::string_view title, unsigned int width, unsigned int height) :
-	WindowTemplate(title, width, height),
-	m_app(app)
+Window::Window(Application* app, const WindowProperties& props) :
+	WindowTemplate(props),
+	m_app(app),
+	m_page(nullptr)
 {
 }
 void Window::Shutdown()

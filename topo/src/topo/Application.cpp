@@ -5,11 +5,9 @@ namespace topo
 {
 
 Application::Application() :
-	m_applicationShutdownRequested(false)
+	m_applicationShutdownRequested(false),
+	m_window(nullptr)
 {
-	m_window = std::make_unique<Window>(this, "Main Window", 1280, 720);
-
-	LaunchWindow("Child Window", 600, 600);
 }
 Application::~Application()
 {
@@ -17,6 +15,12 @@ Application::~Application()
 
 int Application::Run()
 {
+	if (m_window == nullptr)
+	{
+		TOPO_CORE_ERROR("Cannot call Application::Run() before launching the main window");
+		return 1;
+	}
+
 	while (true)
 	{
 		// process all messages pending, but do not block for new messages
@@ -33,29 +37,6 @@ int Application::Run()
 			return *ecode;
 		}
 	}
-}
-
-void Application::LaunchWindow(std::string_view title, unsigned int width, unsigned int height)
-{
-	m_childWindowThreads.emplace_back(
-		[this, title, width, height]() 
-		{
-			std::unique_ptr<Window> window = std::make_unique<Window>(this, title, width, height);
-
-			while (true)
-			{
-				if (this->ApplicationShutdownRequested())
-					break;
-
-				// process all messages pending, but do not block for new messages
-				if (const auto ecode = window->ProcessMessages())
-				{
-					// if return optional has value, means we're quitting so return exit code
-					return;
-				}
-			}
-		}
-	);
 }
 
 // Window Event Handlers

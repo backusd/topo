@@ -1,10 +1,30 @@
 #pragma once
 #include "Core.h"
 #include "Log.h"
+#include "Page.h"
 
 namespace topo
 {
 class Application;
+
+#ifdef TOPO_PLATFORM_WINDOWS
+#pragma warning( push )
+#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
+struct TOPO_API WindowProperties
+{
+	std::string_view Title = "Topo Window";
+	unsigned int Width = 1280;
+	unsigned int Height = 720;
+};
+#pragma warning( pop )
+#else
+struct TOPO_API WindowProperties
+{
+	std::string_view Title = "Topo Window";
+	unsigned int Width = 1280;
+	unsigned int Height = 720;
+};
+#endif
 
 #ifdef TOPO_PLATFORM_WINDOWS
 
@@ -15,10 +35,10 @@ template<typename T>
 class WindowTemplate
 {
 public:
-	WindowTemplate(std::string_view title, unsigned int width, unsigned int height) :
-		m_height(height), 
-		m_width(width),
-		m_title(title), 
+	WindowTemplate(const WindowProperties& props) :
+		m_height(props.Height), 
+		m_width(props.Width),
+		m_title(props.Title), 
 		m_hInst(GetModuleHandle(nullptr)), // I believe GetModuleHandle should not ever throw, even though it is not marked noexcept
 		m_mouseX(0),
 		m_mouseY(0),
@@ -99,8 +119,8 @@ public:
 	ND constexpr HWND GetHWND() const noexcept { return m_hWnd; }
 	ND constexpr short GetWidth() const noexcept { return m_width; }
 	ND constexpr short GetHeight() const noexcept { return m_height; }
-	ND constexpr short GetMouseX() const noexcept { return m_mouseX; }
-	ND constexpr short GetMouseY() const noexcept { return m_mouseY; }
+	ND constexpr float GetMouseX() const noexcept { return m_mouseX; }
+	ND constexpr float GetMouseY() const noexcept { return m_mouseY; }
 	ND constexpr bool MouseIsInWindow() const noexcept { return m_mouseIsInWindow; }
 
 	inline void BringToForeground() const noexcept { if (m_hWnd != ::GetForegroundWindow()) ::SetForegroundWindow(m_hWnd); }
@@ -157,10 +177,12 @@ LRESULT CALLBACK WindowTemplate<T>::HandleMsgBase(HWND hWnd, UINT msg, WPARAM wP
 // =======================================================================
 // Window
 // =======================================================================
-class Window : public WindowTemplate<Window>
+#pragma warning( push )
+#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
+class TOPO_API Window : public WindowTemplate<Window>
 {
 public:
-	Window(Application* app, std::string_view title = "Topo App", unsigned int width = 1280, unsigned int height = 720);
+	Window(Application* app, const WindowProperties& props);
 	Window(const Window&) = delete;
 	Window(Window&&) = delete;
 	Window& operator=(const Window&) = delete;
@@ -172,13 +194,20 @@ public:
 
 //		ND inline std::shared_ptr<DeviceResources> GetDeviceResources() noexcept { return m_deviceResources; }
 
+	template<typename T>
+	void InitializePage()
+	{
+		m_page = std::make_unique<T>(); 
+	}
 
 private:
 	void Shutdown();
 	
 //		std::shared_ptr<DeviceResources> m_deviceResources = nullptr;
 	Application* m_app;
+	std::unique_ptr<Page> m_page;
 };
+#pragma warning( pop )
 
 #else
 #error Only Supporting Windows

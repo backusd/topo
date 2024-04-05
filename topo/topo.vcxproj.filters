@@ -29,6 +29,7 @@
     <ClInclude Include="src\topo\events\MouseButtonEventKeyStates.h">
       <Filter>topo\events</Filter>
     </ClInclude>
+    <ClInclude Include="src\topo\Page.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -44,5 +45,6 @@
     <ClCompile Include="src\topo\events\MouseButtonEventKeyStates.cpp">
       <Filter>topo\events</Filter>
     </ClCompile>
+    <ClCompile Include="src\topo\Page.cpp" />
   </ItemGroup>
 </Project>
