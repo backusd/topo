@@ -4,9 +4,13 @@
     <Filter Include="topo">
       <UniqueIdentifier>{87929E7C-73C9-9F0D-1CB6-851008CC1B0F}</UniqueIdentifier>
     </Filter>
+    <Filter Include="topo\events">
+      <UniqueIdentifier>{AB541897-170A-918C-A0FE-8A630CB38790}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Topo.h" />
+    <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\topo\Application.h">
       <Filter>topo</Filter>
     </ClInclude>
@@ -19,13 +23,26 @@
     <ClInclude Include="src\topo\Log.h">
       <Filter>topo</Filter>
     </ClInclude>
-    <ClInclude Include="src\topo\pch.h">
+    <ClInclude Include="src\topo\Window.h">
       <Filter>topo</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\events\MouseButtonEventKeyStates.h">
+      <Filter>topo\events</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\pch.cpp" />
     <ClCompile Include="src\topo\Application.cpp">
       <Filter>topo</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\Log.cpp">
+      <Filter>topo</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\Window.cpp">
+      <Filter>topo</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\events\MouseButtonEventKeyStates.cpp">
+      <Filter>topo\events</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

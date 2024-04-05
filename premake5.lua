@@ -1,4 +1,4 @@
-workspace "topo"
+workspace "Topo"
 	architecture "x64"
 
 	configurations
@@ -10,13 +10,16 @@ workspace "topo"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
-project "topo"
-	location "topo"
+project "Topo"
+	location "Topo"
 	kind "SharedLib"
 	language "C++"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")	
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	pchheader "pch.h"
+	pchsource "Topo/src/pch.cpp"
 
 	files
 	{
@@ -24,25 +27,33 @@ project "topo"
 		"%{prj.name}/src/**.cpp"
 	}
 
+	includedirs
+	{
+		"%{prj.name}/src"
+	}
+
 	filter "system:windows"
 		cppdialect "C++latest"
-		staticruntime "On"
+		staticruntime "Off"
 		systemversion "latest"
 
 		defines
 		{
 			"TOPO_PLATFORM_WINDOWS",
-			"TOPO_BUILD_DLL",
-			"TOPO_TEST"
+			"TOPO_BUILD_DLL"
 		}
 
 		postbuildcommands
 		{
-			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/sandbox")
+			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox")
 		}
 
 	filter "configurations:Debug"
-		defines "TOPO_DEBUG"
+		defines 
+		{
+			"TOPO_DEBUG",
+			"TOPO_ENABLE_ASSERTS"
+		}
 		symbols "On"
 
 	filter "configurations:Release"
@@ -55,8 +66,8 @@ project "topo"
 
 
 
-project "sandbox"
-	location "sandbox"
+project "Sandbox"
+	location "Sandbox"
 	kind "ConsoleApp"
 	language "C++"
 
@@ -71,17 +82,17 @@ project "sandbox"
 
 	includedirs
 	{
-		"topo/src"
+		"Topo/src"
 	}
 
 	links
 	{
-		"topo"
+		"Topo"
 	}
 	
 	filter "system:windows"
 		cppdialect "C++latest"
-		staticruntime "On"
+		staticruntime "Off"
 		systemversion "latest"
 
 		defines

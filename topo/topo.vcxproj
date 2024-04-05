@@ -15,10 +15,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{87929E7C-73C9-9F0D-1CB6-851008CC1B0F}</ProjectGuid>
+    <ProjectGuid>{67068D7C-533D-8E0D-FC29-7410E83F0A0F}</ProjectGuid>
     <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>topo</RootNamespace>
+    <RootNamespace>Topo</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -55,56 +55,60 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\bin\Debug-windows-x86_64\topo\</OutDir>
-    <IntDir>..\bin-int\Debug-windows-x86_64\topo\</IntDir>
-    <TargetName>topo</TargetName>
+    <OutDir>..\bin\Debug-windows-x86_64\Topo\</OutDir>
+    <IntDir>..\bin-int\Debug-windows-x86_64\Topo\</IntDir>
+    <TargetName>Topo</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\bin\Release-windows-x86_64\topo\</OutDir>
-    <IntDir>..\bin-int\Release-windows-x86_64\topo\</IntDir>
-    <TargetName>topo</TargetName>
+    <OutDir>..\bin\Release-windows-x86_64\Topo\</OutDir>
+    <IntDir>..\bin-int\Release-windows-x86_64\Topo\</IntDir>
+    <TargetName>Topo</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\bin\Dist-windows-x86_64\topo\</OutDir>
-    <IntDir>..\bin-int\Dist-windows-x86_64\topo\</IntDir>
-    <TargetName>topo</TargetName>
+    <OutDir>..\bin\Dist-windows-x86_64\Topo\</OutDir>
+    <IntDir>..\bin-int\Dist-windows-x86_64\Topo\</IntDir>
+    <TargetName>Topo</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>TOPO_PLATFORM_WINDOWS;TOPO_BUILD_DLL;TOPO_TEST;TOPO_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TOPO_PLATFORM_WINDOWS;TOPO_BUILD_DLL;TOPO_DEBUG;TOPO_ENABLE_ASSERTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ImportLibrary>..\bin\Debug-windows-x86_64\topo\topo.lib</ImportLibrary>
+      <ImportLibrary>..\bin\Debug-windows-x86_64\Topo\Topo.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>IF EXIST ..\bin\Debug-windows-x86_64\topo\topo.dll\ (xcopy /Q /E /Y /I ..\bin\Debug-windows-x86_64\topo\topo.dll ..\bin\Debug-windows-x86_64\sandbox &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Debug-windows-x86_64\topo\topo.dll ..\bin\Debug-windows-x86_64\sandbox &gt; nul)</Command>
+      <Command>IF EXIST ..\bin\Debug-windows-x86_64\Topo\Topo.dll\ (xcopy /Q /E /Y /I ..\bin\Debug-windows-x86_64\Topo\Topo.dll ..\bin\Debug-windows-x86_64\Sandbox &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Debug-windows-x86_64\Topo\Topo.dll ..\bin\Debug-windows-x86_64\Sandbox &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>TOPO_PLATFORM_WINDOWS;TOPO_BUILD_DLL;TOPO_TEST;TOPO_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TOPO_PLATFORM_WINDOWS;TOPO_BUILD_DLL;TOPO_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
@@ -112,23 +116,25 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <ImportLibrary>..\bin\Release-windows-x86_64\topo\topo.lib</ImportLibrary>
+      <ImportLibrary>..\bin\Release-windows-x86_64\Topo\Topo.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>IF EXIST ..\bin\Release-windows-x86_64\topo\topo.dll\ (xcopy /Q /E /Y /I ..\bin\Release-windows-x86_64\topo\topo.dll ..\bin\Release-windows-x86_64\sandbox &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Release-windows-x86_64\topo\topo.dll ..\bin\Release-windows-x86_64\sandbox &gt; nul)</Command>
+      <Command>IF EXIST ..\bin\Release-windows-x86_64\Topo\Topo.dll\ (xcopy /Q /E /Y /I ..\bin\Release-windows-x86_64\Topo\Topo.dll ..\bin\Release-windows-x86_64\Sandbox &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Release-windows-x86_64\Topo\Topo.dll ..\bin\Release-windows-x86_64\Sandbox &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>TOPO_PLATFORM_WINDOWS;TOPO_BUILD_DLL;TOPO_TEST;TOPO_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TOPO_PLATFORM_WINDOWS;TOPO_BUILD_DLL;TOPO_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
@@ -136,22 +142,30 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <ImportLibrary>..\bin\Dist-windows-x86_64\topo\topo.lib</ImportLibrary>
+      <ImportLibrary>..\bin\Dist-windows-x86_64\Topo\Topo.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>IF EXIST ..\bin\Dist-windows-x86_64\topo\topo.dll\ (xcopy /Q /E /Y /I ..\bin\Dist-windows-x86_64\topo\topo.dll ..\bin\Dist-windows-x86_64\sandbox &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Dist-windows-x86_64\topo\topo.dll ..\bin\Dist-windows-x86_64\sandbox &gt; nul)</Command>
+      <Command>IF EXIST ..\bin\Dist-windows-x86_64\Topo\Topo.dll\ (xcopy /Q /E /Y /I ..\bin\Dist-windows-x86_64\Topo\Topo.dll ..\bin\Dist-windows-x86_64\Sandbox &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Dist-windows-x86_64\Topo\Topo.dll ..\bin\Dist-windows-x86_64\Sandbox &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\Topo.h" />
+    <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\topo\Application.h" />
     <ClInclude Include="src\topo\Core.h" />
     <ClInclude Include="src\topo\EntryPoint.h" />
     <ClInclude Include="src\topo\Log.h" />
-    <ClInclude Include="src\topo\pch.h" />
+    <ClInclude Include="src\topo\Window.h" />
+    <ClInclude Include="src\topo\events\MouseButtonEventKeyStates.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\topo\Application.cpp" />
+    <ClCompile Include="src\topo\Log.cpp" />
+    <ClCompile Include="src\topo\Window.cpp" />
+    <ClCompile Include="src\topo\events\MouseButtonEventKeyStates.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

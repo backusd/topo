@@ -19,10 +19,12 @@
 #define STRINGIFY2(X) #X
 #define STRINGIFY(X) STRINGIFY2(X)
 
-#ifdef TOPO_DEBUG
+#ifdef TOPO_ENABLE_ASSERTS
 #define CORE_ASSERT(x, ...) { if (!(x)) { TOPO_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
 #define ASSERT(x, ...) { if (!(x)) { TOPO_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
 #else
 #define CORE_ASSERT(x, ...)
 #define ASSERT(x, ...)
 #endif
+
+#define BIT(x) (1 << x)
