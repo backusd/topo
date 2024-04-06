@@ -154,6 +154,7 @@
     <ClInclude Include="src\topo\Application.h" />
     <ClInclude Include="src\topo\Core.h" />
     <ClInclude Include="src\topo\EntryPoint.h" />
+    <ClInclude Include="src\topo\KeyCode.h" />
     <ClInclude Include="src\topo\Log.h" />
     <ClInclude Include="src\topo\Page.h" />
     <ClInclude Include="src\topo\Window.h" />

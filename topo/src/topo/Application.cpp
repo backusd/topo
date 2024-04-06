@@ -17,7 +17,7 @@ int Application::Run()
 {
 	if (m_window == nullptr)
 	{
-		TOPO_CORE_ERROR("Cannot call Application::Run() before launching the main window");
+		LOG_ERROR("Cannot call Application::Run() before launching the main window");
 		return 1;
 	}
 
@@ -145,23 +145,23 @@ bool Application::OnMouseHWheel(Window* window, float wheelDelta, float mouseX, 
 }
 
 // Keyboard Event Handlers
-bool Application::OnChar(Window* window, unsigned int keyCode, unsigned int repeatCount)
+bool Application::OnChar(Window* window, unsigned int character, unsigned int repeatCount)
 {
 	return true;
 }
-bool Application::OnKeyDown(Window* window, unsigned int keyCode, unsigned int repeatCount)
+bool Application::OnKeyDown(Window* window, KeyCode keyCode, unsigned int repeatCount)
 {
 	return true;
 }
-bool Application::OnKeyUp(Window* window, unsigned int keyCode, unsigned int repeatCount)
+bool Application::OnKeyUp(Window* window, KeyCode keyCode, unsigned int repeatCount)
 {
 	return true;
 }
-bool Application::OnSysKeyDown(Window* window, unsigned int keyCode, unsigned int repeatCount)
+bool Application::OnSysKeyDown(Window* window, KeyCode keyCode, unsigned int repeatCount)
 {
 	return true;
 }
-bool Application::OnSysKeyUp(Window* window, unsigned int keyCode, unsigned int repeatCount)
+bool Application::OnSysKeyUp(Window* window, KeyCode keyCode, unsigned int repeatCount)
 {
 	return true;
 }

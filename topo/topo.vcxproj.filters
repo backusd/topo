@@ -30,6 +30,7 @@
       <Filter>topo\events</Filter>
     </ClInclude>
     <ClInclude Include="src\topo\Page.h" />
+    <ClInclude Include="src\topo\KeyCode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />

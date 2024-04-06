@@ -122,14 +122,26 @@ namespace topo
 	}
 }
 
-// CORE Log macros
-#define TOPO_CORE_TRACE(...) ::topo::LogCoreTrace(__VA_ARGS__)
-#define TOPO_CORE_INFO(...) ::topo::LogCoreInfo(__VA_ARGS__)
-#define TOPO_CORE_WARN(...) ::topo::LogCoreWarn(__VA_ARGS__)
-#define TOPO_CORE_ERROR(...) ::topo::LogCoreError(__VA_ARGS__)
+// Disable logging for distribution builds
+#ifdef TOPO_DIST 
 
-// CLIENT Log macros
-#define TOPO_TRACE(...) ::topo::LogTrace(__VA_ARGS__)
-#define TOPO_INFO(...) ::topo::LogInfo(__VA_ARGS__)
-#define TOPO_WARN(...) ::topo::LogWarn(__VA_ARGS__)
-#define TOPO_ERROR(...) ::topo::LogError(__VA_ARGS__)
+#define LOG_TRACE(...)
+#define LOG_INFO(...)
+#define LOG_WARN(...)
+#define LOG_ERROR(...)
+
+#elif TOPO_BUILD_DLL // If building the DLL, use CORE logging
+
+#define LOG_TRACE(...) ::topo::LogCoreTrace(__VA_ARGS__)
+#define LOG_INFO(...) ::topo::LogCoreInfo(__VA_ARGS__)
+#define LOG_WARN(...) ::topo::LogCoreWarn(__VA_ARGS__)
+#define LOG_ERROR(...) ::topo::LogCoreError(__VA_ARGS__)
+
+#else // If building the client application, use basic logging
+
+#define LOG_TRACE(...) ::topo::LogTrace(__VA_ARGS__)
+#define LOG_INFO(...) ::topo::LogInfo(__VA_ARGS__)
+#define LOG_WARN(...) ::topo::LogWarn(__VA_ARGS__)
+#define LOG_ERROR(...) ::topo::LogError(__VA_ARGS__)
+
+#endif

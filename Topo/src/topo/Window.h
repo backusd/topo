@@ -104,7 +104,7 @@ public:
 		// show window
 		ShowWindow(m_hWnd, SW_SHOWDEFAULT);
 
-		TOPO_CORE_INFO("Created window: {0} ({1}, {2})", m_title, m_height, m_width);
+		LOG_INFO("Created window: {0} ({1}, {2})", m_title, m_height, m_width);
 	}
 	WindowTemplate(const WindowTemplate&) = delete;
 	WindowTemplate(WindowTemplate&&) = delete;

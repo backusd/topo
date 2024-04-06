@@ -2,6 +2,7 @@
 #include "Core.h"
 #include "events/MouseButtonEventKeyStates.h"
 #include "Window.h"
+#include "KeyCode.h"
 
 namespace topo
 {
@@ -55,11 +56,11 @@ private:
 	bool OnMouseHWheel(Window* window, float wheelDelta, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
 
 	// Keyboard Event Handlers
-	bool OnChar(Window* window, unsigned int keyCode, unsigned int repeatCount);
-	bool OnKeyDown(Window* window, unsigned int keyCode, unsigned int repeatCount);
-	bool OnKeyUp(Window* window, unsigned int keyCode, unsigned int repeatCount);
-	bool OnSysKeyDown(Window* window, unsigned int keyCode, unsigned int repeatCount);
-	bool OnSysKeyUp(Window* window, unsigned int keyCode, unsigned int repeatCount);		
+	bool OnChar(Window* window, unsigned int character, unsigned int repeatCount);
+	bool OnKeyDown(Window* window, KeyCode keyCode, unsigned int repeatCount);
+	bool OnKeyUp(Window* window, KeyCode keyCode, unsigned int repeatCount);
+	bool OnSysKeyDown(Window* window, KeyCode keyCode, unsigned int repeatCount);
+	bool OnSysKeyUp(Window* window, KeyCode keyCode, unsigned int repeatCount);		
 
 private:
 	std::unique_ptr<Window> m_window;
@@ -108,17 +109,17 @@ bool Application::LaunchChildWindow(const WindowProperties& props)
 	catch (std::system_error& e)
 	{
 		// system_error can be thrown from std::thread constructor if it failed to launch the thread
-		TOPO_CORE_ERROR("{0}:{1} - Failed to launch thread for window '{2}'. Caught std::system_error. Message: {3}", __FILE__, __LINE__, props.Title, e.what());
+		LOG_ERROR("{0}:{1} - Failed to launch thread for window '{2}'. Caught std::system_error. Message: {3}", __FILE__, __LINE__, props.Title, e.what());
 		return false;
 	}
 	catch (std::exception& e)
 	{
-		TOPO_CORE_ERROR("{0}:{1} - Failed to launch thread for window '{2}'. Caught std::exception. Message: {3}", __FILE__, __LINE__, props.Title, e.what());
+		LOG_ERROR("{0}:{1} - Failed to launch thread for window '{2}'. Caught std::exception. Message: {3}", __FILE__, __LINE__, props.Title, e.what());
 		return false;
 	}
 	catch (...)
 	{
-		TOPO_CORE_ERROR("{0}:{1} - Failed to launch thread for window '{2}' - UNKNOWN ERROR", __FILE__, __LINE__, props.Title);
+		LOG_ERROR("{0}:{1} - Failed to launch thread for window '{2}' - UNKNOWN ERROR", __FILE__, __LINE__, props.Title);
 		return false;
 	}
 }

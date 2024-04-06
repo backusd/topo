@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Window.h"
 #include "Application.h"
+#include "KeyCode.h"
 
 #include <windowsx.h> // Included so we can use GET_X_LPARAM/GET_Y_LPARAM
 
@@ -212,19 +213,19 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			return 0;
 		break;		
 	case WM_KEYDOWN:		
-		if (m_app->OnKeyDown(this, static_cast<unsigned int>(wParam), static_cast<unsigned int>(LOWORD(lParam))))
+		if (m_app->OnKeyDown(this, static_cast<KeyCode>(wParam), static_cast<unsigned int>(LOWORD(lParam))))
 			return 0;
 		break;
 	case WM_KEYUP:			
-		if (m_app->OnKeyUp(this, static_cast<unsigned int>(wParam), static_cast<unsigned int>(LOWORD(lParam))))
+		if (m_app->OnKeyUp(this, static_cast<KeyCode>(wParam), static_cast<unsigned int>(LOWORD(lParam))))
 			return 0;
 		break;
 	case WM_SYSKEYDOWN:		
-		if (m_app->OnSysKeyDown(this, static_cast<unsigned int>(wParam), static_cast<unsigned int>(LOWORD(lParam))))
+		if (m_app->OnSysKeyDown(this, static_cast<KeyCode>(wParam), static_cast<unsigned int>(LOWORD(lParam))))
 			return 0;
 		break;
 	case WM_SYSKEYUP:		
-		if (m_app->OnSysKeyUp(this, static_cast<unsigned int>(wParam), static_cast<unsigned int>(LOWORD(lParam))))
+		if (m_app->OnSysKeyUp(this, static_cast<KeyCode>(wParam), static_cast<unsigned int>(LOWORD(lParam))))
 			return 0;
 		break;
 
@@ -252,7 +253,7 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_DPICHANGED:
-		TOPO_CORE_WARN("({0} - {1}: Received WM_DPICHANGED. Currently not handling this message", __FILE__, __LINE__); 
+		LOG_WARN("({0} - {1}: Received WM_DPICHANGED. Currently not handling this message", __FILE__, __LINE__); 
 		break;
 	}
 
