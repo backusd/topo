@@ -28,6 +28,20 @@ DeviceResources::DeviceResources(HWND hWnd, int width, int height) :
 	CreateRtvAndDsvDescriptorHeaps();
 	CreateSwapChain();
 	OnResize(m_height, m_width);
+
+	// Initialize the descriptor vector
+	m_descriptorVector = std::make_unique<DescriptorVector>(m_d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	// Reset the command list so we can execute commands when initializing the renderer
+	GFX_THROW_INFO(m_commandList->Reset(m_allocators[m_currentFrameIndex].Get(), nullptr));
+
+	// Execute the initialization commands.
+	GFX_THROW_INFO(m_commandList->Close()); 
+	ID3D12CommandList* cmdsLists[] = { m_commandList.Get()}; 
+	GFX_THROW_INFO_ONLY(m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists)); 
+
+	// Wait until initialization is complete.
+	FlushCommandQueue(); 
 }
 
 void DeviceResources::CreateDevice()
@@ -106,18 +120,29 @@ void DeviceResources::CreateCommandObjects()
 	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	GFX_THROW_INFO(m_d3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueue)));
 
-	GFX_THROW_INFO(
-		m_d3dDevice->CreateCommandAllocator(
-			D3D12_COMMAND_LIST_TYPE_DIRECT,
-			IID_PPV_ARGS(m_directCmdListAlloc.GetAddressOf())
-		)
-	);
+	// Initialize allocators
+	for (unsigned int iii = 0; iii < g_numFrameResources; ++iii)
+	{
+		GFX_THROW_INFO(
+			m_d3dDevice->CreateCommandAllocator(
+				D3D12_COMMAND_LIST_TYPE_DIRECT,
+				IID_PPV_ARGS(m_allocators[iii].GetAddressOf())
+			)
+		);
+	}
+
+//	GFX_THROW_INFO(
+//		m_d3dDevice->CreateCommandAllocator(
+//			D3D12_COMMAND_LIST_TYPE_DIRECT,
+//			IID_PPV_ARGS(m_directCmdListAlloc.GetAddressOf())
+//		)
+//	);
 
 	GFX_THROW_INFO(
 		m_d3dDevice->CreateCommandList(
 			0,
 			D3D12_COMMAND_LIST_TYPE_DIRECT,
-			m_directCmdListAlloc.Get(), // Associated command allocator
+			m_allocators[0].Get(), // Associated command allocator
 			nullptr,                   // Initial PipelineStateObject
 			IID_PPV_ARGS(m_commandList.GetAddressOf())
 		)
@@ -269,7 +294,6 @@ void DeviceResources::OnResize(int height, int width)
 {
 	ASSERT(m_d3dDevice != nullptr, "device is null");
 	ASSERT(m_swapChain != nullptr, "swapchain is null");
-	ASSERT(m_directCmdListAlloc != nullptr, "command list allocator is null");
 
 	// When the window is minimized, the height and width will both be 0. However, we cannot create a 0 sized
 	// depth stencil buffer, so just return
@@ -282,7 +306,7 @@ void DeviceResources::OnResize(int height, int width)
 	// Flush before changing any resources.
 	FlushCommandQueue();
 
-	GFX_THROW_INFO(m_commandList->Reset(m_directCmdListAlloc.Get(), nullptr));
+	GFX_THROW_INFO(m_commandList->Reset(m_allocators[m_currentFrameIndex].Get(), nullptr));
 
 	// Release the previous resources we will be recreating.
 	for (int i = 0; i < SwapChainBufferCount; ++i)
@@ -445,7 +469,89 @@ void DeviceResources::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT for
 	}
 }
 
+void DeviceResources::Update()
+{
+	// Cycle through the circular frame resource array.
+	m_currentFrameIndex = (m_currentFrameIndex + 1) % g_numFrameResources;
 
+	// Has the GPU finished processing the commands of the current frame?
+	// If not, wait until the GPU has completed commands up to this fence point.
+	UINT64 currentFence = m_fences[m_currentFrameIndex];
+	{
+		if (currentFence != 0 && m_fence->GetCompletedValue() < currentFence)
+		{
+			HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+			GFX_THROW_INFO(
+				m_fence->SetEventOnCompletion(currentFence, eventHandle)
+			);
+
+			ASSERT(eventHandle != NULL, "Handle should not be null");
+			WaitForSingleObject(eventHandle, INFINITE);
+			CloseHandle(eventHandle);
+		}
+	}
+
+	// Reuse the memory associated with command recording.
+	// We can only reset when the associated command lists have finished execution on the GPU.
+	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator = m_allocators[m_currentFrameIndex];
+	GFX_THROW_INFO(m_allocators[m_currentFrameIndex]->Reset());
+
+	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
+	// Reusing the command list reuses memory.
+	// NOTE: When resetting the commandlist, we are allowed to specify the PSO we want the command list to have.
+	//       However, this is slightly inconvenient given the way we have structured the loop below. According to
+	//		 the documentation for resetting using nullptr: "If NULL, the runtime sets a dummy initial pipeline 
+	//		 state so that drivers don't have to deal with undefined state. The overhead for this is low, 
+	//		 particularly for a command list, for which the overall cost of recording the command list likely 
+	//		 dwarfs the cost of one initial state setting."
+	GFX_THROW_INFO(m_commandList->Reset(commandAllocator.Get(), nullptr));
+
+	ID3D12DescriptorHeap* descriptorHeaps[] = { m_descriptorVector->GetRawHeapPointer() };
+	GFX_THROW_INFO_ONLY(
+		m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps)
+	);
+}
+void DeviceResources::PreRender()
+{
+	// Indicate a state transition on the resource usage.
+	auto transition = CD3DX12_RESOURCE_BARRIER::Transition(
+		CurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_PRESENT,
+		D3D12_RESOURCE_STATE_RENDER_TARGET
+	);
+	GFX_THROW_INFO_ONLY(m_commandList->ResourceBarrier(1, &transition));
+
+	// Clear the back buffer and depth buffer.
+	FLOAT color[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
+	GFX_THROW_INFO_ONLY(m_commandList->ClearRenderTargetView(CurrentBackBufferView(), color, 0, nullptr));
+	GFX_THROW_INFO_ONLY(m_commandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr));
+
+	// Specify the buffers we are going to render to.
+	auto currentBackBufferView = CurrentBackBufferView();
+	auto depthStencilView = DepthStencilView();
+	GFX_THROW_INFO_ONLY(
+		m_commandList->OMSetRenderTargets(1, &currentBackBufferView, true, &depthStencilView)
+	);
+}
+void DeviceResources::PostRender()
+{
+	// Indicate a state transition on the resource usage.
+	auto transition = CD3DX12_RESOURCE_BARRIER::Transition(
+		CurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		D3D12_RESOURCE_STATE_PRESENT
+	);
+	GFX_THROW_INFO_ONLY(m_commandList->ResourceBarrier(1, &transition));
+
+	// Done recording commands.
+	GFX_THROW_INFO(m_commandList->Close());
+
+	// Add the command list to the queue for execution.
+	ID3D12CommandList* cmdsLists[] = { m_commandList.Get() };
+	GFX_THROW_INFO_ONLY(
+		m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists)
+	);
+}
 void DeviceResources::Present()
 {
 	// PROFILE_SCOPE("m_swapChain->Present()");
@@ -460,6 +566,23 @@ void DeviceResources::Present()
 	//FlushCommandQueue();
 
 	++m_currentFence;
+
+
+
+
+
+	m_fences[m_currentFrameIndex] = m_currentFence;
+
+	// Add an instruction to the command queue to set a new fence point. 
+	// Because we are on the GPU timeline, the new fence point won't be 
+	// set until the GPU finishes processing all the commands prior to this Signal().
+	GFX_THROW_INFO(
+		m_commandQueue->Signal(m_fence.Get(), m_fences[m_currentFrameIndex])
+	);
+
+	// At the end of each frame, we need to clean up all resources that were previously
+	// passed to DeviceResources::DelayedDelete()
+	CleanupResources();
 }
 
 void DeviceResources::DelayedDelete(Microsoft::WRL::ComPtr<ID3D12Resource> resource) noexcept

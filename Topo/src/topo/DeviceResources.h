@@ -1,6 +1,10 @@
 #pragma once
 #include "Core.h"
-#include "utils/DxgiInfoManager.h"
+#include "topo/TopoException.h"
+#include "topo/utils/Constants.h"
+#include "topo/utils/DxgiInfoManager.h"
+#include "topo/utils/TranslateErrorCode.h"
+#include "rendering/DescriptorVector.h"
 
 
 
@@ -28,6 +32,8 @@
 
 namespace topo
 {
+class DescriptorVector;
+
 class DeviceResources
 {
 public:
@@ -37,14 +43,12 @@ public:
 	DeviceResources& operator=(const DeviceResources&) = delete;
 	DeviceResources& operator=(DeviceResources&&) = delete;
 
-
 	void OnResize(int height, int width);
 	void FlushCommandQueue();
 
 	// Getters
 	ND inline float AspectRatio() const noexcept { return static_cast<float>(m_width) / m_height; }
 	ND inline ID3D12GraphicsCommandList* GetCommandList() const noexcept { return m_commandList.Get(); }
-	ND inline ID3D12CommandAllocator* GetCommandAllocator() const noexcept { return m_directCmdListAlloc.Get(); }
 	ND inline ID3D12CommandQueue* GetCommandQueue() const noexcept { return m_commandQueue.Get(); }
 	ND inline ID3D12Device* GetDevice() const noexcept { return m_d3dDevice.Get(); }
 	ND inline DXGI_FORMAT GetBackBufferFormat() const noexcept { return m_backBufferFormat; }
@@ -67,7 +71,9 @@ public:
 
 
 
-
+	void Update();
+	void PreRender();
+	void PostRender();
 	void Present();
 
 	void DelayedDelete(Microsoft::WRL::ComPtr<ID3D12Resource> resource) noexcept;
@@ -91,6 +97,16 @@ private:
 	int m_height;
 	int m_width;
 
+	// Rendering resources
+	std::array<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>, g_numFrameResources> m_allocators;
+	int m_currentFrameIndex = 0;
+	std::array<UINT64, g_numFrameResources> m_fences = {};
+	std::unique_ptr<DescriptorVector> m_descriptorVector = nullptr;
+
+
+
+
+
 	Microsoft::WRL::ComPtr<IDXGIFactory4>	m_dxgiFactory;
 	Microsoft::WRL::ComPtr<IDXGISwapChain1> m_swapChain;
 	Microsoft::WRL::ComPtr<ID3D12Device>	m_d3dDevice;
@@ -99,7 +115,6 @@ private:
 	UINT64 m_currentFence = 0;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue>			m_commandQueue;
-	Microsoft::WRL::ComPtr<ID3D12CommandAllocator>		m_directCmdListAlloc;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>	m_commandList;
 
 	static const int SwapChainBufferCount = 2;

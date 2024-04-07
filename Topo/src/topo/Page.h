@@ -4,6 +4,7 @@
 #include "Layout.h"
 #include "events/MouseButtonEventKeyStates.h"
 #include "KeyCode.h"
+#include "utils/Timer.h"
 
 namespace topo
 {
@@ -13,6 +14,14 @@ class TOPO_API Page
 {
 public:
 	Page(float width, float height);
+
+	void Update(const Timer& timer)
+	{
+
+	}
+	void Render() 
+	{
+	}
 
 	// Window Event Handlers
 	bool OnWindowClosed();

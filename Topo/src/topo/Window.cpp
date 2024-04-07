@@ -255,6 +255,23 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
+
+void Window::Update(const Timer& timer) 
+{
+	m_deviceResources->Update();
+	m_page->Update(timer);
+}
+void Window::Render(const Timer& timer) 
+{
+	m_deviceResources->PreRender();
+	m_page->Render();
+	m_deviceResources->PostRender();
+}
+void Window::Present() 
+{
+	m_deviceResources->Present();
+}
+
 #else
 #error Only Supporting Windows
 #endif

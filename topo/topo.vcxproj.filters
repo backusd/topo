@@ -41,6 +41,8 @@
     <ClInclude Include="src\topo\utils\d3dx12.h" />
     <ClInclude Include="src\topo\utils\WindowMessageMap.h" />
     <ClInclude Include="src\topo\utils\Timer.h" />
+    <ClInclude Include="src\topo\utils\Constants.h" />
+    <ClInclude Include="src\topo\rendering\DescriptorVector.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -66,5 +68,6 @@
     <ClCompile Include="src\topo\utils\DxgiInfoManager.cpp" />
     <ClCompile Include="src\topo\utils\WindowMessageMap.cpp" />
     <ClCompile Include="src\topo\utils\Timer.cpp" />
+    <ClCompile Include="src\topo\rendering\DescriptorVector.cpp" />
   </ItemGroup>
 </Project>

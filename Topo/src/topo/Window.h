@@ -221,9 +221,9 @@ public:
 	}
 
 private:
-	void Update(const Timer& timer) {}
-	void Render(const Timer& timer) {}
-	void Present() {}
+	void Update(const Timer& timer);
+	void Render(const Timer& timer);
+	void Present();
 
 	void Shutdown();
 

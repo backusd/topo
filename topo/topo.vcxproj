@@ -159,8 +159,10 @@
     <ClInclude Include="src\topo\Layout.h" />
     <ClInclude Include="src\topo\Log.h" />
     <ClInclude Include="src\topo\Page.h" />
+    <ClInclude Include="src\topo\rendering\DescriptorVector.h" />
     <ClInclude Include="src\topo\TopoException.h" />
     <ClInclude Include="src\topo\utils\Concepts.h" />
+    <ClInclude Include="src\topo\utils\Constants.h" />
     <ClInclude Include="src\topo\utils\d3dx12.h" />
     <ClInclude Include="src\topo\utils\DxgiInfoManager.h" />
     <ClInclude Include="src\topo\utils\String.h" />
@@ -179,6 +181,7 @@
     <ClCompile Include="src\topo\Layout.cpp" />
     <ClCompile Include="src\topo\Log.cpp" />
     <ClCompile Include="src\topo\Page.cpp" />
+    <ClCompile Include="src\topo\rendering\DescriptorVector.cpp" />
     <ClCompile Include="src\topo\TopoException.cpp" />
     <ClCompile Include="src\topo\utils\Concepts.cpp" />
     <ClCompile Include="src\topo\utils\DxgiInfoManager.cpp" />
