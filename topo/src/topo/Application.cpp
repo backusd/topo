@@ -4,9 +4,9 @@
 namespace topo
 {
 
-Application::Application() noexcept :
+Application::Application(const WindowProperties& mainWindowProperties) noexcept :
 	m_applicationShutdownRequested(false),
-	m_window(nullptr),
+	m_window(mainWindowProperties),
 	m_timer()
 {
 }
@@ -16,9 +16,9 @@ Application::~Application() noexcept
 
 int Application::Run()
 {
-	if (m_window == nullptr)
+	if (!m_window.Initialized())
 	{
-		LOG_ERROR("Cannot call Application::Run() before launching the main window");
+		LOG_ERROR("Cannot call Application::Run() before initializing the main window");
 		return 1;
 	}
 
@@ -27,7 +27,7 @@ int Application::Run()
 	while (true)
 	{
 		// process all messages pending, but do not block for new messages
-		if (const auto ecode = m_window->ProcessMessages())
+		if (const auto ecode = m_window.ProcessMessages())
 		{
 			// When the main window is closed, call Terminate to close all open windows
 			TerminateAllChildWindows();
@@ -39,9 +39,7 @@ int Application::Run()
 		try
 		{
 			m_timer.Tick();
-			m_window->Update(m_timer); 
-			m_window->Render(m_timer); 
-			m_window->Present();
+			m_window.DoFrame(m_timer);
 		}
 		catch (const topo::TopoException& e)
 		{

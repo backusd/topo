@@ -4,14 +4,11 @@
 class Sandbox : public topo::Application
 {
 public:
-	Sandbox()
+	Sandbox() : topo::Application(topo::WindowProperties("Main Window", 1600, 800))
 	{
-		topo::WindowProperties props = {}; 
-		props.Title = "Main Window"; 
-		props.Height = 720; 
-		props.Width = 1280; 
-		LaunchWindow<MainPage>(props);
+		InitializeMainWindowPage<MainPage>();
 
+//		topo::WindowProperties props{};
 //		props.Title = "Child Window";
 //		props.Height = 600;
 //		props.Width = 600;

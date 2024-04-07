@@ -16,25 +16,22 @@
 
 namespace topo
 {
-class Application;
-
 #ifdef TOPO_PLATFORM_WINDOWS
 #pragma warning( push )
 #pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
+#endif
 struct TOPO_API WindowProperties
 {
+	constexpr WindowProperties(std::string_view title = "Topo Window", unsigned int width = 1280, unsigned int height = 720) noexcept :
+		Title(title), Width(width), Height(height)
+	{}
+
 	std::string_view Title = "Topo Window";
 	unsigned int Width = 1280;
 	unsigned int Height = 720;
 };
+#ifdef TOPO_PLATFORM_WINDOWS
 #pragma warning( pop )
-#else
-struct TOPO_API WindowProperties
-{
-	std::string_view Title = "Topo Window";
-	unsigned int Width = 1280;
-	unsigned int Height = 720;
-};
 #endif
 
 #ifdef TOPO_PLATFORM_WINDOWS
@@ -46,8 +43,7 @@ template<typename T>
 class WindowTemplate
 {
 public:
-	WindowTemplate(Application* app, const WindowProperties& props) :
-		m_app(app),
+	WindowTemplate(const WindowProperties& props) :
 		m_deviceResources(nullptr),
 		m_page(std::make_unique<Page>(static_cast<float>(props.Width), static_cast<float>(props.Height))),	// Create a default page so it is guaranteed to not be null
 		m_height(props.Height), 
@@ -146,7 +142,6 @@ protected:
 	HINSTANCE m_hInst;
 
 	std::shared_ptr<DeviceResources> m_deviceResources;
-	Application* m_app;
 	std::unique_ptr<Page> m_page;
 
 	// Window Data
@@ -196,7 +191,7 @@ LRESULT CALLBACK WindowTemplate<T>::HandleMsgBase(HWND hWnd, UINT msg, WPARAM wP
 class TOPO_API Window : public WindowTemplate<Window>
 {
 public:
-	Window(Application* app, const WindowProperties& props) : WindowTemplate(app, props)
+	Window(const WindowProperties& props) : WindowTemplate(props)
 	{}
 	Window(const Window&) = delete;
 	Window(Window&&) = delete;
@@ -212,15 +207,27 @@ public:
 	template<typename T>
 	void InitializePage() noexcept
 	{
+		m_initialized = true;
 		m_page = std::make_unique<T>(m_height, m_width); 
 	}
 
+	ND constexpr bool Initialized() const noexcept { return m_initialized; }
+
+	void DoFrame(const Timer& timer)
+	{
+		Update(timer);
+		Render(timer);
+		Present();
+	}
+
+private:
 	void Update(const Timer& timer) {}
 	void Render(const Timer& timer) {}
 	void Present() {}
 
-private:
 	void Shutdown();
+
+	bool m_initialized = false;
 };
 
 #pragma warning( pop )

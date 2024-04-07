@@ -13,51 +13,63 @@ namespace topo
 class TOPO_API Application
 {
 public:
-	Application() noexcept;
+	Application(const WindowProperties& mainWindowProperties) noexcept;
 	virtual ~Application() noexcept;
 	int Run();
 		
 	ND constexpr bool ApplicationShutdownRequested() const noexcept { return m_applicationShutdownRequested; }
 
 	template<DerivedFromPage T>
-	bool LaunchWindow(const WindowProperties& props);
+	bool LaunchWindow(const WindowProperties& props) noexcept;
+
+protected:
+	template<DerivedFromPage T>
+	void InitializeMainWindowPage()
+	{
+		m_window.InitializePage<T>();
+	}
 
 private:
-	template<DerivedFromPage T>
-	bool LaunchChildWindow(const WindowProperties& props) noexcept;	
-
 	void TerminateAllChildWindows() noexcept;
 
 	Timer m_timer;
-	std::unique_ptr<Window> m_window;
+	Window m_window;
 	std::vector<std::thread> m_childWindowThreads;
 	bool m_applicationShutdownRequested;
 };
 
 template<DerivedFromPage T>
-bool Application::LaunchWindow(const WindowProperties& props)
-{
-	if (m_window != nullptr)
-		return LaunchChildWindow<T>(props);
-
-	m_window = std::make_unique<Window>(this, props);
-	m_window->InitializePage<T>();
-	return true;
-}
-
-template<DerivedFromPage T>
-bool Application::LaunchChildWindow(const WindowProperties& props) noexcept
+bool Application::LaunchWindow(const WindowProperties& props) noexcept
 {
 	try
 	{
 		m_childWindowThreads.emplace_back(
 			[this, props]() noexcept
 			{
-				std::unique_ptr<Window> window = nullptr;
 				try
 				{
-					window = std::make_unique<Window>(this, props);
-					window->InitializePage<T>();
+					Window window(props);
+					window.InitializePage<T>();
+
+					Timer timer{};
+					timer.Reset();
+
+					while (true)
+					{
+						if (this->ApplicationShutdownRequested())
+							break;
+
+						// process all messages pending, but do not block for new messages
+						if (const auto ecode = window.ProcessMessages())
+						{
+							// if return optional has value, means we're quitting
+							return;
+						}
+
+						timer.Tick(); 
+						window.DoFrame(timer);
+					}
+
 				}
 				catch (const topo::TopoException& e)
 				{
@@ -70,45 +82,10 @@ bool Application::LaunchChildWindow(const WindowProperties& props) noexcept
 					LOG_ERROR("\tWHAT: {0}", e.what());
 					return;
 				}
-
-				Timer timer{};
-				timer.Reset();
-
-				while (true)
+				catch (...)
 				{
-					if (this->ApplicationShutdownRequested()) 
-						break;
-
-					// process all messages pending, but do not block for new messages
-					if (const auto ecode = window->ProcessMessages()) 
-					{
-						// if return optional has value, means we're quitting so return exit code
-						return;
-					}
-
-					try
-					{
-						timer.Tick();
-						window->Update(timer); 
-						window->Render(timer); 
-						window->Present(); 
-					}
-					catch (const topo::TopoException& e) 
-					{
-						LOG_ERROR("{0}", e); 
-						break;
-					}
-					catch (const std::exception& e) 
-					{
-						LOG_ERROR("Caught std::exception"); 
-						LOG_ERROR("\tWHAT: {0}", e.what()); 
-						break;
-					}
-					catch (...)
-					{
-						LOG_ERROR("Caught unknown exception"); 
-						break;
-					}
+					LOG_ERROR("Caught unknown exception");
+					return;
 				}
 			}
 		);
