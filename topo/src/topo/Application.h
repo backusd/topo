@@ -47,22 +47,38 @@ bool Application::LaunchChildWindow(const WindowProperties& props) noexcept
 	try
 	{
 		m_childWindowThreads.emplace_back(
-			[this, props]()
+			[this, props]() noexcept
 			{
-				std::unique_ptr<Window> window = std::make_unique<Window>(this, props);
-				window->InitializePage<T>();
-
-				while (true)
+				try
 				{
-					if (this->ApplicationShutdownRequested())
-						break;
+					std::unique_ptr<Window> window = std::make_unique<Window>(this, props);
+					window->InitializePage<T>();
 
-					// process all messages pending, but do not block for new messages
-					if (const auto ecode = window->ProcessMessages())
+					while (true)
 					{
-						// if return optional has value, means we're quitting so return exit code
-						return;
+						if (this->ApplicationShutdownRequested())
+							break;
+
+						// process all messages pending, but do not block for new messages
+						if (const auto ecode = window->ProcessMessages())
+						{
+							// if return optional has value, means we're quitting so return exit code
+							return;
+						}
 					}
+				}
+				catch (const topo::TopoException& e)
+				{
+					LOG_ERROR("{0}", e);
+				}
+				catch (const std::exception& e)
+				{
+					LOG_ERROR("Caught std::exception");
+					LOG_ERROR("\tWHAT: {0}", e.what());
+				}
+				catch (...)
+				{
+					LOG_ERROR("Caught unknown exception");
 				}
 			}
 		);

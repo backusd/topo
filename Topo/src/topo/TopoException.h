@@ -72,3 +72,20 @@ private:
 };
 #pragma warning( pop )
 }
+
+template <>
+struct std::formatter<topo::TopoException> : std::formatter<std::string> {
+    auto format(topo::TopoException e, format_context& ctx) const 
+    {
+        auto& location = e.where();
+
+        std::string s = std::format("TopoException:\n\nWHAT: {0}\n", e.what());
+        if (e.hasData())
+            s += std::format("\tDATA: {0}\n", e.dataAsString());
+        s += std::format("WHERE: {0}({1}:{2}), `function` {3}\nSTACK TRACE:\n", location.file_name(), location.line(), location.column(), location.function_name());
+        for (auto iter = e.stack().begin(); iter != (e.stack().end() - 3); ++iter)
+            s += std::format("\t{0}({1}) : {2}\n", iter->source_file(), iter->source_line(), iter->description());
+
+        return formatter<string>::format(s, ctx);
+    }
+};

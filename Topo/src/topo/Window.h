@@ -91,7 +91,7 @@ public:
 		// create window & get hWnd
 		m_hWnd = CreateWindowExW(
 			style,
-			wndBaseClassName,
+			nullptr, //wndBaseClassName,	// <-- Set this nullptr to get exception to throw
 			w_title.c_str(),
 			WS_options,
 			CW_USEDEFAULT,
@@ -141,21 +141,18 @@ protected:
 	HINSTANCE m_hInst;
 
 	// Window Data
-	short m_width;
-	short m_height;
-	std::string m_title;
-	HWND m_hWnd;
-	float m_mouseX;
-	float m_mouseY;
-	bool m_mouseIsInWindow;
+	short		m_width;
+	short		m_height;
+	std::string	m_title;
+	HWND		m_hWnd;
+	float		m_mouseX;
+	float		m_mouseY;
+	bool		m_mouseIsInWindow;
 };
 
 template<typename T>
 LRESULT CALLBACK WindowTemplate<T>::HandleMsgSetupBase(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
-//		static seethe::WindowMessageMap mm;
-//		LOG_TRACE("EARLY MESSAGE: {}", mm(msg, lParam, wParam));
-
 	// use create parameter passed in from CreateWindow() to store window class pointer at WinAPI side
 	if (msg == WM_NCCREATE)
 	{
