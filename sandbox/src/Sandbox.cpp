@@ -6,12 +6,6 @@ class Sandbox : public topo::Application
 public:
 	Sandbox()
 	{
-		LOG_INFO("First message");
-		LOG_INFO("Second Message {}", 42);
-		LOG_WARN("This is a warning: {}", "you suck");
-		LOG_TRACE("Tracing: {}", __LINE__);
-		LOG_ERROR("ERROR: {}", 1234);
-
 		topo::WindowProperties props = {}; 
 		props.Title = "Main Window"; 
 		props.Height = 720; 

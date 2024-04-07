@@ -4,6 +4,7 @@
 #include "Window.h"
 #include "KeyCode.h"
 #include "utils/Timer.h"
+#include "utils/Concepts.h"
 
 namespace topo
 {
@@ -18,11 +19,11 @@ public:
 		
 	ND constexpr bool ApplicationShutdownRequested() const noexcept { return m_applicationShutdownRequested; }
 
-	template<typename T>
+	template<DerivedFromPage T>
 	bool LaunchWindow(const WindowProperties& props);
 
 private:
-	template<typename T>
+	template<DerivedFromPage T>
 	bool LaunchChildWindow(const WindowProperties& props) noexcept;	
 
 	void TerminateAllChildWindows() noexcept;
@@ -33,7 +34,7 @@ private:
 	bool m_applicationShutdownRequested;
 };
 
-template<typename T>
+template<DerivedFromPage T>
 bool Application::LaunchWindow(const WindowProperties& props)
 {
 	if (m_window != nullptr)
@@ -44,7 +45,7 @@ bool Application::LaunchWindow(const WindowProperties& props)
 	return true;
 }
 
-template<typename T>
+template<DerivedFromPage T>
 bool Application::LaunchChildWindow(const WindowProperties& props) noexcept
 {
 	try
