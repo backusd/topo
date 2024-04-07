@@ -86,7 +86,7 @@
 #include <DirectXCollision.h>
 
 // #include "utils/Constants.h"
-// #include "utils/d3dx12.h"
+#include "topo/utils/d3dx12.h"
 // #include "utils/DDSTextureLoader.h"
 // #include "utils/MathHelper.h"
 

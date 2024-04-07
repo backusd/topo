@@ -4,18 +4,14 @@
 
 namespace topo
 {
-Page::Page(float height, float width) :
-	m_layout(height, width)
+Page::Page(float width, float height) :
+	m_layout(width, height)
 {
 
 }
 
 
 // Window Event Handlers
-bool Page::OnWindowCreated(float height, float width)
-{
-	return true;
-}
 bool Page::OnWindowClosed()
 {
 	PostQuitMessage(0);

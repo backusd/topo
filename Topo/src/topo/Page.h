@@ -12,12 +12,11 @@ namespace topo
 class TOPO_API Page
 {
 public:
-	Page(float height, float width);
+	Page(float width, float height);
 
 	// Window Event Handlers
-	bool OnWindowCreated(float height, float width);
 	bool OnWindowClosed();
-	bool OnWindowResized(float height, float width);
+	bool OnWindowResized(float width, float height);
 	bool OnKillFocus();
 	bool OnDPIChanged();
 

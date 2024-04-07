@@ -36,6 +36,11 @@
     <ClInclude Include="src\topo\utils\Concepts.h" />
     <ClInclude Include="src\topo\utils\TranslateErrorCode.h" />
     <ClInclude Include="src\topo\utils\String.h" />
+    <ClInclude Include="src\topo\DeviceResources.h" />
+    <ClInclude Include="src\topo\utils\DxgiInfoManager.h" />
+    <ClInclude Include="src\topo\utils\d3dx12.h" />
+    <ClInclude Include="src\topo\utils\WindowMessageMap.h" />
+    <ClInclude Include="src\topo\utils\Timer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -57,5 +62,9 @@
     <ClCompile Include="src\topo\utils\Concepts.cpp" />
     <ClCompile Include="src\topo\utils\TranslateErrorCode.cpp" />
     <ClCompile Include="src\topo\utils\String.cpp" />
+    <ClCompile Include="src\topo\DeviceResources.cpp" />
+    <ClCompile Include="src\topo\utils\DxgiInfoManager.cpp" />
+    <ClCompile Include="src\topo\utils\WindowMessageMap.cpp" />
+    <ClCompile Include="src\topo\utils\Timer.cpp" />
   </ItemGroup>
 </Project>

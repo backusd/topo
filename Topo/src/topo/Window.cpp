@@ -2,21 +2,17 @@
 #include "Window.h"
 #include "Application.h"
 #include "KeyCode.h"
+#include "utils/WindowMessageMap.h"
 
 #include <windowsx.h> // Included so we can use GET_X_LPARAM/GET_Y_LPARAM
 
 namespace topo
 {
 #ifdef TOPO_PLATFORM_WINDOWS
+
 // =======================================================================
 // Window
 // =======================================================================
-Window::Window(Application* app, const WindowProperties& props) :
-	WindowTemplate(props),
-	m_app(app),
-	m_page(nullptr)
-{
-}
 void Window::Shutdown()
 {
 	UnregisterClass(wndBaseClassName, m_hInst); 
@@ -50,8 +46,8 @@ std::optional<int> Window::ProcessMessages() const noexcept
 }
 LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	//static seethe::WindowMessageMap mm;
-	//LOG_TRACE("{}", mm(msg, wParam, lParam));
+//	static topo::WindowMessageMap mm;
+//	LOG_TRACE("{}", mm(msg, wParam, lParam));
 
 	// 'case' options are arranged in roughly in the order of highest frequency
 	// I'm not sure if  actually affects performance slightly, but I assume it can't hurt
@@ -188,7 +184,7 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		m_width = LOWORD(lParam);
 		m_height = HIWORD(lParam);
-//		m_deviceResources->OnResize(m_height, m_width);
+		m_deviceResources->OnResize(m_height, m_width);
 
 		if (m_page->OnWindowResized(m_height, m_width))
 			return 0;
@@ -241,11 +237,10 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		CREATESTRUCTW* cs = reinterpret_cast<CREATESTRUCTW*>(lParam);
 		m_height = cs->cy;
 		m_width = cs->cx;
-//		m_deviceResources = std::make_shared<DeviceResources>(hWnd, height, width);
+		m_deviceResources = std::make_shared<DeviceResources>(hWnd, m_width, m_height);
 
-		if (m_page->OnWindowCreated(m_height, m_width))
-			return 0;
-		break;
+		// Don't pass message to m_page, because InitializePage will not have been called yet
+		return 0;
 	}
 	case WM_CLOSE:			
 		if (m_page->OnWindowClosed())

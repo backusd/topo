@@ -1,13 +1,15 @@
 #pragma once
 #include "Core.h"
+#include "DeviceResources.h"
 #include "Log.h"
 #include "Page.h"
 #include "TopoException.h"
 #include "utils/String.h"
 #include "utils/TranslateErrorCode.h"
+#include "utils/Timer.h"
 
 #ifdef TOPO_PLATFORM_WINDOWS
-#define THROW_WINDOW_LAST_EXCEPT() auto _err = GetLastError(); throw EXCEPTION(std::format("Window Exception\n[Error Code] {0:#x} ({0})\n[Description] {1}", _err, ::topo::TranslateErrorCode(_err), __FILE__, __LINE__))
+#define THROW_WINDOW_LAST_EXCEPT() auto _err = GetLastError(); throw EXCEPTION(std::format("Window Exception\n[Error Code] {0:#x} ({0})\n[Description] {1}", _err, ::topo::TranslateErrorCode(_err)))
 #else
 #error Only Supporting Windows!
 #endif
@@ -44,7 +46,10 @@ template<typename T>
 class WindowTemplate
 {
 public:
-	WindowTemplate(const WindowProperties& props) :
+	WindowTemplate(Application* app, const WindowProperties& props) :
+		m_app(app),
+		m_deviceResources(nullptr),
+		m_page(std::make_unique<Page>(static_cast<float>(props.Width), static_cast<float>(props.Height))),	// Create a default page so it is guaranteed to not be null
 		m_height(props.Height), 
 		m_width(props.Width),
 		m_title(props.Title), 
@@ -91,7 +96,7 @@ public:
 		// create window & get hWnd
 		m_hWnd = CreateWindowExW(
 			style,
-			nullptr, //wndBaseClassName,	// <-- Set this nullptr to get exception to throw
+			wndBaseClassName,	// <-- Set this nullptr to get exception to throw
 			w_title.c_str(),
 			WS_options,
 			CW_USEDEFAULT,
@@ -140,6 +145,10 @@ protected:
 	static constexpr const wchar_t* wndBaseClassName = L"Topo Window";
 	HINSTANCE m_hInst;
 
+	std::shared_ptr<DeviceResources> m_deviceResources;
+	Application* m_app;
+	std::unique_ptr<Page> m_page;
+
 	// Window Data
 	short		m_width;
 	short		m_height;
@@ -183,10 +192,12 @@ LRESULT CALLBACK WindowTemplate<T>::HandleMsgBase(HWND hWnd, UINT msg, WPARAM wP
 // =======================================================================
 #pragma warning( push )
 #pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
+
 class TOPO_API Window : public WindowTemplate<Window>
 {
 public:
-	Window(Application* app, const WindowProperties& props);
+	Window(Application* app, const WindowProperties& props) : WindowTemplate(app, props)
+	{}
 	Window(const Window&) = delete;
 	Window(Window&&) = delete;
 	Window& operator=(const Window&) = delete;
@@ -196,7 +207,7 @@ public:
 	ND std::optional<int> ProcessMessages() const noexcept;
 	ND LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-//		ND inline std::shared_ptr<DeviceResources> GetDeviceResources() noexcept { return m_deviceResources; }
+	ND inline std::shared_ptr<DeviceResources> GetDeviceResources() noexcept { return m_deviceResources; }
 
 	template<typename T>
 	void InitializePage() noexcept
@@ -204,13 +215,14 @@ public:
 		m_page = std::make_unique<T>(m_height, m_width); 
 	}
 
+	void Update(const Timer& timer) {}
+	void Render(const Timer& timer) {}
+	void Present() {}
+
 private:
 	void Shutdown();
-	
-//		std::shared_ptr<DeviceResources> m_deviceResources = nullptr;
-	Application* m_app;
-	std::unique_ptr<Page> m_page;
 };
+
 #pragma warning( pop )
 
 #else
