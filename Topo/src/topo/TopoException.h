@@ -1,0 +1,74 @@
+#pragma once
+#include "Core.h"
+#include "utils/Concepts.h"
+
+#define EXCEPTION(message) ::topo::TopoException(message)
+#define EXCEPTION_WITH_DATA(message, data) ::topo::TopoExceptionWithData(message, data)
+
+namespace topo
+{
+#pragma warning( push )
+#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
+class TOPO_API TopoException {
+public:
+    TopoException(const std::string& errorMessage, const std::source_location& loc = std::source_location::current(), std::stacktrace trace = std::stacktrace::current()) :
+        m_errorMessage(errorMessage),
+        m_location{ loc },
+        m_stacktrace{ trace }
+    {}
+    TopoException(std::string&& errorMessage, const std::source_location& loc = std::source_location::current(), std::stacktrace trace = std::stacktrace::current()) :
+        m_errorMessage(std::move(errorMessage)),
+        m_location{ loc },
+        m_stacktrace{ trace }
+    {}
+
+    std::string& what() { return m_errorMessage; }
+    const std::string& what() const noexcept { return m_errorMessage; }
+    const std::source_location& where() const { return m_location; }
+    const std::stacktrace& stack() const { return m_stacktrace; }
+
+    virtual std::string dataAsString() const noexcept { return "(no data)"; }
+    virtual bool hasData() const noexcept { return false; }
+
+protected:
+    std::string m_errorMessage;
+    const std::source_location m_location;
+    const std::stacktrace m_stacktrace;
+};
+#pragma warning( pop )
+
+
+#pragma warning( push )
+#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
+template<HasFormatterSpecialization DATA_T>
+class TOPO_API TopoExceptionWithData : public TopoException
+{
+public:
+    TopoExceptionWithData(const std::string& errorMessage, const DATA_T& data, const std::source_location& loc = std::source_location::current(), std::stacktrace trace = std::stacktrace::current()) :
+        TopoException(errorMessage, loc, trace),
+        m_data(data)
+    {}
+    TopoExceptionWithData(const std::string& errorMessage, DATA_T&& data, const std::source_location& loc = std::source_location::current(), std::stacktrace trace = std::stacktrace::current()) :
+        TopoException(errorMessage, loc, trace),
+        m_data(data)
+    {}
+    TopoExceptionWithData(std::string&& errorMessage, const DATA_T& data, const std::source_location& loc = std::source_location::current(), std::stacktrace trace = std::stacktrace::current()) :
+        TopoException(errorMessage, loc, trace),
+        m_data(std::move(data))
+    {}
+    TopoExceptionWithData(std::string&& errorMessage, DATA_T&& data, const std::source_location& loc = std::source_location::current(), std::stacktrace trace = std::stacktrace::current()) :
+        TopoException(errorMessage, loc, trace),
+        m_data(std::move(data))
+    {}
+
+    DATA_T& data() { return m_data; }
+    const DATA_T& data() const noexcept { return m_data; }
+
+    std::string dataAsString() const noexcept override { return std::format("{0}", m_data); } 
+    bool hasData() const noexcept { return true; }
+
+private:
+    DATA_T m_data;
+};
+#pragma warning( pop )
+}

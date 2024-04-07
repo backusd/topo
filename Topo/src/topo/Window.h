@@ -2,6 +2,15 @@
 #include "Core.h"
 #include "Log.h"
 #include "Page.h"
+#include "TopoException.h"
+#include "utils/String.h"
+#include "utils/TranslateErrorCode.h"
+
+#ifdef TOPO_PLATFORM_WINDOWS
+#define THROW_WINDOW_LAST_EXCEPT() auto _err = GetLastError(); throw EXCEPTION(std::format("Window Exception\n[Error Code] {0:#x} ({0})\n[Description] {1}", _err, ::topo::TranslateErrorCode(_err), __FILE__, __LINE__))
+#else
+#error Only Supporting Windows!
+#endif
 
 namespace topo
 {
@@ -71,14 +80,13 @@ public:
 
 		if (AdjustWindowRect(&rect, WS_options, FALSE) == 0)
 		{
-			throw std::runtime_error("ERROR LINE 47");
-//				throw WINDOW_LAST_EXCEPT();
+			THROW_WINDOW_LAST_EXCEPT();
 		};
 
 		// TODO: Look into other extended window styles
 		auto style = WS_EX_WINDOWEDGE;
 
-		std::wstring w_title(m_title.begin(), m_title.end());
+		std::wstring w_title = s2ws(m_title);
 
 		// create window & get hWnd
 		m_hWnd = CreateWindowExW(
@@ -98,13 +106,12 @@ public:
 
 		if (m_hWnd == nullptr)
 		{
-			throw std::runtime_error("ERROR LINE 74");
-//				throw WINDOW_LAST_EXCEPT();
+			THROW_WINDOW_LAST_EXCEPT();
 		}
 		// show window
 		ShowWindow(m_hWnd, SW_SHOWDEFAULT);
 
-		LOG_INFO("Created window: {0} ({1}, {2})", m_title, m_height, m_width);
+		LOG_INFO("Created window: {0} ({1}, {2})", m_title, m_width, m_height);
 	}
 	WindowTemplate(const WindowTemplate&) = delete;
 	WindowTemplate(WindowTemplate&&) = delete;
@@ -195,9 +202,9 @@ public:
 //		ND inline std::shared_ptr<DeviceResources> GetDeviceResources() noexcept { return m_deviceResources; }
 
 	template<typename T>
-	void InitializePage()
+	void InitializePage() noexcept
 	{
-		m_page = std::make_unique<T>(); 
+		m_page = std::make_unique<T>(m_height, m_width); 
 	}
 
 private:

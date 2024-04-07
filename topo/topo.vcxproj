@@ -155,8 +155,13 @@
     <ClInclude Include="src\topo\Core.h" />
     <ClInclude Include="src\topo\EntryPoint.h" />
     <ClInclude Include="src\topo\KeyCode.h" />
+    <ClInclude Include="src\topo\Layout.h" />
     <ClInclude Include="src\topo\Log.h" />
     <ClInclude Include="src\topo\Page.h" />
+    <ClInclude Include="src\topo\TopoException.h" />
+    <ClInclude Include="src\topo\utils\Concepts.h" />
+    <ClInclude Include="src\topo\utils\String.h" />
+    <ClInclude Include="src\topo\utils\TranslateErrorCode.h" />
     <ClInclude Include="src\topo\Window.h" />
     <ClInclude Include="src\topo\events\MouseButtonEventKeyStates.h" />
   </ItemGroup>
@@ -165,8 +170,13 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\topo\Application.cpp" />
+    <ClCompile Include="src\topo\Layout.cpp" />
     <ClCompile Include="src\topo\Log.cpp" />
     <ClCompile Include="src\topo\Page.cpp" />
+    <ClCompile Include="src\topo\TopoException.cpp" />
+    <ClCompile Include="src\topo\utils\Concepts.cpp" />
+    <ClCompile Include="src\topo\utils\String.cpp" />
+    <ClCompile Include="src\topo\utils\TranslateErrorCode.cpp" />
     <ClCompile Include="src\topo\Window.cpp" />
     <ClCompile Include="src\topo\events\MouseButtonEventKeyStates.cpp" />
   </ItemGroup>

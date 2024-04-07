@@ -10,11 +10,9 @@ namespace topo
 #pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
 class TOPO_API Application
 {
-	friend class Window;
-
 public:
-	Application();
-	virtual ~Application();
+	Application() noexcept;
+	virtual ~Application() noexcept;
 	int Run();
 		
 	ND constexpr bool ApplicationShutdownRequested() const noexcept { return m_applicationShutdownRequested; }
@@ -24,45 +22,9 @@ public:
 
 private:
 	template<typename T>
-	bool LaunchChildWindow(const WindowProperties& props);
+	bool LaunchChildWindow(const WindowProperties& props) noexcept;	
 
-	// Window Event Handlers
-	bool OnWindowCreated(Window* window, float height, float width);
-	bool OnWindowClosed(Window* window);
-	bool OnWindowResized(Window* window, float height, float width);
-	bool OnKillFocus(Window* window);
-	bool OnDPIChanged(Window* window);
 
-	// Mouse Event Handlers
-	bool OnLButtonDown(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnLButtonUp(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnLButtonDoubleClick(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnMButtonDown(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnMButtonUp(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnMButtonDoubleClick(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnRButtonDown(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnRButtonUp(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnRButtonDoubleClick(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnX1ButtonDown(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnX1ButtonUp(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnX1ButtonDoubleClick(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnX2ButtonDown(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnX2ButtonUp(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnX2ButtonDoubleClick(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnMouseMoved(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnMouseEntered(Window* window, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnMouseLeave(Window* window);
-	bool OnMouseWheel(Window* window, float wheelDelta, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-	bool OnMouseHWheel(Window* window, float wheelDelta, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates);
-
-	// Keyboard Event Handlers
-	bool OnChar(Window* window, unsigned int character, unsigned int repeatCount);
-	bool OnKeyDown(Window* window, KeyCode keyCode, unsigned int repeatCount);
-	bool OnKeyUp(Window* window, KeyCode keyCode, unsigned int repeatCount);
-	bool OnSysKeyDown(Window* window, KeyCode keyCode, unsigned int repeatCount);
-	bool OnSysKeyUp(Window* window, KeyCode keyCode, unsigned int repeatCount);		
-
-private:
 	std::unique_ptr<Window> m_window;
 	std::vector<std::thread> m_childWindowThreads;
 	bool m_applicationShutdownRequested;
@@ -80,7 +42,7 @@ bool Application::LaunchWindow(const WindowProperties& props)
 }
 
 template<typename T>
-bool Application::LaunchChildWindow(const WindowProperties& props)
+bool Application::LaunchChildWindow(const WindowProperties& props) noexcept
 {
 	try
 	{

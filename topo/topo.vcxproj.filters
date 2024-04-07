@@ -31,6 +31,11 @@
     </ClInclude>
     <ClInclude Include="src\topo\Page.h" />
     <ClInclude Include="src\topo\KeyCode.h" />
+    <ClInclude Include="src\topo\Layout.h" />
+    <ClInclude Include="src\topo\TopoException.h" />
+    <ClInclude Include="src\topo\utils\Concepts.h" />
+    <ClInclude Include="src\topo\utils\TranslateErrorCode.h" />
+    <ClInclude Include="src\topo\utils\String.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -47,5 +52,10 @@
       <Filter>topo\events</Filter>
     </ClCompile>
     <ClCompile Include="src\topo\Page.cpp" />
+    <ClCompile Include="src\topo\Layout.cpp" />
+    <ClCompile Include="src\topo\TopoException.cpp" />
+    <ClCompile Include="src\topo\utils\Concepts.cpp" />
+    <ClCompile Include="src\topo\utils\TranslateErrorCode.cpp" />
+    <ClCompile Include="src\topo\utils\String.cpp" />
   </ItemGroup>
 </Project>
