@@ -15,6 +15,7 @@
 #include <iterator>
 #include <iostream>		// <-- Can probably remove this for distribution builds
 #include <memory>
+#include <numbers>
 #include <optional>
 #include <queue>
 #include <source_location>

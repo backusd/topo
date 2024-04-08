@@ -6,6 +6,6 @@
 #include "topo/Page.h"
 #include "topo/TopoException.h"
 
-
+#include "topo/rendering/Camera.h"
 
 #include "topo/EntryPoint.h"

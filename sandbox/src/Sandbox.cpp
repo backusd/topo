@@ -8,6 +8,9 @@ public:
 	{
 		InitializeMainWindowPage<MainPage>();
 
+
+		topo::Camera c{};
+
 //		topo::WindowProperties props{};
 //		props.Title = "Child Window";
 //		props.Height = 600;

@@ -43,6 +43,22 @@
     <ClInclude Include="src\topo\utils\Timer.h" />
     <ClInclude Include="src\topo\utils\Constants.h" />
     <ClInclude Include="src\topo\rendering\DescriptorVector.h" />
+    <ClInclude Include="src\topo\rendering\Camera.h" />
+    <ClInclude Include="src\topo\utils\MathHelper.h" />
+    <ClInclude Include="src\topo\rendering\ConstantBuffer.h" />
+    <ClInclude Include="src\topo\utils\GeometryGenerator.h" />
+    <ClInclude Include="src\topo\rendering\InputLayout.h" />
+    <ClInclude Include="src\topo\rendering\MeshGroup.h" />
+    <ClInclude Include="src\topo\rendering\Shader.h" />
+    <ClInclude Include="src\topo\rendering\RootSignature.h" />
+    <ClInclude Include="src\topo\rendering\RootDescriptorTable.h" />
+    <ClInclude Include="src\topo\rendering\RootConstantBufferView.h" />
+    <ClInclude Include="src\topo\rendering\RenderItem.h" />
+    <ClInclude Include="src\topo\rendering\RenderPassLayer.h" />
+    <ClInclude Include="src\topo\rendering\RenderPass.h" />
+    <ClInclude Include="src\topo\rendering\ComputeLayer.h" />
+    <ClInclude Include="src\topo\rendering\Renderer.h" />
+    <ClInclude Include="src\topo\utils\DDSTextureLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -69,5 +85,20 @@
     <ClCompile Include="src\topo\utils\WindowMessageMap.cpp" />
     <ClCompile Include="src\topo\utils\Timer.cpp" />
     <ClCompile Include="src\topo\rendering\DescriptorVector.cpp" />
+    <ClCompile Include="src\topo\rendering\Camera.cpp" />
+    <ClCompile Include="src\topo\utils\MathHelper.cpp" />
+    <ClCompile Include="src\topo\utils\GeometryGenerator.cpp" />
+    <ClCompile Include="src\topo\rendering\InputLayout.cpp" />
+    <ClCompile Include="src\topo\rendering\MeshGroup.cpp" />
+    <ClCompile Include="src\topo\rendering\Shader.cpp" />
+    <ClCompile Include="src\topo\rendering\RootSignature.cpp" />
+    <ClCompile Include="src\topo\rendering\RootDescriptorTable.cpp" />
+    <ClCompile Include="src\topo\rendering\RootConstantBufferView.cpp" />
+    <ClCompile Include="src\topo\rendering\RenderItem.cpp" />
+    <ClCompile Include="src\topo\rendering\RenderPassLayer.cpp" />
+    <ClCompile Include="src\topo\rendering\RenderPass.cpp" />
+    <ClCompile Include="src\topo\rendering\ComputeLayer.cpp" />
+    <ClCompile Include="src\topo\rendering\Renderer.cpp" />
+    <ClCompile Include="src\topo\utils\DDSTextureLoader.cpp" />
   </ItemGroup>
 </Project>

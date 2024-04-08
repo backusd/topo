@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "Application.h"
 
+#include "rendering/ConstantBuffer.h"
+#include "utils/GeometryGenerator.h"
+
 namespace topo
 {
 
@@ -9,6 +12,12 @@ Application::Application(const WindowProperties& mainWindowProperties) noexcept 
 	m_window(mainWindowProperties),
 	m_timer()
 {
+
+	ConstantBufferStatic<float> buffer(m_window.GetDeviceResources(), 1);
+
+	GeometryGenerator::MeshData sphere = GeometryGenerator::CreateSphere(1.0f, 10, 10);
+
+
 }
 Application::~Application() noexcept
 {

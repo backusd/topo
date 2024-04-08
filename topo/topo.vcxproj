@@ -149,6 +149,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\topo\rendering\Camera.h" />
     <ClInclude Include="src\Topo.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\topo\Application.h" />
@@ -159,12 +160,27 @@
     <ClInclude Include="src\topo\Layout.h" />
     <ClInclude Include="src\topo\Log.h" />
     <ClInclude Include="src\topo\Page.h" />
+    <ClInclude Include="src\topo\rendering\ComputeLayer.h" />
+    <ClInclude Include="src\topo\rendering\ConstantBuffer.h" />
     <ClInclude Include="src\topo\rendering\DescriptorVector.h" />
+    <ClInclude Include="src\topo\rendering\InputLayout.h" />
+    <ClInclude Include="src\topo\rendering\MeshGroup.h" />
+    <ClInclude Include="src\topo\rendering\Renderer.h" />
+    <ClInclude Include="src\topo\rendering\RenderItem.h" />
+    <ClInclude Include="src\topo\rendering\RenderPass.h" />
+    <ClInclude Include="src\topo\rendering\RenderPassLayer.h" />
+    <ClInclude Include="src\topo\rendering\RootConstantBufferView.h" />
+    <ClInclude Include="src\topo\rendering\RootDescriptorTable.h" />
+    <ClInclude Include="src\topo\rendering\RootSignature.h" />
+    <ClInclude Include="src\topo\rendering\Shader.h" />
     <ClInclude Include="src\topo\TopoException.h" />
     <ClInclude Include="src\topo\utils\Concepts.h" />
     <ClInclude Include="src\topo\utils\Constants.h" />
     <ClInclude Include="src\topo\utils\d3dx12.h" />
+    <ClInclude Include="src\topo\utils\DDSTextureLoader.h" />
     <ClInclude Include="src\topo\utils\DxgiInfoManager.h" />
+    <ClInclude Include="src\topo\utils\GeometryGenerator.h" />
+    <ClInclude Include="src\topo\utils\MathHelper.h" />
     <ClInclude Include="src\topo\utils\String.h" />
     <ClInclude Include="src\topo\utils\Timer.h" />
     <ClInclude Include="src\topo\utils\TranslateErrorCode.h" />
@@ -173,6 +189,7 @@
     <ClInclude Include="src\topo\events\MouseButtonEventKeyStates.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\topo\rendering\Camera.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -181,10 +198,24 @@
     <ClCompile Include="src\topo\Layout.cpp" />
     <ClCompile Include="src\topo\Log.cpp" />
     <ClCompile Include="src\topo\Page.cpp" />
+    <ClCompile Include="src\topo\rendering\ComputeLayer.cpp" />
     <ClCompile Include="src\topo\rendering\DescriptorVector.cpp" />
+    <ClCompile Include="src\topo\rendering\InputLayout.cpp" />
+    <ClCompile Include="src\topo\rendering\MeshGroup.cpp" />
+    <ClCompile Include="src\topo\rendering\Renderer.cpp" />
+    <ClCompile Include="src\topo\rendering\RenderItem.cpp" />
+    <ClCompile Include="src\topo\rendering\RenderPass.cpp" />
+    <ClCompile Include="src\topo\rendering\RenderPassLayer.cpp" />
+    <ClCompile Include="src\topo\rendering\RootConstantBufferView.cpp" />
+    <ClCompile Include="src\topo\rendering\RootDescriptorTable.cpp" />
+    <ClCompile Include="src\topo\rendering\RootSignature.cpp" />
+    <ClCompile Include="src\topo\rendering\Shader.cpp" />
     <ClCompile Include="src\topo\TopoException.cpp" />
     <ClCompile Include="src\topo\utils\Concepts.cpp" />
+    <ClCompile Include="src\topo\utils\DDSTextureLoader.cpp" />
     <ClCompile Include="src\topo\utils\DxgiInfoManager.cpp" />
+    <ClCompile Include="src\topo\utils\GeometryGenerator.cpp" />
+    <ClCompile Include="src\topo\utils\MathHelper.cpp" />
     <ClCompile Include="src\topo\utils\String.cpp" />
     <ClCompile Include="src\topo\utils\Timer.cpp" />
     <ClCompile Include="src\topo\utils\TranslateErrorCode.cpp" />
