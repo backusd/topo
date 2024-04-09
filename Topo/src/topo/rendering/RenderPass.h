@@ -13,15 +13,13 @@ namespace topo
 class RenderPass
 {
 public:
-	inline RenderPass(std::shared_ptr<RootSignature> rootSig, std::string_view name = "Unnamed") noexcept :
-		m_rootSignature(rootSig),
-		m_name(name)
+	inline RenderPass(std::shared_ptr<RootSignature> rootSig) noexcept :
+		m_rootSignature(rootSig)
 	{
 		ASSERT(m_rootSignature != nullptr, "Root signature should not be nullptr");
 	}
-	inline RenderPass(std::shared_ptr<DeviceResources> deviceResources, const D3D12_ROOT_SIGNATURE_DESC& desc, std::string_view name = "Unnamed") :
-		m_rootSignature(nullptr),
-		m_name(name)
+	inline RenderPass(std::shared_ptr<DeviceResources> deviceResources, const D3D12_ROOT_SIGNATURE_DESC& desc) :
+		m_rootSignature(nullptr)
 	{
 		m_rootSignature = std::make_shared<RootSignature>(deviceResources, desc);
 		ASSERT(m_rootSignature != nullptr, "Root signature should not be nullptr");
@@ -32,8 +30,10 @@ public:
 		m_rootSignature(rhs.m_rootSignature),
 		m_constantBufferViews(std::move(rhs.m_constantBufferViews)),
 		m_renderPassLayers(std::move(rhs.m_renderPassLayers)),
-		m_computeLayers(std::move(rhs.m_computeLayers)),
-		m_name(std::move(rhs.m_name))
+		m_computeLayers(std::move(rhs.m_computeLayers))
+#ifndef TOPO_DIST
+		, m_name(std::move(rhs.m_name))
+#endif
 	{}
 	inline RenderPass& operator=(RenderPass&& rhs) noexcept
 	{
@@ -43,9 +43,19 @@ public:
 		m_constantBufferViews = std::move(rhs.m_constantBufferViews);
 		m_renderPassLayers = std::move(rhs.m_renderPassLayers);
 		m_computeLayers = std::move(rhs.m_computeLayers);
-		m_name = std::move(rhs.m_name);
 
+#ifndef TOPO_DIST
+		m_name = std::move(rhs.m_name);
+#endif
 		return *this;
+	}
+
+	RenderPassLayer& EmplaceBackRenderPassLayer(std::shared_ptr<DeviceResources> deviceResources,
+		std::shared_ptr<MeshGroupBase> meshGroup,
+		const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc,
+		D3D12_PRIMITIVE_TOPOLOGY topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
+	{
+		return m_renderPassLayers.emplace_back(deviceResources, meshGroup, desc, topology);
 	}
 	inline ~RenderPass() noexcept = default;
 
@@ -67,24 +77,16 @@ public:
 	template <class Self>
 	ND constexpr auto&& GetComputeLayers(this Self&& self) noexcept { return std::forward<Self>(self).m_computeLayers; }
 
-	ND constexpr std::string_view GetName() const noexcept { return m_name; }
+
 
 	inline void SetRootSignature(std::shared_ptr<RootSignature> rs) noexcept { m_rootSignature = rs; }
-	constexpr void SetName(std::string_view name) noexcept { m_name = name; }
+
 
 	constexpr void PushBackRootConstantBufferView(RootConstantBufferView&& rcbv) noexcept { m_constantBufferViews.push_back(std::move(rcbv)); }
 	constexpr void PushBackRenderPassLayer(RenderPassLayer&& rpl) noexcept { m_renderPassLayers.push_back(std::move(rpl)); }
 	constexpr void PushBackComputeLayer(ComputeLayer&& cl) noexcept { m_computeLayers.push_back(std::move(cl)); }
 
 	constexpr RootConstantBufferView& EmplaceBackRootConstantBufferView(UINT rootParameterIndex, ConstantBufferBase* cb) noexcept { return m_constantBufferViews.emplace_back(rootParameterIndex, cb); }
-	RenderPassLayer& EmplaceBackRenderPassLayer(std::shared_ptr<DeviceResources> deviceResources,
-		std::shared_ptr<MeshGroupBase> meshGroup,
-		const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc,
-		D3D12_PRIMITIVE_TOPOLOGY topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-		std::string_view name = "Unnamed")
-	{
-		return m_renderPassLayers.emplace_back(deviceResources, meshGroup, desc, topology, name);
-	}
 
 	// Function pointers for Pre/Post-Work 
 	// PreWork needs to return a bool: false -> signals early exit (i.e. do not make a Draw call for this layer)
@@ -109,8 +111,14 @@ private:
 	// 0+ render layers
 	std::vector<ComputeLayer> m_computeLayers;
 
-	// Name (for debug/profiling purposes)
+// In DIST builds, we don't name the object
+#ifndef TOPO_DIST
+public:
+	void SetDebugName(std::string_view name) noexcept { m_name = name; }
+	ND const std::string& GetDebugName() const noexcept { return m_name; }
+private:
 	std::string m_name;
+#endif
 };
 
 #endif

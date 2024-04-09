@@ -16,6 +16,9 @@ MeshGroupBase::MeshGroupBase(MeshGroupBase&& rhs) noexcept :
 	m_vertexBufferView(rhs.m_vertexBufferView),
 	m_indexBufferView(rhs.m_indexBufferView),
 	m_submeshes(std::move(rhs.m_submeshes))
+#ifndef TOPO_DIST
+	, m_name(std::move(rhs.m_name))
+#endif
 {
 	// Set the "moved from" flag on the rhs object so that it knows not to call DelayedDelete on GPU resources
 	rhs.m_movedFrom = true;
@@ -28,6 +31,9 @@ MeshGroupBase& MeshGroupBase::operator=(MeshGroupBase&& rhs) noexcept
 	m_vertexBufferView = rhs.m_vertexBufferView;
 	m_indexBufferView = rhs.m_indexBufferView;
 	m_submeshes = std::move(rhs.m_submeshes);
+#ifndef TOPO_DIST
+	m_name = std::move(rhs.m_name);
+#endif
 
 	// Set the "moved from" flag on the rhs object so that it knows not to call DelayedDelete on GPU resources
 	rhs.m_movedFrom = true;

@@ -19,12 +19,18 @@ public:
 		m_deviceResources(rhs.m_deviceResources),
 		m_uploadBuffer(nullptr),
 		m_elementByteSizeOffsetter(rhs.m_elementByteSizeOffsetter)
+#ifndef TOPO_DIST
+		, m_name(rhs.m_name)
+#endif
 	{}
 	inline ConstantBufferBase& operator=(ConstantBufferBase&& rhs) noexcept
 	{
 		m_deviceResources = rhs.m_deviceResources;
 		m_uploadBuffer = nullptr;
 		m_elementByteSizeOffsetter = rhs.m_elementByteSizeOffsetter;
+#ifndef TOPO_DIST
+		m_name = rhs.m_name;
+#endif
 		return *this;
 	}
 	inline virtual ~ConstantBufferBase() noexcept
@@ -42,7 +48,6 @@ public:
 		return m_uploadBuffer->GetGPUVirtualAddress() + static_cast<UINT64>(frameIndex) * m_elementByteSizeOffsetter;
 	}
 
-
 protected:
 	ConstantBufferBase(const ConstantBufferBase& rhs) = delete;
 	ConstantBufferBase& operator=(const ConstantBufferBase& rhs) = delete;
@@ -54,12 +59,31 @@ protected:
 	// However, when using a ConstantBufferStatic, this value must remain 0 because we only retain a single copy of data in
 	// the buffer, so there is no need to offset
 	UINT m_elementByteSizeOffsetter;
+
+// In DIST builds, we don't name the object
+#ifndef TOPO_DIST
+public:
+	void SetDebugName(std::string_view name) noexcept
+	{
+		m_uploadBuffer->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(name.size()), name.data());
+	}
+	ND std::string GetDebugName() const noexcept
+	{
+		char name[64] = {};
+		UINT size = sizeof(name);
+		m_uploadBuffer->GetPrivateData(WKPDID_D3DDebugObjectName, &size, name);
+		return name;
+	}
+protected:
+	std::string m_name = "";
+#endif
 };
 
 template<typename T>
 class ConstantBufferMapped : public ConstantBufferBase
 {
 public:
+
 	// Let the element count be the maximum by default
 	// Maximum allowed constant buffer size is 4096 float4's which is 65536 bytes
 	inline ConstantBufferMapped(std::shared_ptr<DeviceResources> deviceResources, unsigned int elementCount = 65536 / sizeof(T)) :
@@ -147,6 +171,11 @@ private:
 
 		// We do not need to unmap until we are done with the resource. However, we must not write to
 		// the resource while it is in use by the GPU (so we must use synchronization techniques).
+
+// If not a DIST build, reset the debug name
+#ifndef TOPO_DIST
+		SetDebugName(m_name);
+#endif
 	}
 
 	BYTE* m_mappedData;
@@ -164,6 +193,8 @@ private:
 	// 512
 	UINT m_elementByteSize = 0; // default to 0 - will get appropriately assigned in Initialize()
 	unsigned int m_elementCount;
+
+
 };
 
 template<typename T>
@@ -285,6 +316,11 @@ private:
 				IID_PPV_ARGS(&m_intermediateBuffer)
 			)
 		);
+
+// If not a DIST build, reset the debug name
+#ifndef TOPO_DIST
+		SetDebugName(m_name);
+#endif
 	}
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_intermediateBuffer;

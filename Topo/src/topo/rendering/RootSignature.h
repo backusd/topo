@@ -11,8 +11,7 @@ class RootSignature
 {
 public:
 	inline RootSignature(std::shared_ptr<DeviceResources> deviceResources, const D3D12_ROOT_SIGNATURE_DESC& desc) :
-		m_deviceResources(deviceResources),
-		m_rootSignature(nullptr)
+		m_deviceResources(deviceResources), m_rootSignature(nullptr)
 	{
 		// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 		Microsoft::WRL::ComPtr<ID3DBlob> serializedRootSig = nullptr;
@@ -45,11 +44,28 @@ public:
 	RootSignature& operator=(RootSignature&&) noexcept = default;
 	~RootSignature() noexcept {}
 
-	ND inline ID3D12RootSignature* Get() const noexcept { return m_rootSignature.Get(); }
+	ND ID3D12RootSignature* Get() const noexcept { return m_rootSignature.Get(); }
 
 private:
 	std::shared_ptr<DeviceResources> m_deviceResources;
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
+
+
+// In DIST builds, we don't name the object
+#ifndef TOPO_DIST
+public:
+	void SetDebugName(std::string_view name) noexcept
+	{
+		m_rootSignature->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(name.size()), name.data());
+	}
+	ND std::string GetDebugName() const noexcept
+	{
+		char name[64] = {};
+		UINT size = sizeof(name);
+		m_rootSignature->GetPrivateData(WKPDID_D3DDebugObjectName, &size, name);
+		return name;
+	}
+#endif
 };
 
 #endif

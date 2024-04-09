@@ -74,6 +74,11 @@ void DescriptorVector::DoubleTheCapacity()
 
     // Update the capacity
     m_capacity *= 2;
+
+// Reset the debug names for the heaps
+#ifndef TOPO_DIST
+    SetDebugName(m_name);
+#endif
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE DescriptorVector::GetCPUHandleAt(UINT index) const noexcept

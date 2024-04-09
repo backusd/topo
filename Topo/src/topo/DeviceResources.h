@@ -21,7 +21,7 @@
 #elif defined(TOPO_RELEASE) || defined(TOPO_DIST)
 
 #define INFOMAN
-#define GFX_EXCEPT(hr) EXCEPTION(std::format("Device Resources Exception\n[Error Code] {0:#x} ({0})\n[Error Description]\n{1}\n", hr, seethe::TranslateErrorCode(hr)))
+#define GFX_EXCEPT(hr) EXCEPTION(std::format("Device Resources Exception\n[Error Code] {0:#x} ({0})\n[Error Description]\n{1}\n", hr, ::topo::TranslateErrorCode(hr)))
 #define GFX_THROW_INFO(hrcall) { HRESULT hr; if( FAILED( hr = (hrcall) ) ) throw GFX_EXCEPT(hr); }
 #define GFX_THROW_INFO_ONLY(call) call;
 
@@ -86,12 +86,6 @@ private:
 	void CreateSwapChain();
 	void CreateRtvAndDsvDescriptorHeaps();
 
-
-
-	void LogAdapters();
-	void LogAdapterOutputs(IDXGIAdapter* adapter);
-	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
-
 	HWND m_hWnd;
 
 	int m_height;
@@ -142,6 +136,19 @@ public:
 	ND inline static DxgiInfoManager& GetInfoManager() noexcept { return m_infoManager; }
 private:
 	static DxgiInfoManager m_infoManager;
+
+	void LogAdapters();
+	void LogAdapterOutputs(IDXGIAdapter* adapter);
+	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
+#endif
+
+#ifndef TOPO_DIST
+	template<typename T>
+	void SetDebugName(T obj, std::string_view name) noexcept
+	{
+		obj->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(name.size()), name.data());
+	}
+	void SetDebugNames();
 #endif
 };
 }

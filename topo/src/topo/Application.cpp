@@ -6,18 +6,22 @@
 
 namespace topo
 {
+Application* Application::s_application = nullptr;
 
 Application::Application(const WindowProperties& mainWindowProperties) noexcept :
 	m_applicationShutdownRequested(false),
 	m_window(mainWindowProperties),
 	m_timer()
 {
+	ASSERT(s_application == nullptr, "Not allowed to create a second instance of Application");
+	s_application = this;
 
-	ConstantBufferStatic<float> buffer(m_window.GetDeviceResources(), 1);
+	ConstantBufferStatic<float> buffer(m_window.GetDeviceResources(), 1);	
+	SET_DEBUG_NAME(buffer, "Test Name")
+
+
 
 	GeometryGenerator::MeshData sphere = GeometryGenerator::CreateSphere(1.0f, 10, 10);
-
-
 }
 Application::~Application() noexcept
 {

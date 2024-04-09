@@ -42,6 +42,10 @@ DeviceResources::DeviceResources(HWND hWnd, int width, int height) :
 
 	// Wait until initialization is complete.
 	FlushCommandQueue(); 
+
+#ifndef TOPO_DIST
+	SetDebugNames();
+#endif
 }
 
 void DeviceResources::CreateDevice()
@@ -398,76 +402,6 @@ void DeviceResources::OnResize(int height, int width)
 	FlushCommandQueue();
 }
 
-void DeviceResources::LogAdapters()
-{
-	UINT i = 0;
-	IDXGIAdapter* adapter = nullptr;
-	std::vector<IDXGIAdapter*> adapterList;
-	while (m_dxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND)
-	{
-		DXGI_ADAPTER_DESC desc;
-		adapter->GetDesc(&desc);
-
-		std::wstring text = L"***Adapter: ";
-		text += desc.Description;
-
-		LOG_INFO("{}", ws2s(text)); // std::string(text.begin(), text.end()));
-
-		adapterList.push_back(adapter);
-
-		++i;
-	}
-
-	for (size_t i = 0; i < adapterList.size(); ++i)
-	{
-		LogAdapterOutputs(adapterList[i]);
-		ReleaseCom(adapterList[i]);
-	}
-}
-void DeviceResources::LogAdapterOutputs(IDXGIAdapter* adapter)
-{
-	UINT i = 0;
-	IDXGIOutput* output = nullptr;
-	while (adapter->EnumOutputs(i, &output) != DXGI_ERROR_NOT_FOUND)
-	{
-		DXGI_OUTPUT_DESC desc;
-		output->GetDesc(&desc);
-
-		std::wstring text = L"***Output: ";
-		text += desc.DeviceName;
-
-		LOG_INFO("{0}", ws2s(text));
-
-		LogOutputDisplayModes(output, m_backBufferFormat);
-
-		ReleaseCom(output);
-
-		++i;
-	}
-}
-void DeviceResources::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
-{
-	UINT count = 0;
-	UINT flags = 0;
-
-	// Call with nullptr to get list count.
-	output->GetDisplayModeList(format, flags, &count, nullptr);
-
-	std::vector<DXGI_MODE_DESC> modeList(count);
-	output->GetDisplayModeList(format, flags, &count, &modeList[0]);
-
-	for (auto& x : modeList)
-	{
-		UINT n = x.RefreshRate.Numerator;
-		UINT d = x.RefreshRate.Denominator;
-		std::wstring text =
-			L"Width = " + std::to_wstring(x.Width) + L" " +
-			L"Height = " + std::to_wstring(x.Height) + L" " +
-			L"Refresh = " + std::to_wstring(n) + L"/" + std::to_wstring(d);
-
-		LOG_INFO("{0}", ws2s(text));
-	}
-}
 
 void DeviceResources::Update()
 {
@@ -606,5 +540,101 @@ void DeviceResources::CleanupResources() noexcept
 		);
 	}
 }
+
+
+#if defined(TOPO_DEBUG)
+
+void DeviceResources::LogAdapters()
+{
+	UINT i = 0;
+	IDXGIAdapter* adapter = nullptr;
+	std::vector<IDXGIAdapter*> adapterList;
+	while (m_dxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND)
+	{
+		DXGI_ADAPTER_DESC desc;
+		adapter->GetDesc(&desc);
+
+		std::wstring text = L"***Adapter: ";
+		text += desc.Description;
+
+		LOG_INFO("{}", ws2s(text)); // std::string(text.begin(), text.end()));
+
+		adapterList.push_back(adapter);
+
+		++i;
+	}
+
+	for (size_t i = 0; i < adapterList.size(); ++i)
+	{
+		LogAdapterOutputs(adapterList[i]);
+		ReleaseCom(adapterList[i]);
+	}
+}
+void DeviceResources::LogAdapterOutputs(IDXGIAdapter* adapter)
+{
+	UINT i = 0;
+	IDXGIOutput* output = nullptr;
+	while (adapter->EnumOutputs(i, &output) != DXGI_ERROR_NOT_FOUND)
+	{
+		DXGI_OUTPUT_DESC desc;
+		output->GetDesc(&desc);
+
+		std::wstring text = L"***Output: ";
+		text += desc.DeviceName;
+
+		LOG_INFO("{0}", ws2s(text));
+
+		LogOutputDisplayModes(output, m_backBufferFormat);
+
+		ReleaseCom(output);
+
+		++i;
+	}
+}
+void DeviceResources::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
+{
+	UINT count = 0;
+	UINT flags = 0;
+
+	// Call with nullptr to get list count.
+	output->GetDisplayModeList(format, flags, &count, nullptr);
+
+	std::vector<DXGI_MODE_DESC> modeList(count);
+	output->GetDisplayModeList(format, flags, &count, &modeList[0]);
+
+	for (auto& x : modeList)
+	{
+		UINT n = x.RefreshRate.Numerator;
+		UINT d = x.RefreshRate.Denominator;
+		std::wstring text =
+			L"Width = " + std::to_wstring(x.Width) + L" " +
+			L"Height = " + std::to_wstring(x.Height) + L" " +
+			L"Refresh = " + std::to_wstring(n) + L"/" + std::to_wstring(d);
+
+		LOG_INFO("{0}", ws2s(text));
+	}
+}
+
+#endif
+
+#ifndef TOPO_DIST
+void DeviceResources::SetDebugNames()
+{
+	for (unsigned int iii = 0; iii < g_numFrameResources; ++iii)
+		SetDebugName(m_allocators[iii], std::format("DeviceResources: Command Allocator ({0})", iii));
+	m_descriptorVector->SetDebugName("DeviceResources: Descriptor Vector");
+	SetDebugName(m_dxgiFactory, "DeviceResources: DXGI Factory");
+	SetDebugName(m_swapChain, "DeviceResources: Swap Chain");
+	SetDebugName(m_d3dDevice, "DeviceResources: D3D Device");
+	SetDebugName(m_fence, "DeviceResources: Fence");
+	SetDebugName(m_commandQueue, "DeviceResources: Command Queue");
+	SetDebugName(m_commandList, "DeviceResources: Command List");
+	for (unsigned int iii = 0; iii < SwapChainBufferCount; ++iii)
+		SetDebugName(m_swapChainBuffer[iii], std::format("DeviceResources: Swap Chain Buffer ({0})", iii));
+	SetDebugName(m_depthStencilBuffer, "DeviceResources: Depth Stencil Buffer");
+	SetDebugName(m_rtvHeap, "DeviceResources: RTV Heap");
+	SetDebugName(m_dsvHeap, "DeviceResources: DSV Heap");
+}
+#endif
 
 }

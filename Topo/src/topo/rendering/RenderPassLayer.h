@@ -10,15 +10,13 @@ class RenderPassLayer
 {
 public:
 	inline RenderPassLayer(std::shared_ptr<DeviceResources> deviceResources,
-		std::shared_ptr<MeshGroupBase> meshGroup,
-		const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc,
-		D3D12_PRIMITIVE_TOPOLOGY topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-		std::string_view name = "Unnamed") :
+							std::shared_ptr<MeshGroupBase> meshGroup,
+							const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc,
+							D3D12_PRIMITIVE_TOPOLOGY topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST) :
 		m_deviceResources(deviceResources),
 		m_pipelineState(nullptr),
 		m_topology(topology),
 		m_meshes(meshGroup),
-		m_name(name),
 		m_stencilRef(std::nullopt),
 		m_active(true)
 	{
@@ -33,9 +31,11 @@ public:
 		m_pipelineState(rhs.m_pipelineState),
 		m_topology(rhs.m_topology),
 		m_meshes(std::move(rhs.m_meshes)),
-		m_name(std::move(rhs.m_name)),
 		m_stencilRef(rhs.m_stencilRef),
 		m_active(rhs.m_active)
+#ifndef TOPO_DIST
+		, m_name(std::move(rhs.m_name))
+#endif
 	{}
 	inline RenderPassLayer& operator=(RenderPassLayer&& rhs) noexcept
 	{
@@ -46,9 +46,11 @@ public:
 		m_pipelineState = rhs.m_pipelineState;
 		m_topology = rhs.m_topology;
 		m_meshes = std::move(rhs.m_meshes);
-		m_name = std::move(rhs.m_name);
 		m_stencilRef = rhs.m_stencilRef;
 		m_active = rhs.m_active;
+#ifndef TOPO_DIST
+		m_name = std::move(rhs.m_name);
+#endif
 		return *this;
 	}
 	~RenderPassLayer() noexcept = default;
@@ -83,11 +85,9 @@ public:
 	ND inline ID3D12PipelineState* GetPSO() const noexcept { return m_pipelineState.Get(); }
 	ND constexpr D3D12_PRIMITIVE_TOPOLOGY GetTopology() const noexcept { return m_topology; }
 	ND inline std::shared_ptr<MeshGroupBase> GetMeshGroup() const noexcept { return m_meshes; }
-	ND constexpr std::string_view GetName() const noexcept { return m_name; }
 	ND constexpr bool IsActive() const noexcept { return m_active; }
 	ND constexpr std::optional<unsigned int> GetStencilRef() const noexcept { return m_stencilRef; }
 
-	constexpr void SetName(std::string_view name) noexcept { m_name = name; }
 	constexpr void SetActive(bool active) noexcept { m_active = active; }
 
 	constexpr void SetStencilRef(unsigned int value) noexcept { m_stencilRef = value; }
@@ -112,8 +112,15 @@ private:
 	bool										m_active;
 	std::optional<unsigned int>					m_stencilRef;
 
-	// Name (for debug/profiling purposes)
+
+// In DIST builds, we don't name the object
+#ifndef TOPO_DIST
+public:
+	void SetDebugName(std::string_view name) noexcept { m_name = name; }
+	ND const std::string& GetDebugName() const noexcept { return m_name; }
+private:
 	std::string m_name;
+#endif
 };
 
 

@@ -29,7 +29,9 @@ struct SubmeshGeometry
 class MeshGroupBase
 {
 public:
-	inline MeshGroupBase(std::shared_ptr<DeviceResources> deviceResources) noexcept : m_deviceResources(deviceResources) {}
+	inline MeshGroupBase(std::shared_ptr<DeviceResources> deviceResources) noexcept : 
+		m_deviceResources(deviceResources) 
+	{}
 	MeshGroupBase(MeshGroupBase&& rhs) noexcept;
 	MeshGroupBase& operator=(MeshGroupBase&& rhs) noexcept;
 	inline virtual ~MeshGroupBase() noexcept {}
@@ -75,11 +77,28 @@ private:
 	// There is too much state to worry about copying, so just delete copy operations until we find a good use case
 	MeshGroupBase(const MeshGroupBase&) noexcept = delete;
 	MeshGroupBase& operator=(const MeshGroupBase&) noexcept = delete;
+
+
+// In DIST builds, we don't name the object
+#ifndef TOPO_DIST
+public:
+	void SetDebugName(std::string_view name) noexcept
+	{
+		m_name = name;
+		std::string resource1Name = m_name + "-VertexBufferGPU";
+		std::string resource2Name = m_name + "-IndexBufferGPU";
+		m_vertexBufferGPU->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(resource1Name.size()), resource1Name.data());
+		m_indexBufferGPU->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(resource2Name.size()), resource2Name.data());
+	}
+	ND const std::string& GetDebugName() const noexcept { return m_name; }
+protected:
+	std::string m_name;
+#endif
 };
 
 
 //
-// MeshGroupT ======================================================================================================
+// MeshGroup ======================================================================================================
 //
 template<typename T>
 requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
@@ -201,6 +220,10 @@ MeshGroup<T>::MeshGroup(std::shared_ptr<DeviceResources> deviceResources,
 	// Get the buffer locations
 	m_vertexBufferView.BufferLocation = m_vertexBufferGPU->GetGPUVirtualAddress();
 	m_indexBufferView.BufferLocation = m_indexBufferGPU->GetGPUVirtualAddress();
+
+#ifndef TOPO_DIST
+	SetDebugName(m_name);
+#endif
 }
 
 //
@@ -289,6 +312,10 @@ public:
 		// Set the buffer locations as the start of the Upload buffers. This will later be changed each frame when Update() is called
 		m_vertexBufferView.BufferLocation = m_vertexBufferGPU->GetGPUVirtualAddress();
 		m_indexBufferView.BufferLocation = m_indexBufferGPU->GetGPUVirtualAddress();
+
+#ifndef TOPO_DIST
+		SetDebugName(m_name);
+#endif
 	}
 	inline DynamicMeshGroup(DynamicMeshGroup&& rhs) noexcept :
 		DynamicMeshGroupBase(std::move(rhs)),
@@ -337,6 +364,14 @@ public:
 		UploadIndices(frameIndex);
 	}
 
+	ND constexpr std::vector<T>& GetVertices() noexcept { return m_vertices; }
+	ND constexpr std::vector<std::uint16_t>& GetIndices() noexcept { return m_indices; }
+
+private:
+	// There is too much state to worry about copying, so just delete copy operations until we find a good use case
+	DynamicMeshGroup(const DynamicMeshGroup&) = delete;
+	DynamicMeshGroup& operator=(const DynamicMeshGroup&) = delete;
+
 	inline void UploadVertices(unsigned int frameIndex) noexcept
 	{
 		ASSERT(frameIndex < g_numFrameResources, "Frame index is larger than expected");
@@ -347,14 +382,6 @@ public:
 		ASSERT(frameIndex < g_numFrameResources, "Frame index is larger than expected");
 		memcpy(&m_mappedIndexData[frameIndex * m_indexBufferView.SizeInBytes], m_indices.data(), m_indexBufferView.SizeInBytes);
 	}
-
-	ND constexpr std::vector<T>& GetVertices() noexcept { return m_vertices; }
-	ND constexpr std::vector<std::uint16_t>& GetIndices() noexcept { return m_indices; }
-
-private:
-	// There is too much state to worry about copying, so just delete copy operations until we find a good use case
-	DynamicMeshGroup(const DynamicMeshGroup&) = delete;
-	DynamicMeshGroup& operator=(const DynamicMeshGroup&) = delete;
 
 	// System memory copies. 
 	std::vector<T> m_vertices;

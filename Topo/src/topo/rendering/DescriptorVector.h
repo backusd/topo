@@ -19,6 +19,9 @@ public:
         m_gpuHeapStart(rhs.m_gpuHeapStart),
         m_type(rhs.m_type),
         m_releasedIndices(std::move(m_releasedIndices))
+#ifndef TOPO_DIST
+        , m_name(std::move(rhs.m_name))
+#endif
     {
         LOG_WARN("{}", "DescriptorVector Move Constructor has been called, but I've never tested this function.");
     }
@@ -36,6 +39,9 @@ public:
         m_gpuHeapStart = rhs.m_gpuHeapStart;
         m_type = rhs.m_type;
         m_releasedIndices = std::move(rhs.m_releasedIndices);
+#ifndef TOPO_DIST
+        m_name = std::move(rhs.m_name);
+#endif
 
         return *this;
     }
@@ -83,5 +89,26 @@ private:
     D3D12_DESCRIPTOR_HEAP_TYPE m_type;
 
     std::vector<unsigned int> m_releasedIndices;
+
+
+
+// In DIST builds, we don't name the object
+#ifndef TOPO_DIST
+public:
+    void SetDebugName(std::string_view name) noexcept
+    {
+        m_name = name;
+        std::string heap1Name = m_name + "-HeapCopyable";
+        std::string heap2Name = m_name + "-HeapShaderVisible";
+        m_descriptorHeapCopyable->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(heap1Name.size()), heap1Name.data());
+        m_descriptorHeapShaderVisible->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(heap2Name.size()), heap2Name.data());
+    }
+    ND const std::string& GetDebugName() const noexcept
+    {
+        return m_name;
+    }
+private:
+    std::string m_name;
+#endif
 };
 }

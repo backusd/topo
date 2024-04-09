@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "Page.h"
 
-
 namespace topo
 {
 Page::Page(float width, float height) :
@@ -9,6 +8,18 @@ Page::Page(float width, float height) :
 {
 
 }
+
+void Page::Update(const Timer& timer)
+{
+
+}
+void Page::Render()
+{
+
+}
+
+
+
 
 
 // Window Event Handlers

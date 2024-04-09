@@ -15,13 +15,9 @@ class TOPO_API Page
 public:
 	Page(float width, float height);
 
-	void Update(const Timer& timer)
-	{
 
-	}
-	void Render() 
-	{
-	}
+	void Update(const Timer& timer);
+	void Render();
 
 	// Window Event Handlers
 	bool OnWindowClosed();
@@ -60,6 +56,11 @@ public:
 
 private:
 	Layout m_layout;
+
+
+
+
+
 };
 #pragma warning( pop )
 }

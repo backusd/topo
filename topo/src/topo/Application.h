@@ -22,6 +22,8 @@ public:
 	template<DerivedFromPage T>
 	bool LaunchWindow(const WindowProperties& props) noexcept;
 
+	static Application* Get() noexcept { return s_application; }
+
 protected:
 	template<DerivedFromPage T>
 	void InitializeMainWindowPage()
@@ -36,6 +38,9 @@ private:
 	Window m_window;
 	std::vector<std::thread> m_childWindowThreads;
 	bool m_applicationShutdownRequested;
+
+	// Pointer to singleton
+	static Application* s_application;
 };
 
 template<DerivedFromPage T>

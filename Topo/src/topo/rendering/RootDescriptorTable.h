@@ -28,6 +28,16 @@ public:
 private:
 	UINT m_rootParameterIndex;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_descriptorHandle;
+
+
+// In DIST builds, we don't name the object
+#ifndef TOPO_DIST
+public:
+	void SetDebugName(std::string_view name) noexcept { m_name = name; }
+	ND const std::string& GetDebugName() const noexcept { return m_name; }
+private:
+	std::string m_name;
+#endif
 };
 
 

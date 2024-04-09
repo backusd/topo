@@ -11,12 +11,10 @@ class ComputeLayer
 public:
 	inline ComputeLayer(std::shared_ptr<DeviceResources> deviceResources,
 		std::shared_ptr<RootSignature> rootSig,
-		const D3D12_COMPUTE_PIPELINE_STATE_DESC& desc,
-		std::string_view name = "Unnamed") :
+		const D3D12_COMPUTE_PIPELINE_STATE_DESC& desc) :
 		m_deviceResources(deviceResources),
 		m_rootSignature(rootSig),
 		m_pipelineState(nullptr),
-		m_name(name),
 		m_active(true)
 	{
 		ASSERT(m_rootSignature != nullptr, "Root Signature should not be nullptr");
@@ -24,12 +22,10 @@ public:
 	}
 	inline ComputeLayer(std::shared_ptr<DeviceResources> deviceResources,
 		const D3D12_ROOT_SIGNATURE_DESC& rootSigDesc,
-		const D3D12_COMPUTE_PIPELINE_STATE_DESC& computePSODesc,
-		std::string_view name = "Unnamed") :
+		const D3D12_COMPUTE_PIPELINE_STATE_DESC& computePSODesc) :
 		m_deviceResources(deviceResources),
 		m_rootSignature(nullptr),
 		m_pipelineState(nullptr),
-		m_name(name),
 		m_active(true)
 	{
 		m_rootSignature = std::make_shared<RootSignature>(m_deviceResources, rootSigDesc);
@@ -41,8 +37,10 @@ public:
 		PostWork(std::move(rhs.PostWork)),
 		m_computeItems(std::move(rhs.m_computeItems)),
 		m_pipelineState(rhs.m_pipelineState),
-		m_name(std::move(rhs.m_name)),
 		m_active(rhs.m_active)
+#ifndef TOPO_DIST
+		, m_name(std::move(rhs.m_name))
+#endif
 	{}
 	inline ComputeLayer& operator=(ComputeLayer&& rhs) noexcept
 	{
@@ -51,8 +49,10 @@ public:
 		PostWork = std::move(rhs.PostWork);
 		m_computeItems = std::move(rhs.m_computeItems);
 		m_pipelineState = rhs.m_pipelineState;
-		m_name = std::move(rhs.m_name);
 		m_active = rhs.m_active;
+#ifndef TOPO_DIST
+		m_name = std::move(rhs.m_name);
+#endif
 		return *this;
 	}
 	~ComputeLayer() noexcept = default;
@@ -82,10 +82,9 @@ public:
 	ND constexpr auto&& GetComputeItems(this Self&& self) noexcept { return std::forward<Self>(self).m_computeItems; }
 	ND inline ID3D12PipelineState* GetPSO() const noexcept { return m_pipelineState.Get(); }
 	ND inline RootSignature* GetRootSignature() const noexcept { return m_rootSignature.get(); }
-	ND constexpr std::string_view GetName() const noexcept { return m_name; }
 	ND constexpr bool IsActive() const noexcept { return m_active; }
 
-	constexpr void SetName(std::string_view name) noexcept { m_name = name; }
+	
 	constexpr void SetActive(bool active) noexcept { m_active = active; }
 
 	// PreWork needs to return a bool: false -> signals early exit (i.e. do not call Dispatch for this RenderLayer)
@@ -108,8 +107,14 @@ private:
 	std::vector<ComputeItem>					m_computeItems;
 	bool										m_active;
 
-	// Name (for debug/profiling purposes)
+// In DIST builds, we don't name the object
+#ifndef TOPO_DIST
+public:
+	void SetDebugName(std::string_view name) noexcept { m_name = name; }
+	ND const std::string& GetDebugName() const noexcept { return m_name; }
+private:
 	std::string m_name;
+#endif
 };
 
 #endif
