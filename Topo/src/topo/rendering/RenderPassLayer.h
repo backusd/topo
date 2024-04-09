@@ -53,7 +53,6 @@ public:
 #endif
 		return *this;
 	}
-	~RenderPassLayer() noexcept = default;
 
 
 	inline void CreatePSO(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc)

@@ -57,7 +57,6 @@ public:
 	{
 		return m_renderPassLayers.emplace_back(deviceResources, meshGroup, desc, topology);
 	}
-	inline ~RenderPass() noexcept = default;
 
 	inline void Update(const Timer& timer, int frameIndex)
 	{

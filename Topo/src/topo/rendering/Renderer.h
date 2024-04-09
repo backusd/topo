@@ -29,7 +29,6 @@ public:
 		m_renderPasses = std::move(rhs.m_renderPasses);
 		return *this;
 	}
-	inline ~Renderer() noexcept = default;
 
 	void Update(const Timer& timer, int frameIndex);
 	void Render(int frameIndex);

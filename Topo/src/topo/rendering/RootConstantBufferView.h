@@ -19,7 +19,6 @@ public:
 	RootConstantBufferView(RootConstantBufferView&&) noexcept = default;
 	RootConstantBufferView& operator=(const RootConstantBufferView&) noexcept = default;
 	RootConstantBufferView& operator=(RootConstantBufferView&&) noexcept = default;
-	~RootConstantBufferView() noexcept = default;
 
 	ND constexpr UINT GetRootParameterIndex() const noexcept { return m_rootParameterIndex; }
 	ND constexpr ConstantBufferBase* GetConstantBuffer() const noexcept { return m_constantBuffer; }

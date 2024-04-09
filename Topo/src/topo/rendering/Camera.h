@@ -18,7 +18,6 @@ public:
 	Camera(Camera&&) noexcept = default;
 	Camera& operator=(const Camera&) noexcept = default;
 	Camera& operator=(Camera&&) noexcept = default;
-	~Camera() noexcept {}
 
 	void Update(const Timer& timer) noexcept;
 

@@ -19,7 +19,6 @@ public:
 	constexpr InputLayout(InputLayout&& rhs) noexcept = default;
 	constexpr InputLayout& operator=(const InputLayout& rhs) noexcept = default;
 	constexpr InputLayout& operator=(InputLayout&& rhs) noexcept = default;
-	~InputLayout() noexcept {}
 
 	ND constexpr D3D12_INPUT_LAYOUT_DESC GetInputLayoutDesc() const noexcept { return { m_inputLayout.data(), (UINT)m_inputLayout.size() }; }
 

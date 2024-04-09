@@ -47,7 +47,6 @@ public:
 
         return *this;
     }
-    inline ~DescriptorVector() noexcept {}
 
     ND constexpr unsigned int Count() const noexcept { return m_count; }
     ND constexpr unsigned int Capacity() const noexcept { return m_capacity; }

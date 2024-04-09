@@ -25,9 +25,6 @@ Application::Application(const WindowProperties& mainWindowProperties) noexcept 
 
 	GeometryGenerator::MeshData sphere = GeometryGenerator::CreateSphere(1.0f, 10, 10);
 }
-Application::~Application() noexcept
-{
-}
 
 int Application::Run()
 {

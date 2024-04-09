@@ -14,7 +14,7 @@ class TOPO_API Application
 {
 public:
 	Application(const WindowProperties& mainWindowProperties) noexcept;
-	virtual ~Application() noexcept;
+	virtual ~Application() noexcept {}
 	int Run();
 		
 	ND constexpr bool ApplicationShutdownRequested() const noexcept { return m_applicationShutdownRequested; }

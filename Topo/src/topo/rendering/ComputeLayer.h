@@ -55,7 +55,6 @@ public:
 #endif
 		return *this;
 	}
-	~ComputeLayer() noexcept = default;
 
 	inline void CreatePSO(const D3D12_COMPUTE_PIPELINE_STATE_DESC& desc)
 	{

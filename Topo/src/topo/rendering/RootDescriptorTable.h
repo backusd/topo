@@ -18,7 +18,6 @@ public:
 	RootDescriptorTable(RootDescriptorTable&&) noexcept = default;
 	RootDescriptorTable& operator=(const RootDescriptorTable&) noexcept = default;
 	RootDescriptorTable& operator=(RootDescriptorTable&&) noexcept = default;
-	~RootDescriptorTable() noexcept = default;
 
 	std::function<void(RootDescriptorTable*, const Timer&, int)> Update = [](RootDescriptorTable*, const Timer&, int) {};
 
