@@ -19,6 +19,8 @@ Application::Application(const WindowProperties& mainWindowProperties) noexcept 
 	ConstantBufferStatic<float> buffer(m_window.GetDeviceResources(), 1);	
 	SET_DEBUG_NAME(buffer, "Test Name")
 
+	LOG_TRACE("Trace 1");
+	LOG_TRACE("Trace {0}", 2);
 
 
 	GeometryGenerator::MeshData sphere = GeometryGenerator::CreateSphere(1.0f, 10, 10);

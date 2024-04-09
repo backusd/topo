@@ -13,12 +13,14 @@ namespace topo
 #ifdef TOPO_PLATFORM_WINDOWS
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 #endif
-		std::cout << "[TRACE " << app_current_time_and_date() << "] CORE - ";
 		if constexpr (sizeof...(T) == 0)
-			std::cout << msg;
+			std::println("[TRACE {0}] CORE - {1}", app_current_time_and_date(), msg);
 		else
-			std::cout << std::vformat(msg, std::make_format_args(std::forward<T>(args)...));
-		std::cout << '\n';
+		{
+			std::print("[TRACE {0}] CORE - ", app_current_time_and_date());
+			std::vprint_nonunicode(std::cout, msg, std::make_format_args(std::forward<T>(args)...));
+			std::println("");
+		}
 	}
 
 	template <typename... T>
@@ -27,12 +29,14 @@ namespace topo
 #ifdef TOPO_PLATFORM_WINDOWS
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
 #endif
-		std::cout << "[INFO " << app_current_time_and_date() << "] CORE - ";
 		if constexpr (sizeof...(T) == 0)
-			std::cout << msg;
+			std::println("[INFO {0}] CORE - {1}", app_current_time_and_date(), msg);
 		else
-			std::cout << std::vformat(msg, std::make_format_args(std::forward<T>(args)...));
-		std::cout << '\n';
+		{
+			std::print("[INFO {0}] CORE - ", app_current_time_and_date());
+			std::vprint_nonunicode(std::cout, msg, std::make_format_args(std::forward<T>(args)...));
+			std::println("");
+		}
 	}
 
 	template <typename... T>
@@ -41,12 +45,14 @@ namespace topo
 #ifdef TOPO_PLATFORM_WINDOWS
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
 #endif
-		std::cout << "[WARNING " << app_current_time_and_date() << "] CORE - ";
 		if constexpr (sizeof...(T) == 0)
-			std::cout << msg;
+			std::println("[WARNING {0}] CORE - {1}", app_current_time_and_date(), msg);
 		else
-			std::cout << std::vformat(msg, std::make_format_args(std::forward<T>(args)...));
-		std::cout << '\n';
+		{
+			std::print("[WARNING {0}] CORE - ", app_current_time_and_date());
+			std::vprint_nonunicode(std::cout, msg, std::make_format_args(std::forward<T>(args)...));
+			std::println("");
+		}
 	}
 
 	template <typename... T>
@@ -55,12 +61,14 @@ namespace topo
 #ifdef TOPO_PLATFORM_WINDOWS
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);
 #endif
-		std::cout << "[ERROR " << app_current_time_and_date() << "] CORE - ";
 		if constexpr (sizeof...(T) == 0)
-			std::cout << msg;
+			std::println("[ERROR {0}] CORE - {1}", app_current_time_and_date(), msg);
 		else
-			std::cout << std::vformat(msg, std::make_format_args(std::forward<T>(args)...));
-		std::cout << '\n';
+		{
+			std::print("[ERROR {0}] CORE - ", app_current_time_and_date());
+			std::vprint_nonunicode(std::cout, msg, std::make_format_args(std::forward<T>(args)...));
+			std::println("");
+		}
 	}
 
 	// CLIENT Logging ========================================================================================
@@ -71,12 +79,14 @@ namespace topo
 #ifdef TOPO_PLATFORM_WINDOWS
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 #endif
-		std::cout << "[TRACE " << app_current_time_and_date() << "] ";
 		if constexpr (sizeof...(T) == 0)
-			std::cout << msg;
+			std::println("[TRACE {0}] {1}", app_current_time_and_date(), msg);
 		else
-			std::cout << std::vformat(msg, std::make_format_args(std::forward<T>(args)...));
-		std::cout << '\n';
+		{
+			std::print("[TRACE {0}] ", app_current_time_and_date());
+			std::vprint_nonunicode(std::cout, msg, std::make_format_args(std::forward<T>(args)...));
+			std::println("");
+		}
 	}
 
 	template <typename... T>
@@ -85,12 +95,14 @@ namespace topo
 #ifdef TOPO_PLATFORM_WINDOWS
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
 #endif
-		std::cout << "[INFO " << app_current_time_and_date() << "] ";
 		if constexpr (sizeof...(T) == 0)
-			std::cout << msg;
+			std::println("[INFO {0}] {1}", app_current_time_and_date(), msg);
 		else
-			std::cout << std::vformat(msg, std::make_format_args(std::forward<T>(args)...));
-		std::cout << '\n';
+		{
+			std::print("[INFO {0}] ", app_current_time_and_date());
+			std::vprint_nonunicode(std::cout, msg, std::make_format_args(std::forward<T>(args)...));
+			std::println("");
+		}
 	}
 
 	template <typename... T>
@@ -99,12 +111,14 @@ namespace topo
 #ifdef TOPO_PLATFORM_WINDOWS
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
 #endif
-		std::cout << "[WARNING " << app_current_time_and_date() << "] ";
 		if constexpr (sizeof...(T) == 0)
-			std::cout << msg;
+			std::println("[WARNING {0}] {1}", app_current_time_and_date(), msg);
 		else
-			std::cout << std::vformat(msg, std::make_format_args(std::forward<T>(args)...));
-		std::cout << '\n';
+		{
+			std::print("[WARNING {0}] ", app_current_time_and_date());
+			std::vprint_nonunicode(std::cout, msg, std::make_format_args(std::forward<T>(args)...));
+			std::println("");
+		}
 	}
 
 	template <typename... T>
@@ -113,12 +127,14 @@ namespace topo
 #ifdef TOPO_PLATFORM_WINDOWS
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);
 #endif
-		std::cout << "[ERROR " << app_current_time_and_date() << "] ";
 		if constexpr (sizeof...(T) == 0)
-			std::cout << msg;
+			std::println("[WARNING {0}] {1}", app_current_time_and_date(), msg);
 		else
-			std::cout << std::vformat(msg, std::make_format_args(std::forward<T>(args)...));
-		std::cout << '\n';
+		{
+			std::print("[WARNING {0}] ", app_current_time_and_date());
+			std::vprint_nonunicode(std::cout, msg, std::make_format_args(std::forward<T>(args)...));
+			std::println("");
+	}
 	}
 }
 
