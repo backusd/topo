@@ -5,6 +5,8 @@
 
 namespace topo
 {
+#ifdef DIRECTX12
+
 DescriptorVector::DescriptorVector(Microsoft::WRL::ComPtr<ID3D12Device> d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, unsigned int initialCapacity) :
     m_device(d3dDevice),
     m_count(0),
@@ -187,4 +189,6 @@ void DescriptorVector::ReleaseAt(unsigned int index) noexcept
     m_releasedIndices.push_back(index);
     --m_count;
 }
+
+#endif
 }

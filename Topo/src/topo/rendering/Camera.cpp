@@ -1,14 +1,13 @@
 #include "pch.h"
 #include "Camera.h"
 
-#ifdef TOPO_PLATFORM_WINDOWS
+#ifdef DIRECTX12
 using namespace DirectX;
 #endif
 
 namespace topo
 {
-// Using Windows only macro here because there are so many references to DirectX math functions
-#ifdef TOPO_PLATFORM_WINDOWS
+#ifdef DIRECTX12
 
 Camera::Camera() noexcept
 {

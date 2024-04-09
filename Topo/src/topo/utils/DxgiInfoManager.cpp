@@ -5,7 +5,7 @@
 
 namespace topo
 {
-#ifdef TOPO_PLATFORM_WINDOWS
+#ifdef DIRECTX12
 
 #define DXGI_EXCEPT(hr) EXCEPTION(std::format("DxgiInfoManager Exception\n[Error Code] {0:#x} ({0})\n[Description] {1}", hr, ::topo::TranslateErrorCode(hr)))
 #define THROW_DXGI_LAST_EXCEPT() auto _err = GetLastError(); throw EXCEPTION(std::format("DxgiInfoManager Exception\n[Error Code] {0:#x} ({0})\n[Description] {1}", _err, ::topo::TranslateErrorCode(_err)))

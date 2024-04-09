@@ -6,7 +6,7 @@
 
 namespace topo
 {
-#ifdef TOPO_PLATFORM_WINDOWS
+#ifdef DIRECTX12
 
 // Defines a subrange of geometry in a MeshGeometry.  This is for when multiple
 // geometries are stored in one vertex and index buffer.  It provides the offsets

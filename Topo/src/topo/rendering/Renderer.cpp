@@ -3,6 +3,8 @@
 
 namespace topo
 {
+#ifdef DIRECTX12
+
 Renderer::Renderer(std::shared_ptr<DeviceResources> deviceResources,
 	D3D12_VIEWPORT& viewport,
 	D3D12_RECT& scissorRect) noexcept :
@@ -182,4 +184,6 @@ void Renderer::RunComputeLayer(const ComputeLayer& layer, const Timer* timer, in
 	// Post-Work method - possibly for transitioning resources
 	layer.PostWork(layer, commandList, timer, frameIndex);
 }
+
+#endif
 }

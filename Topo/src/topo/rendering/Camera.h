@@ -6,8 +6,7 @@
 
 namespace topo
 {
-// Using Windows only macro here because there are so many references to DirectX math functions
-#ifdef TOPO_PLATFORM_WINDOWS
+#ifdef DIRECTX12
 
 #pragma warning( push )
 #pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class

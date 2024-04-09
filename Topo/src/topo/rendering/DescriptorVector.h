@@ -4,6 +4,8 @@
 
 namespace topo
 {
+#ifdef DIRECTX12
+
 class DescriptorVector
 {
 public:
@@ -111,4 +113,6 @@ private:
     std::string m_name;
 #endif
 };
+
+#endif
 }

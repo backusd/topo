@@ -4,8 +4,7 @@
 
 namespace topo
 {
-// Using Windows only macro here because there are so many references to D3D12
-#ifdef TOPO_PLATFORM_WINDOWS
+#ifdef DIRECTX12
 
 class InputLayout
 {

@@ -32,6 +32,11 @@ project "Topo"
 		"%{prj.name}/src"
 	}
 
+	defines
+	{
+		"DIRECTX12"
+	}
+
 	filter "system:windows"
 		cppdialect "C++latest"
 		staticruntime "Off"
@@ -88,6 +93,11 @@ project "Sandbox"
 	links
 	{
 		"Topo"
+	}
+
+	defines
+	{
+		"DIRECTX12"
 	}
 	
 	filter "system:windows"

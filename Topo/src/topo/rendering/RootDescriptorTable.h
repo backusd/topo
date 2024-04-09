@@ -5,7 +5,7 @@
 
 namespace topo
 {
-#ifdef TOPO_PLATFORM_WINDOWS
+#ifdef DIRECTX12
 
 class RootDescriptorTable
 {

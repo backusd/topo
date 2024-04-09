@@ -5,6 +5,8 @@
 
 namespace topo
 {
+#ifdef DIRECTX12
+
 class ConstantBufferBase
 {
 public:
@@ -339,4 +341,6 @@ private:
 	UINT m_elementByteSize = 0; // default to 0 - will get appropriately assigned in Initialize()
 	unsigned int m_elementCount;
 };
+
+#endif
 }

@@ -7,6 +7,12 @@
     <Filter Include="topo\events">
       <UniqueIdentifier>{AB541897-170A-918C-A0FE-8A630CB38790}</UniqueIdentifier>
     </Filter>
+    <Filter Include="topo\rendering">
+      <UniqueIdentifier>{B490E264-A05E-D66A-89F2-4691755FB2CF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="topo\utils">
+      <UniqueIdentifier>{472DE3BF-33E5-240D-9CEC-FD6888C3BFFD}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Topo.h" />
@@ -17,10 +23,25 @@
     <ClInclude Include="src\topo\Core.h">
       <Filter>topo</Filter>
     </ClInclude>
+    <ClInclude Include="src\topo\DeviceResources.h">
+      <Filter>topo</Filter>
+    </ClInclude>
     <ClInclude Include="src\topo\EntryPoint.h">
       <Filter>topo</Filter>
     </ClInclude>
+    <ClInclude Include="src\topo\KeyCode.h">
+      <Filter>topo</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\Layout.h">
+      <Filter>topo</Filter>
+    </ClInclude>
     <ClInclude Include="src\topo\Log.h">
+      <Filter>topo</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\Page.h">
+      <Filter>topo</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\TopoException.h">
       <Filter>topo</Filter>
     </ClInclude>
     <ClInclude Include="src\topo\Window.h">
@@ -29,43 +50,100 @@
     <ClInclude Include="src\topo\events\MouseButtonEventKeyStates.h">
       <Filter>topo\events</Filter>
     </ClInclude>
-    <ClInclude Include="src\topo\Page.h" />
-    <ClInclude Include="src\topo\KeyCode.h" />
-    <ClInclude Include="src\topo\Layout.h" />
-    <ClInclude Include="src\topo\TopoException.h" />
-    <ClInclude Include="src\topo\utils\Concepts.h" />
-    <ClInclude Include="src\topo\utils\TranslateErrorCode.h" />
-    <ClInclude Include="src\topo\utils\String.h" />
-    <ClInclude Include="src\topo\DeviceResources.h" />
-    <ClInclude Include="src\topo\utils\DxgiInfoManager.h" />
-    <ClInclude Include="src\topo\utils\d3dx12.h" />
-    <ClInclude Include="src\topo\utils\WindowMessageMap.h" />
-    <ClInclude Include="src\topo\utils\Timer.h" />
-    <ClInclude Include="src\topo\utils\Constants.h" />
-    <ClInclude Include="src\topo\rendering\DescriptorVector.h" />
-    <ClInclude Include="src\topo\rendering\Camera.h" />
-    <ClInclude Include="src\topo\utils\MathHelper.h" />
-    <ClInclude Include="src\topo\rendering\ConstantBuffer.h" />
-    <ClInclude Include="src\topo\utils\GeometryGenerator.h" />
-    <ClInclude Include="src\topo\rendering\InputLayout.h" />
-    <ClInclude Include="src\topo\rendering\MeshGroup.h" />
-    <ClInclude Include="src\topo\rendering\Shader.h" />
-    <ClInclude Include="src\topo\rendering\RootSignature.h" />
-    <ClInclude Include="src\topo\rendering\RootDescriptorTable.h" />
-    <ClInclude Include="src\topo\rendering\RootConstantBufferView.h" />
-    <ClInclude Include="src\topo\rendering\RenderItem.h" />
-    <ClInclude Include="src\topo\rendering\RenderPassLayer.h" />
-    <ClInclude Include="src\topo\rendering\RenderPass.h" />
-    <ClInclude Include="src\topo\rendering\ComputeLayer.h" />
-    <ClInclude Include="src\topo\rendering\Renderer.h" />
-    <ClInclude Include="src\topo\utils\DDSTextureLoader.h" />
+    <ClInclude Include="src\topo\rendering\Camera.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\ComputeLayer.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\ConstantBuffer.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\DescriptorVector.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\InputLayout.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\MeshGroup.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\RenderItem.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\RenderPass.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\RenderPassLayer.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\Renderer.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\RootConstantBufferView.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\RootDescriptorTable.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\RootSignature.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\Shader.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\utils\Concepts.h">
+      <Filter>topo\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\utils\Constants.h">
+      <Filter>topo\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\utils\DDSTextureLoader.h">
+      <Filter>topo\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\utils\DxgiInfoManager.h">
+      <Filter>topo\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\utils\GeometryGenerator.h">
+      <Filter>topo\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\utils\MathHelper.h">
+      <Filter>topo\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\utils\String.h">
+      <Filter>topo\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\utils\Timer.h">
+      <Filter>topo\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\utils\TranslateErrorCode.h">
+      <Filter>topo\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\utils\WindowMessageMap.h">
+      <Filter>topo\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\utils\d3dx12.h">
+      <Filter>topo\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
     <ClCompile Include="src\topo\Application.cpp">
       <Filter>topo</Filter>
     </ClCompile>
+    <ClCompile Include="src\topo\DeviceResources.cpp">
+      <Filter>topo</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\Layout.cpp">
+      <Filter>topo</Filter>
+    </ClCompile>
     <ClCompile Include="src\topo\Log.cpp">
+      <Filter>topo</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\Page.cpp">
+      <Filter>topo</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\TopoException.cpp">
       <Filter>topo</Filter>
     </ClCompile>
     <ClCompile Include="src\topo\Window.cpp">
@@ -74,31 +152,71 @@
     <ClCompile Include="src\topo\events\MouseButtonEventKeyStates.cpp">
       <Filter>topo\events</Filter>
     </ClCompile>
-    <ClCompile Include="src\topo\Page.cpp" />
-    <ClCompile Include="src\topo\Layout.cpp" />
-    <ClCompile Include="src\topo\TopoException.cpp" />
-    <ClCompile Include="src\topo\utils\Concepts.cpp" />
-    <ClCompile Include="src\topo\utils\TranslateErrorCode.cpp" />
-    <ClCompile Include="src\topo\utils\String.cpp" />
-    <ClCompile Include="src\topo\DeviceResources.cpp" />
-    <ClCompile Include="src\topo\utils\DxgiInfoManager.cpp" />
-    <ClCompile Include="src\topo\utils\WindowMessageMap.cpp" />
-    <ClCompile Include="src\topo\utils\Timer.cpp" />
-    <ClCompile Include="src\topo\rendering\DescriptorVector.cpp" />
-    <ClCompile Include="src\topo\rendering\Camera.cpp" />
-    <ClCompile Include="src\topo\utils\MathHelper.cpp" />
-    <ClCompile Include="src\topo\utils\GeometryGenerator.cpp" />
-    <ClCompile Include="src\topo\rendering\InputLayout.cpp" />
-    <ClCompile Include="src\topo\rendering\MeshGroup.cpp" />
-    <ClCompile Include="src\topo\rendering\Shader.cpp" />
-    <ClCompile Include="src\topo\rendering\RootSignature.cpp" />
-    <ClCompile Include="src\topo\rendering\RootDescriptorTable.cpp" />
-    <ClCompile Include="src\topo\rendering\RootConstantBufferView.cpp" />
-    <ClCompile Include="src\topo\rendering\RenderItem.cpp" />
-    <ClCompile Include="src\topo\rendering\RenderPassLayer.cpp" />
-    <ClCompile Include="src\topo\rendering\RenderPass.cpp" />
-    <ClCompile Include="src\topo\rendering\ComputeLayer.cpp" />
-    <ClCompile Include="src\topo\rendering\Renderer.cpp" />
-    <ClCompile Include="src\topo\utils\DDSTextureLoader.cpp" />
+    <ClCompile Include="src\topo\rendering\Camera.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\ComputeLayer.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\DescriptorVector.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\InputLayout.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\MeshGroup.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\RenderItem.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\RenderPass.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\RenderPassLayer.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\Renderer.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\RootConstantBufferView.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\RootDescriptorTable.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\RootSignature.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\Shader.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\utils\Concepts.cpp">
+      <Filter>topo\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\utils\DDSTextureLoader.cpp">
+      <Filter>topo\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\utils\DxgiInfoManager.cpp">
+      <Filter>topo\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\utils\GeometryGenerator.cpp">
+      <Filter>topo\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\utils\MathHelper.cpp">
+      <Filter>topo\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\utils\String.cpp">
+      <Filter>topo\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\utils\Timer.cpp">
+      <Filter>topo\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\utils\TranslateErrorCode.cpp">
+      <Filter>topo\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\utils\WindowMessageMap.cpp">
+      <Filter>topo\utils</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

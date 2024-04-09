@@ -10,6 +10,8 @@
 
 #ifdef TOPO_DEBUG
 
+#ifdef DIRECTX12
+
 #define INFOMAN ::topo::DxgiInfoManager& infoManager = ::topo::DeviceResources::GetInfoManager();
 #define GFX_EXCEPT(hr) EXCEPTION(std::format("Device Resources Exception\n[Error Code] {0:#x} ({0})\n[Error Description]\n{1}\n{2}\n",	\
 	hr, ::topo::TranslateErrorCode(hr),																									\
@@ -17,6 +19,8 @@
 #define INFO_EXCEPT() EXCEPTION(std::format("Device Resources Info Exception\n\n[Error Info]\n{0}\n", infoManager.GetConcatenatedMessages()))
 #define GFX_THROW_INFO(hrcall) { HRESULT hr; INFOMAN infoManager.Set(); if( FAILED( hr = (hrcall) ) ) throw GFX_EXCEPT(hr); }
 #define GFX_THROW_INFO_ONLY(call) { INFOMAN infoManager.Set(); call; {auto v = infoManager.GetMessages(); if(!v.empty()) {throw INFO_EXCEPT();}}}
+
+#endif
 
 #elif defined(TOPO_RELEASE) || defined(TOPO_DIST)
 
@@ -33,6 +37,8 @@
 namespace topo
 {
 class DescriptorVector;
+
+#ifdef DIRECTX12
 
 class DeviceResources
 {
@@ -151,4 +157,6 @@ private:
 	void SetDebugNames();
 #endif
 };
+
+#endif
 }
