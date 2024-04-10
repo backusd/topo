@@ -125,6 +125,8 @@
     <ClInclude Include="src\topo\utils\d3dx12.h">
       <Filter>topo\utils</Filter>
     </ClInclude>
+    <ClInclude Include="src\topo\controls\Control.h" />
+    <ClInclude Include="src\topo\controls\Button.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -218,5 +220,11 @@
     <ClCompile Include="src\topo\utils\WindowMessageMap.cpp">
       <Filter>topo\utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\topo\controls\Control.cpp" />
+    <ClCompile Include="src\topo\controls\Button.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="src\topo\shaders\ControlVS.hlsl" />
+    <FxCompile Include="src\topo\shaders\ControlPS.hlsl" />
   </ItemGroup>
 </Project>

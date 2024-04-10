@@ -54,7 +54,7 @@ public:
 	bool OnSysKeyDown(KeyCode keyCode, unsigned int repeatCount);
 	bool OnSysKeyUp(KeyCode keyCode, unsigned int repeatCount);	
 
-private:
+protected:
 	Layout m_layout;
 
 

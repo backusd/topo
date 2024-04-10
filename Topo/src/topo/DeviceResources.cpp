@@ -32,20 +32,36 @@ DeviceResources::DeviceResources(HWND hWnd, int width, int height) :
 	// Initialize the descriptor vector
 	m_descriptorVector = std::make_unique<DescriptorVector>(m_d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	// Reset the command list so we can execute commands when initializing the renderer
-	GFX_THROW_INFO(m_commandList->Reset(m_allocators[m_currentFrameIndex].Get(), nullptr));
-
-	// Execute the initialization commands.
-	GFX_THROW_INFO(m_commandList->Close()); 
-	ID3D12CommandList* cmdsLists[] = { m_commandList.Get()}; 
-	GFX_THROW_INFO_ONLY(m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists)); 
-
-	// Wait until initialization is complete.
-	FlushCommandQueue(); 
+//	// Reset the command list so we can execute commands when initializing the renderer
+//	GFX_THROW_INFO(m_commandList->Reset(m_allocators[m_currentFrameIndex].Get(), nullptr));
+//
+//	// Execute the initialization commands.
+//	GFX_THROW_INFO(m_commandList->Close()); 
+//	ID3D12CommandList* cmdsLists[] = { m_commandList.Get()}; 
+//	GFX_THROW_INFO_ONLY(m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists)); 
+//
+//	// Wait until initialization is complete.
+//	FlushCommandQueue(); 
 
 #ifndef TOPO_DIST
 	SetDebugNames();
 #endif
+}
+void DeviceResources::RunInitializationCommands(std::function<void()> func)
+{
+	// Reset the command list so we can execute commands when initializing the renderer
+	GFX_THROW_INFO(m_commandList->Reset(m_allocators[m_currentFrameIndex].Get(), nullptr));
+
+	// Run initialization commands
+	func();
+
+	// Execute the initialization commands.
+	GFX_THROW_INFO(m_commandList->Close());
+	ID3D12CommandList* cmdsLists[] = { m_commandList.Get() };
+	GFX_THROW_INFO_ONLY(m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists));
+
+	// Wait until initialization is complete.
+	FlushCommandQueue();
 }
 
 void DeviceResources::CreateDevice()

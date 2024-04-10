@@ -7,6 +7,7 @@
 #include "utils/String.h"
 #include "utils/TranslateErrorCode.h"
 #include "utils/Timer.h"
+#include "rendering/Renderer.h"
 
 #ifdef TOPO_PLATFORM_WINDOWS
 #define THROW_WINDOW_LAST_EXCEPT() auto _err = GetLastError(); throw EXCEPTION(std::format("Window Exception\n[Error Code] {0:#x} ({0})\n[Description] {1}", _err, ::topo::TranslateErrorCode(_err)))
@@ -16,6 +17,25 @@
 
 namespace topo
 {
+	struct PassConstants
+	{
+		float Width;
+		float Height;
+	};
+
+	struct Vertex
+	{
+		DirectX::XMFLOAT4 position;
+		DirectX::XMFLOAT4 color;
+		DirectX::XMFLOAT3 Position() const noexcept { return { position.x, position.y, position.z }; }
+	};
+
+
+
+
+
+
+
 #ifdef TOPO_PLATFORM_WINDOWS
 #pragma warning( push )
 #pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
@@ -45,6 +65,9 @@ class WindowTemplate
 public:
 	WindowTemplate(const WindowProperties& props) :
 		m_deviceResources(nullptr),
+		m_renderer(nullptr),
+		m_viewport{ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f },
+		m_scissorRect{ 0, 0, 0, 0 },
 		m_page(std::make_unique<Page>(static_cast<float>(props.Width), static_cast<float>(props.Height))),	// Create a default page so it is guaranteed to not be null
 		m_height(props.Height), 
 		m_width(props.Width),
@@ -144,6 +167,14 @@ protected:
 	std::shared_ptr<DeviceResources> m_deviceResources;
 	std::unique_ptr<Page> m_page;
 
+	std::unique_ptr<Renderer> m_renderer;
+	D3D12_VIEWPORT m_viewport;
+	D3D12_RECT m_scissorRect;
+	std::unique_ptr<Shader> m_controlVS = nullptr;
+	std::unique_ptr<Shader> m_controlPS = nullptr;
+	std::unique_ptr<ConstantBufferMapped<PassConstants>>	m_passConstantsBuffer = nullptr;
+	std::shared_ptr<MeshGroup<Vertex>> m_meshGroup = nullptr;
+
 	// Window Data
 	short		m_width;
 	short		m_height;
@@ -192,7 +223,9 @@ class TOPO_API Window : public WindowTemplate<Window>
 {
 public:
 	Window(const WindowProperties& props) : WindowTemplate(props)
-	{}
+	{
+		m_deviceResources->RunInitializationCommands([this]() { this->InitializeRenderResources(); });
+	}
 	Window(const Window&) = delete;
 	Window(Window&&) = delete;
 	Window& operator=(const Window&) = delete;
@@ -205,10 +238,11 @@ public:
 	ND inline std::shared_ptr<DeviceResources> GetDeviceResources() noexcept { return m_deviceResources; }
 
 	template<typename T>
-	void InitializePage() noexcept
+	void InitializePage()
 	{
 		m_initialized = true;
-		m_page = std::make_unique<T>(m_height, m_width); 
+		m_page = std::make_unique<T>(m_height, m_width);
+		InitializeRenderer();
 	}
 
 	ND constexpr bool Initialized() const noexcept { return m_initialized; }
@@ -220,11 +254,15 @@ public:
 		Present();
 	}
 
+	void InitializeRenderResources();
+
 private:
 	void Update(const Timer& timer);
 	void Render(const Timer& timer);
 	void Present();
 
+	
+	void InitializeRenderer();
 	void Shutdown();
 
 	bool m_initialized = false;

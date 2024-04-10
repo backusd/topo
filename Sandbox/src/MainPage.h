@@ -1,13 +1,13 @@
 #pragma once
-#include <topo/Page.h>
-
+#include <Topo.h>
 
 class MainPage : public topo::Page 
 {
 public:
 	MainPage(float height, float width) :
-		Page(height, width)
+		topo::Page(height, width)
 	{
+		m_layout.AddControl<topo::Button>();
 	}
 
 

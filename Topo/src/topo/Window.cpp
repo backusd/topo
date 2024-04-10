@@ -4,6 +4,8 @@
 #include "KeyCode.h"
 #include "utils/WindowMessageMap.h"
 
+#include "rendering/MeshGroup.h"
+
 #include <windowsx.h> // Included so we can use GET_X_LPARAM/GET_Y_LPARAM
 
 namespace topo
@@ -186,6 +188,12 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		m_height = HIWORD(lParam);
 		m_deviceResources->OnResize(m_height, m_width);
 
+		m_viewport.Width = m_width;
+		m_viewport.Height = m_height;
+
+		m_scissorRect.right = static_cast<LONG>(m_width);
+		m_scissorRect.bottom = static_cast<LONG>(m_height);
+
 		if (m_page->OnWindowResized(m_height, m_width))
 			return 0;
 		break;
@@ -239,6 +247,14 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		m_width = cs->cx;
 		m_deviceResources = std::make_shared<DeviceResources>(hWnd, m_width, m_height);
 
+		m_viewport.Width = m_width;
+		m_viewport.Height = m_height;
+
+		m_scissorRect.right = static_cast<LONG>(m_width);
+		m_scissorRect.bottom = static_cast<LONG>(m_height);
+
+		m_renderer = std::make_unique<Renderer>(m_deviceResources, m_viewport, m_scissorRect);
+
 		// Don't pass message to m_page, because InitializePage will not have been called yet
 		return 0;
 	}
@@ -265,11 +281,100 @@ void Window::Render(const Timer& timer)
 {
 	m_deviceResources->PreRender();
 	m_page->Render();
+
+	m_renderer->Render(m_deviceResources->GetCurrentFrameIndex());
+
 	m_deviceResources->PostRender();
 }
 void Window::Present() 
 {
 	m_deviceResources->Present();
+}
+
+void Window::InitializeRenderResources()
+{
+	std::vector<Vertex> squareVertices{
+		{{ -0.5f, 0.5f, 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+		{{ 0.5f, 0.5f, 0.5f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+		{{ 0.5f, -0.5f, 0.5f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+		{{ -0.5f, -0.5f, 0.5f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
+	};
+	std::vector<std::uint16_t> squareIndices{ 0, 1, 3, 1, 2, 3 };
+
+	std::vector<std::vector<Vertex>> vertices;
+	vertices.push_back(std::move(squareVertices));
+
+	std::vector<std::vector<std::uint16_t>> indices;
+	indices.push_back(std::move(squareIndices));
+
+	m_meshGroup = std::make_shared<MeshGroup<Vertex>>(m_deviceResources, vertices, indices);
+	SET_DEBUG_NAME_PTR(m_meshGroup, "MeshGroup");
+}
+
+void Window::InitializeRenderer()
+{
+	m_controlVS = std::make_unique<Shader>("../Topo/cso/ControlVS.cso");
+	m_controlPS = std::make_unique<Shader>("../Topo/cso/ControlPS.cso");
+
+
+	constexpr unsigned int perPassCBRegister = 0;
+
+	// Root parameter can be a table, root descriptor or root constants.
+	// *** Perfomance TIP: Order from most frequent to least frequent.
+	CD3DX12_ROOT_PARAMETER slotRootParameter[1];
+	slotRootParameter[0].InitAsConstantBufferView(perPassCBRegister);	// Object/Instance Constant Buffer  
+
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(1, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+	std::shared_ptr<RootSignature> rootSig1 = std::make_shared<RootSignature>(m_deviceResources, rootSigDesc); 
+	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(rootSig1);
+	SET_DEBUG_NAME(pass1, "Render Pass #1");
+
+	m_passConstantsBuffer = std::make_unique<ConstantBufferMapped<PassConstants>>(m_deviceResources);
+	RootConstantBufferView& perPassConstantsCBV = pass1.EmplaceBackRootConstantBufferView(perPassCBRegister, m_passConstantsBuffer.get());
+	SET_DEBUG_NAME(perPassConstantsCBV, "Per Pass RootConstantBufferView");
+	perPassConstantsCBV.Update = [this](const Timer& timer, int frameIndex)
+		{
+			PassConstants pc{ this->GetWidth(), this->GetHeight() };
+			m_passConstantsBuffer->CopyData(frameIndex, pc);
+		};
+
+	std::unique_ptr<InputLayout> inputLayout = std::make_unique<InputLayout>(
+		std::vector<D3D12_INPUT_ELEMENT_DESC>{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		}
+	);
+	SET_DEBUG_NAME_PTR(inputLayout, "Input Layout");
+
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+	ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+	psoDesc.InputLayout = inputLayout->GetInputLayoutDesc();
+	psoDesc.pRootSignature = rootSig1->Get();
+	psoDesc.VS = m_controlVS->GetShaderByteCode();
+	psoDesc.PS = m_controlPS->GetShaderByteCode();
+	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	psoDesc.RasterizerState.FrontCounterClockwise = false;
+	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	psoDesc.SampleMask = UINT_MAX;
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	psoDesc.NumRenderTargets = 1;
+	psoDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
+	psoDesc.SampleDesc.Count = 1;
+	psoDesc.SampleDesc.Quality = 0;
+	psoDesc.DSVFormat = m_deviceResources->GetDepthStencilFormat();
+
+	psoDesc.DepthStencilState.DepthEnable = FALSE; 
+	psoDesc.DepthStencilState.StencilEnable = FALSE; 
+
+	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_deviceResources, m_meshGroup, psoDesc, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	SET_DEBUG_NAME(layer1, "Render Pass Layer #1");
+
+	RenderItem& squareRI = layer1.EmplaceBackRenderItem();
+	SET_DEBUG_NAME(squareRI, "Square RenderItem"); 
+
 }
 
 #else

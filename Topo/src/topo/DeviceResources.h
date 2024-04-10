@@ -49,6 +49,8 @@ public:
 	DeviceResources& operator=(const DeviceResources&) = delete;
 	DeviceResources& operator=(DeviceResources&&) = delete;
 
+	void RunInitializationCommands(std::function<void()> func);
+
 	void OnResize(int height, int width);
 	void FlushCommandQueue();
 
@@ -74,6 +76,8 @@ public:
 	ND inline UINT GetRTVDescriptorSize() const noexcept { return m_rtvDescriptorSize; }
 	ND inline UINT GetDSVDescriptorSize() const noexcept { return m_dsvDescriptorSize; }
 	ND inline UINT GetCBVSRVUAVDescriptorSize() const noexcept { return m_cbvSrvUavDescriptorSize; }
+
+	ND constexpr int GetCurrentFrameIndex() const noexcept { return m_currentFrameIndex; }
 
 
 
