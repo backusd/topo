@@ -113,11 +113,11 @@ public:
 		m_vertices(std::move(rhs.m_vertices)),
 		m_indices(std::move(rhs.m_indices))
 	{
-		// Specifically, see this SO post above calling std::move(rhs) but then proceding to use the rhs object: https://stackoverflow.com/questions/22977230/move-constructors-in-inheritance-hierarchy
+		// See this SO post above calling std::move(rhs) but then proceding to use the rhs object: https://stackoverflow.com/questions/22977230/move-constructors-in-inheritance-hierarchy
 	}
 	inline MeshGroup& operator=(MeshGroup&& rhs) noexcept
 	{
-		// Specifically, see this SO post above calling std::move(rhs) but then proceding to use the rhs object: https://stackoverflow.com/questions/22977230/move-constructors-in-inheritance-hierarchy
+		// See this SO post above calling std::move(rhs) but then proceding to use the rhs object: https://stackoverflow.com/questions/22977230/move-constructors-in-inheritance-hierarchy
 
 		MeshGroupBase::operator=(std::move(rhs));
 		m_vertices = std::move(rhs.m_vertices);

@@ -246,8 +246,7 @@ public:
 	void Render(const Timer& timer);
 	void Present();
 
-private:
-	
+private:	
 	void InitializeRenderer();
 	void Shutdown();
 };

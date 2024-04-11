@@ -5,6 +5,7 @@
 #include "utils/WindowMessageMap.h"
 
 #include "rendering/MeshGroup.h"
+#include "rendering/AssetManager.h"
 
 #include <windowsx.h> // Included so we can use GET_X_LPARAM/GET_Y_LPARAM
 
