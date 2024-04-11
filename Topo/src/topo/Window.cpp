@@ -2,6 +2,7 @@
 #include "Window.h"
 #include "Application.h"
 #include "KeyCode.h"
+#include "Input.h"
 #include "utils/WindowMessageMap.h"
 
 #include "rendering/MeshGroup.h"
@@ -58,11 +59,22 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_MOUSEMOVE:
 	{
+		// NOTE: We don't immediately set the mouse position every time we get WM_MOUSEMOVE
+		//       This is because of the infrequent case when a mouse button is down and the mouse
+		//		 goes outside the window, then we call SetCapture, but then at some point the button
+		//       is released and the mouse is hovering over another window. In this scenario, the other
+		//       window actually receives 1 or 2 WM_MOUSEMOVE events because the initial window receives
+		//       a WM_MOUSEMOVE event where it will finally call ReleaseCapture. This is necessary
+		//       because the Input class is a singleton, so we need to make sure multiple windows aren't
+		//       modifying its data
+
 		m_mouseX = static_cast<float>(GET_X_LPARAM(lParam)); 
 		m_mouseY = static_cast<float>(GET_Y_LPARAM(lParam)); 
 
 		if (m_mouseX >= 0 && m_mouseX < m_width && m_mouseY >= 0 && m_mouseY < m_height)
 		{
+			Input::SetMousePosition(m_mouseX, m_mouseY); 
+
 			if (!m_mouseIsInWindow) // Will tell you if the mouse was PREVIOUSLY in the window or not
 			{
 				m_mouseIsInWindow = true;
@@ -85,6 +97,8 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			if (wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON))
 			{
+				Input::SetMousePosition(m_mouseX, m_mouseY);
+
 				if (m_page->OnMouseMoved(m_mouseX, m_mouseY, MouseButtonEventKeyStates(wParam))) 
 					return 0;
 				break;
@@ -104,55 +118,70 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	// LButton
 	case WM_LBUTTONDOWN: 
+		BringToForeground();
+		Input::SetKeyDownState(KeyCode::LBUTTON, true);
 		if (m_page->OnLButtonDown(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 			return 0;
 		break;
 	case WM_LBUTTONUP:
+		Input::SetKeyDownState(KeyCode::LBUTTON, false);
 		if (m_page->OnLButtonUp(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 			return 0;
 		break;
-	case WM_LBUTTONDBLCLK:	
+	case WM_LBUTTONDBLCLK:
+		Input::SetKeyDownState(KeyCode::LBUTTON, true); // The double click message is triggered on the second down click and will be followed by another BUTTONUP message
 		if (m_page->OnLButtonDoubleClick(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 			return 0;
 		break; 
 
 	// RButton
-	case WM_RBUTTONDOWN:	
+	case WM_RBUTTONDOWN:
+		BringToForeground();
+		Input::SetKeyDownState(KeyCode::RBUTTON, true);
 		if (m_page->OnRButtonDown(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 			return 0;
 		break;
 	case WM_RBUTTONUP:
+		Input::SetKeyDownState(KeyCode::RBUTTON, false);
 		if (m_page->OnRButtonUp(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 			return 0;
 		break;
 	case WM_RBUTTONDBLCLK:  
+		Input::SetKeyDownState(KeyCode::RBUTTON, true); // The double click message is triggered on the second down click and will be followed by another BUTTONUP message
 		if (m_page->OnRButtonDoubleClick(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 			return 0;
 		break;
 
 	// MButton
 	case WM_MBUTTONDOWN:
+		BringToForeground();
+		Input::SetKeyDownState(KeyCode::MBUTTON, true);
 		if (m_page->OnMButtonDown(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 			return 0;
 		break;
 	case WM_MBUTTONUP:
+		Input::SetKeyDownState(KeyCode::MBUTTON, false);
 		if (m_page->OnRButtonUp(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 			return 0;
 		break;
 	case WM_MBUTTONDBLCLK:  
+		Input::SetKeyDownState(KeyCode::MBUTTON, true); // The double click message is triggered on the second down click and will be followed by another BUTTONUP message
 		if (m_page->OnMButtonDoubleClick(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 			return 0;
 		break;
 
 	// X1/X2 Buttons
 	case WM_XBUTTONDOWN:
+		BringToForeground();
 		if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
 		{
+			Input::SetKeyDownState(KeyCode::X1BUTTON, true);
 			if (m_page->OnX1ButtonDown(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 				return 0;
 		}
 		else
 		{
+			Input::SetKeyDownState(KeyCode::X2BUTTON, true);
 			if (m_page->OnX2ButtonDown(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 				return 0;
 		}
@@ -160,11 +189,13 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_XBUTTONUP:
 		if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
 		{
+			Input::SetKeyDownState(KeyCode::X1BUTTON, false);
 			if (m_page->OnX1ButtonUp(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 				return 0;
 		}
 		else
 		{
+			Input::SetKeyDownState(KeyCode::X2BUTTON, false);
 			if (m_page->OnX2ButtonUp(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 				return 0;
 		}
@@ -172,11 +203,13 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_XBUTTONDBLCLK:
 		if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
 		{
+			Input::SetKeyDownState(KeyCode::X1BUTTON, true); // The double click message is triggered on the second down click and will be followed by another BUTTONUP message
 			if (m_page->OnX1ButtonDoubleClick(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 				return 0;
 		}
 		else
 		{
+			Input::SetKeyDownState(KeyCode::X2BUTTON, true); // The double click message is triggered on the second down click and will be followed by another BUTTONUP message
 			if (m_page->OnX2ButtonDoubleClick(static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 				return 0;
 		}
@@ -201,7 +234,7 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 
 	// Mouse Wheel
-	case WM_MOUSEWHEEL:		
+	case WM_MOUSEWHEEL:
 		if (m_page->OnMouseWheel(static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)), static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam)), MouseButtonEventKeyStates(wParam)))
 			return 0;
 		break;
@@ -213,26 +246,66 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 
 	// Keyboard Events
-	case WM_CHAR:			
+	case WM_CHAR:
 		if (m_page->OnChar(static_cast<unsigned int>(wParam), static_cast<unsigned int>(LOWORD(lParam))))
 			return 0;
 		break;		
-	case WM_KEYDOWN:		
-		if (m_page->OnKeyDown(static_cast<KeyCode>(wParam), static_cast<unsigned int>(LOWORD(lParam))))
+	case WM_KEYDOWN:
+	{
+		KeyCode keyCode = static_cast<KeyCode>(wParam);
+		Input::SetKeyDownState(keyCode, true);
+
+		// In the case of SHIFT, CTRL, MENU, there are LSHIFT and RSHIFT additional keycodes we need to set
+		KeyCode keyCode2 = static_cast<KeyCode>(MapLeftRightKeys(wParam, lParam));
+		if (keyCode != keyCode2)
+			Input::SetKeyDownState(keyCode2, true);
+
+		if (m_page->OnKeyDown(keyCode, static_cast<unsigned int>(LOWORD(lParam))))
 			return 0;
 		break;
-	case WM_KEYUP:			
-		if (m_page->OnKeyUp(static_cast<KeyCode>(wParam), static_cast<unsigned int>(LOWORD(lParam))))
+	}
+	case WM_KEYUP:
+	{
+		KeyCode keyCode = static_cast<KeyCode>(wParam); 
+		Input::SetKeyDownState(keyCode, false); 
+
+		// In the case of SHIFT, CTRL, MENU, there are LSHIFT and RSHIFT additional keycodes we need to set
+		KeyCode keyCode2 = static_cast<KeyCode>(MapLeftRightKeys(wParam, lParam));
+		if (keyCode != keyCode2)
+			Input::SetKeyDownState(keyCode2, false);
+
+		if (m_page->OnKeyUp(keyCode, static_cast<unsigned int>(LOWORD(lParam))))
 			return 0;
 		break;
-	case WM_SYSKEYDOWN:		
-		if (m_page->OnSysKeyDown(static_cast<KeyCode>(wParam), static_cast<unsigned int>(LOWORD(lParam))))
+	}
+	case WM_SYSKEYDOWN:
+	{
+		KeyCode keyCode = static_cast<KeyCode>(wParam);
+		Input::SetKeyDownState(keyCode, true);
+
+		// In the case of SHIFT, CTRL, MENU, there are LSHIFT and RSHIFT additional keycodes we need to set
+		KeyCode keyCode2 = static_cast<KeyCode>(MapLeftRightKeys(wParam, lParam));
+		if (keyCode != keyCode2)
+			Input::SetKeyDownState(keyCode2, true);
+
+		if (m_page->OnSysKeyDown(keyCode, static_cast<unsigned int>(LOWORD(lParam))))
 			return 0;
 		break;
-	case WM_SYSKEYUP:		
-		if (m_page->OnSysKeyUp(static_cast<KeyCode>(wParam), static_cast<unsigned int>(LOWORD(lParam))))
+	}
+	case WM_SYSKEYUP:
+	{
+		KeyCode keyCode = static_cast<KeyCode>(wParam);
+		Input::SetKeyDownState(keyCode, false);
+
+		// In the case of SHIFT, CTRL, MENU, there are LSHIFT and RSHIFT additional keycodes we need to set
+		KeyCode keyCode2 = static_cast<KeyCode>(MapLeftRightKeys(wParam, lParam));
+		if (keyCode != keyCode2)
+			Input::SetKeyDownState(keyCode2, false);
+
+		if (m_page->OnSysKeyUp(keyCode, static_cast<unsigned int>(LOWORD(lParam))))
 			return 0;
 		break;
+	}
 
 
 	// Window Events
@@ -270,6 +343,30 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+WPARAM Window::MapLeftRightKeys(WPARAM vk, LPARAM lParam)
+{
+	// This function taken from here: https://stackoverflow.com/questions/15966642/how-do-you-tell-lshift-apart-from-rshift-in-wm-keydown-events
+	WPARAM new_vk = vk;
+	UINT scancode = (lParam & 0x00ff0000) >> 16;
+	int extended = (lParam & 0x01000000) != 0;
+
+	switch (vk) {
+	case VK_SHIFT:
+		new_vk = MapVirtualKey(scancode, MAPVK_VSC_TO_VK_EX);
+		break;
+	case VK_CONTROL:
+		new_vk = extended ? VK_RCONTROL : VK_LCONTROL;
+		break;
+	case VK_MENU:
+		new_vk = extended ? VK_RMENU : VK_LMENU;
+		break;
+	default:
+		// not a key we map from generic to left/right specialized just return it.
+		break;
+	}
+
+	return new_vk;
 }
 
 void Window::PrepareToRun()

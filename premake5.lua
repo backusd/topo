@@ -10,6 +10,8 @@ workspace "Topo"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+startproject "Sandbox"
+
 project "Topo"
 	location "Topo"
 	kind "SharedLib"

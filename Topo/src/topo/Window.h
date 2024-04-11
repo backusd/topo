@@ -247,6 +247,7 @@ public:
 	void Present();
 
 private:	
+	WPARAM MapLeftRightKeys(WPARAM vk, LPARAM lParam);
 	void InitializeRenderer();
 	void Shutdown();
 };

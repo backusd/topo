@@ -10,11 +10,11 @@ public:
 	{
 		InitializeMainWindowPage<MainPage>();
 
-//		topo::WindowProperties props{};
-//		props.Title = "Child Window";
-//		props.Height = 600;
-//		props.Width = 600;
-//		LaunchWindow<MainPage>(props);
+		topo::WindowProperties props{};
+		props.Title = "Child Window";
+		props.Height = 600;
+		props.Width = 600;
+		LaunchWindow<MainPage>(props);
 
 		auto path = std::filesystem::current_path();
 		LOG_INFO("PATH: {0}", path.string());

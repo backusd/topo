@@ -138,6 +138,7 @@
       <Filter>topo\utils</Filter>
     </ClInclude>
     <ClInclude Include="src\topo\rendering\AssetManager.h" />
+    <ClInclude Include="src\topo\Input.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -238,6 +239,7 @@
       <Filter>topo\utils</Filter>
     </ClCompile>
     <ClCompile Include="src\topo\rendering\AssetManager.cpp" />
+    <ClCompile Include="src\topo\Input.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\topo\shaders\Control-ps.hlsl">
