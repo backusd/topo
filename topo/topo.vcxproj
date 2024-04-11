@@ -89,6 +89,7 @@
     </ClCompile>
     <FxCompile>
       <ObjectFileOutput>../bin/Debug-windows-x86_64/topo/cso/%(Filename).cso</ObjectFileOutput>
+      <AdditionalOptions>/Qembed_debug %(AdditionalOptions)</AdditionalOptions>
     </FxCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -50,6 +50,9 @@ project "Topo"
 	filter { "files:**-vs.hlsl" }
 		shadertype "Vertex"
 
+	filter { "system:windows", "configurations:Debug" }
+		shaderoptions { "/Qembed_debug" }
+
 	filter "system:windows"
 		cppdialect "C++latest"
 		staticruntime "Off"
