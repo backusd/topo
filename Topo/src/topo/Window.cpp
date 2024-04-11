@@ -271,11 +271,25 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
+void Window::PrepareToRun()
+{
+	// This function is required to run immediately before the Update/Render/Present loop
+	// Upon initialization of DeviceResources, it will leave the command list in an open state
+	// so that we can use it during initialization of the Page (and all controls). Therefore, we
+	// must close it and execute its commands before we can start the rendering loop
 
+	// Also perform other sanity checks
+	if (m_page == nullptr)
+		throw EXCEPTION("m_page was nullptr. Did you forget to call InitializeMainWindowPage<...>();");
+
+	m_deviceResources->PrepareToRun();
+}
 void Window::Update(const Timer& timer) 
 {
+	// Must call deviceResources->Update() first because it will reset the commandlist so new commands can be issued
 	m_deviceResources->Update();
 	m_page->Update(timer);
+	m_renderer->Update(timer, m_deviceResources->GetCurrentFrameIndex());
 }
 void Window::Render(const Timer& timer) 
 {
@@ -291,13 +305,16 @@ void Window::Present()
 	m_deviceResources->Present();
 }
 
-void Window::InitializeRenderResources()
+void Window::InitializeRenderer()
 {
+	m_controlVS = std::make_unique<Shader>("Control-vs.cso");
+	m_controlPS = std::make_unique<Shader>("Control-ps.cso");
+
 	std::vector<Vertex> squareVertices{
-		{{ -0.5f, 0.5f, 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
-		{{ 0.5f, 0.5f, 0.5f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
-		{{ 0.5f, -0.5f, 0.5f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
-		{{ -0.5f, -0.5f, 0.5f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
+	{{ -0.5f, 0.5f, 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+	{{ 0.5f, 0.5f, 0.5f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+	{{ 0.5f, -0.5f, 0.5f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+	{{ -0.5f, -0.5f, 0.5f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
 	};
 	std::vector<std::uint16_t> squareIndices{ 0, 1, 3, 1, 2, 3 };
 
@@ -309,12 +326,6 @@ void Window::InitializeRenderResources()
 
 	m_meshGroup = std::make_shared<MeshGroup<Vertex>>(m_deviceResources, vertices, indices);
 	SET_DEBUG_NAME_PTR(m_meshGroup, "MeshGroup");
-}
-
-void Window::InitializeRenderer()
-{
-	m_controlVS = std::make_unique<Shader>("../Topo/cso/ControlVS.cso");
-	m_controlPS = std::make_unique<Shader>("../Topo/cso/ControlPS.cso");
 
 
 	constexpr unsigned int perPassCBRegister = 0;
@@ -335,7 +346,7 @@ void Window::InitializeRenderer()
 	SET_DEBUG_NAME(perPassConstantsCBV, "Per Pass RootConstantBufferView");
 	perPassConstantsCBV.Update = [this](const Timer& timer, int frameIndex)
 		{
-			PassConstants pc{ this->GetWidth(), this->GetHeight() };
+			PassConstants pc{ static_cast<float>(this->GetWidth()), static_cast<float>(this->GetHeight()) };
 			m_passConstantsBuffer->CopyData(frameIndex, pc);
 		};
 

@@ -27,41 +27,34 @@ DeviceResources::DeviceResources(HWND hWnd, int width, int height) :
 	CreateCommandObjects();
 	CreateRtvAndDsvDescriptorHeaps();
 	CreateSwapChain();
-	OnResize(m_height, m_width);
-
+	
 	// Initialize the descriptor vector
 	m_descriptorVector = std::make_unique<DescriptorVector>(m_d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-//	// Reset the command list so we can execute commands when initializing the renderer
-//	GFX_THROW_INFO(m_commandList->Reset(m_allocators[m_currentFrameIndex].Get(), nullptr));
-//
-//	// Execute the initialization commands.
-//	GFX_THROW_INFO(m_commandList->Close()); 
-//	ID3D12CommandList* cmdsLists[] = { m_commandList.Get()}; 
-//	GFX_THROW_INFO_ONLY(m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists)); 
-//
-//	// Wait until initialization is complete.
-//	FlushCommandQueue(); 
+	// Reset the command list so we can execute commands when initializing all UI contents
+	GFX_THROW_INFO(m_commandList->Reset(m_allocators[m_currentFrameIndex].Get(), nullptr));
+	
+	// MUST resize AFTER resetting the command list. The OnResize method assumes command list is not closed
+	OnResize(m_height, m_width);
 
 #ifndef TOPO_DIST
 	SetDebugNames();
 #endif
 }
-void DeviceResources::RunInitializationCommands(std::function<void()> func)
+void DeviceResources::PrepareToRun()
 {
-	// Reset the command list so we can execute commands when initializing the renderer
-	GFX_THROW_INFO(m_commandList->Reset(m_allocators[m_currentFrameIndex].Get(), nullptr));
-
-	// Run initialization commands
-	func();
+	// This function is required to run immediately before the Update/Render/Present loop
+	// Upon initialization of DeviceResources, it will leave the command list in an open state
+	// so that we can use it during initialization of the Page (and all controls). Therefore, we
+	// must close it and execute its commands before we can start the rendering loop
 
 	// Execute the initialization commands.
-	GFX_THROW_INFO(m_commandList->Close());
-	ID3D12CommandList* cmdsLists[] = { m_commandList.Get() };
-	GFX_THROW_INFO_ONLY(m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists));
+	GFX_THROW_INFO(m_commandList->Close()); 
+	ID3D12CommandList* cmdsLists[] = { m_commandList.Get()}; 
+	GFX_THROW_INFO_ONLY(m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists)); 
 
 	// Wait until initialization is complete.
-	FlushCommandQueue();
+	FlushCommandQueue(); 
 }
 
 void DeviceResources::CreateDevice()
@@ -323,9 +316,17 @@ void DeviceResources::OnResize(int height, int width)
 	m_height = height;
 	m_width = width;
 
+	// Execute the initialization commands.
+	{
+		GFX_THROW_INFO(m_commandList->Close());
+		ID3D12CommandList* cmdsLists[] = { m_commandList.Get() };
+		GFX_THROW_INFO_ONLY(m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists));
+	}
+
 	// Flush before changing any resources.
 	FlushCommandQueue();
 
+	// Reset the command list before issuing commands
 	GFX_THROW_INFO(m_commandList->Reset(m_allocators[m_currentFrameIndex].Get(), nullptr));
 
 	// Release the previous resources we will be recreating.
@@ -352,6 +353,10 @@ void DeviceResources::OnResize(int height, int width)
 		GFX_THROW_INFO(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_swapChainBuffer[i])));
 		m_d3dDevice->CreateRenderTargetView(m_swapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
 		rtvHeapHandle.Offset(1, m_rtvDescriptorSize);
+
+#ifndef TOPO_DIST
+		SetDebugName(m_swapChainBuffer[i], std::format("DeviceResources: Swap Chain Buffer ({0})", i));
+#endif
 	}
 
 	// Create the depth/stencil buffer and view.
@@ -391,6 +396,9 @@ void DeviceResources::OnResize(int height, int width)
 			IID_PPV_ARGS(m_depthStencilBuffer.GetAddressOf())
 		)
 	);
+#ifndef TOPO_DIST
+	SetDebugName(m_depthStencilBuffer, "DeviceResources: Depth Stencil Buffer");
+#endif
 
 	// Create descriptor to mip level 0 of entire resource using the format of the resource.
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
@@ -410,12 +418,17 @@ void DeviceResources::OnResize(int height, int width)
 	m_commandList->ResourceBarrier(1, &_b);
 
 	// Execute the resize commands.
-	GFX_THROW_INFO(m_commandList->Close());
-	ID3D12CommandList* cmdsLists[] = { m_commandList.Get() };
-	m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+	{
+		GFX_THROW_INFO(m_commandList->Close());
+		ID3D12CommandList* cmdsLists[] = { m_commandList.Get() };
+		m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+	}
 
 	// Wait until resize is complete.
 	FlushCommandQueue();
+
+	// Re-open the command list so that it is returned to its original state
+	GFX_THROW_INFO(m_commandList->Reset(m_allocators[m_currentFrameIndex].Get(), nullptr));
 }
 
 
@@ -443,8 +456,8 @@ void DeviceResources::Update()
 
 	// Reuse the memory associated with command recording.
 	// We can only reset when the associated command lists have finished execution on the GPU.
-	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator = m_allocators[m_currentFrameIndex];
-	GFX_THROW_INFO(m_allocators[m_currentFrameIndex]->Reset());
+	ID3D12CommandAllocator* commandAllocator = m_allocators[m_currentFrameIndex].Get();
+	GFX_THROW_INFO(commandAllocator->Reset());
 
 	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
 	// Reusing the command list reuses memory.
@@ -454,7 +467,7 @@ void DeviceResources::Update()
 	//		 state so that drivers don't have to deal with undefined state. The overhead for this is low, 
 	//		 particularly for a command list, for which the overall cost of recording the command list likely 
 	//		 dwarfs the cost of one initial state setting."
-	GFX_THROW_INFO(m_commandList->Reset(commandAllocator.Get(), nullptr));
+	GFX_THROW_INFO(m_commandList->Reset(commandAllocator, nullptr));
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_descriptorVector->GetRawHeapPointer() };
 	GFX_THROW_INFO_ONLY(

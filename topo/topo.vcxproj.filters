@@ -4,11 +4,17 @@
     <Filter Include="topo">
       <UniqueIdentifier>{87929E7C-73C9-9F0D-1CB6-851008CC1B0F}</UniqueIdentifier>
     </Filter>
+    <Filter Include="topo\controls">
+      <UniqueIdentifier>{AABD8EE0-167E-0A17-DFB8-53944B384FF3}</UniqueIdentifier>
+    </Filter>
     <Filter Include="topo\events">
       <UniqueIdentifier>{AB541897-170A-918C-A0FE-8A630CB38790}</UniqueIdentifier>
     </Filter>
     <Filter Include="topo\rendering">
       <UniqueIdentifier>{B490E264-A05E-D66A-89F2-4691755FB2CF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="topo\shaders">
+      <UniqueIdentifier>{80E6DB8E-6C49-6B33-15CF-A3E9011137B6}</UniqueIdentifier>
     </Filter>
     <Filter Include="topo\utils">
       <UniqueIdentifier>{472DE3BF-33E5-240D-9CEC-FD6888C3BFFD}</UniqueIdentifier>
@@ -46,6 +52,12 @@
     </ClInclude>
     <ClInclude Include="src\topo\Window.h">
       <Filter>topo</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\controls\Button.h">
+      <Filter>topo\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\controls\Control.h">
+      <Filter>topo\controls</Filter>
     </ClInclude>
     <ClInclude Include="src\topo\events\MouseButtonEventKeyStates.h">
       <Filter>topo\events</Filter>
@@ -125,8 +137,6 @@
     <ClInclude Include="src\topo\utils\d3dx12.h">
       <Filter>topo\utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\topo\controls\Control.h" />
-    <ClInclude Include="src\topo\controls\Button.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -150,6 +160,12 @@
     </ClCompile>
     <ClCompile Include="src\topo\Window.cpp">
       <Filter>topo</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\controls\Button.cpp">
+      <Filter>topo\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\controls\Control.cpp">
+      <Filter>topo\controls</Filter>
     </ClCompile>
     <ClCompile Include="src\topo\events\MouseButtonEventKeyStates.cpp">
       <Filter>topo\events</Filter>
@@ -220,11 +236,13 @@
     <ClCompile Include="src\topo\utils\WindowMessageMap.cpp">
       <Filter>topo\utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\topo\controls\Control.cpp" />
-    <ClCompile Include="src\topo\controls\Button.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="src\topo\shaders\ControlVS.hlsl" />
-    <FxCompile Include="src\topo\shaders\ControlPS.hlsl" />
+    <FxCompile Include="src\topo\shaders\Control-ps.hlsl">
+      <Filter>topo\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="src\topo\shaders\Control-vs.hlsl">
+      <Filter>topo\shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

@@ -87,13 +87,19 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
+    <FxCompile>
+      <ObjectFileOutput>../bin/Debug-windows-x86_64/topo/cso/%(Filename).cso</ObjectFileOutput>
+    </FxCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImportLibrary>..\bin\Debug-windows-x86_64\Topo\Topo.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>IF EXIST ..\bin\Debug-windows-x86_64\Topo\Topo.dll\ (xcopy /Q /E /Y /I ..\bin\Debug-windows-x86_64\Topo\Topo.dll ..\bin\Debug-windows-x86_64\Sandbox &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Debug-windows-x86_64\Topo\Topo.dll ..\bin\Debug-windows-x86_64\Sandbox &gt; nul)</Command>
+      <Command>copy /B /Y ..\bin\Debug-windows-x86_64\Topo\Topo.dll ..\bin\Debug-windows-x86_64\Sandbox
+rmdir /S /Q ..\Sandbox\cso
+IF NOT EXIST ..\Sandbox\cso (mkdir ..\Sandbox\cso)
+copy /B /Y ..\bin\Debug-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -112,6 +118,9 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
+    <FxCompile>
+      <ObjectFileOutput>../bin/Release-windows-x86_64/topo/cso/%(Filename).cso</ObjectFileOutput>
+    </FxCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -119,7 +128,10 @@
       <ImportLibrary>..\bin\Release-windows-x86_64\Topo\Topo.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>IF EXIST ..\bin\Release-windows-x86_64\Topo\Topo.dll\ (xcopy /Q /E /Y /I ..\bin\Release-windows-x86_64\Topo\Topo.dll ..\bin\Release-windows-x86_64\Sandbox &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Release-windows-x86_64\Topo\Topo.dll ..\bin\Release-windows-x86_64\Sandbox &gt; nul)</Command>
+      <Command>copy /B /Y ..\bin\Release-windows-x86_64\Topo\Topo.dll ..\bin\Release-windows-x86_64\Sandbox
+rmdir /S /Q ..\Sandbox\cso
+IF NOT EXIST ..\Sandbox\cso (mkdir ..\Sandbox\cso)
+copy /B /Y ..\bin\Release-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
@@ -138,6 +150,9 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
+    <FxCompile>
+      <ObjectFileOutput>../bin/Dist-windows-x86_64/topo/cso/%(Filename).cso</ObjectFileOutput>
+    </FxCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -145,15 +160,16 @@
       <ImportLibrary>..\bin\Dist-windows-x86_64\Topo\Topo.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>IF EXIST ..\bin\Dist-windows-x86_64\Topo\Topo.dll\ (xcopy /Q /E /Y /I ..\bin\Dist-windows-x86_64\Topo\Topo.dll ..\bin\Dist-windows-x86_64\Sandbox &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Dist-windows-x86_64\Topo\Topo.dll ..\bin\Dist-windows-x86_64\Sandbox &gt; nul)</Command>
+      <Command>copy /B /Y ..\bin\Dist-windows-x86_64\Topo\Topo.dll ..\bin\Dist-windows-x86_64\Sandbox
+rmdir /S /Q ..\Sandbox\cso
+IF NOT EXIST ..\Sandbox\cso (mkdir ..\Sandbox\cso)
+copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\Topo.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\topo\Application.h" />
-    <ClInclude Include="src\topo\controls\Button.h" />
-    <ClInclude Include="src\topo\controls\Control.h" />
     <ClInclude Include="src\topo\Core.h" />
     <ClInclude Include="src\topo\DeviceResources.h" />
     <ClInclude Include="src\topo\EntryPoint.h" />
@@ -163,6 +179,8 @@
     <ClInclude Include="src\topo\Page.h" />
     <ClInclude Include="src\topo\TopoException.h" />
     <ClInclude Include="src\topo\Window.h" />
+    <ClInclude Include="src\topo\controls\Button.h" />
+    <ClInclude Include="src\topo\controls\Control.h" />
     <ClInclude Include="src\topo\events\MouseButtonEventKeyStates.h" />
     <ClInclude Include="src\topo\rendering\Camera.h" />
     <ClInclude Include="src\topo\rendering\ComputeLayer.h" />
@@ -195,14 +213,14 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\topo\Application.cpp" />
-    <ClCompile Include="src\topo\controls\Button.cpp" />
-    <ClCompile Include="src\topo\controls\Control.cpp" />
     <ClCompile Include="src\topo\DeviceResources.cpp" />
     <ClCompile Include="src\topo\Layout.cpp" />
     <ClCompile Include="src\topo\Log.cpp" />
     <ClCompile Include="src\topo\Page.cpp" />
     <ClCompile Include="src\topo\TopoException.cpp" />
     <ClCompile Include="src\topo\Window.cpp" />
+    <ClCompile Include="src\topo\controls\Button.cpp" />
+    <ClCompile Include="src\topo\controls\Control.cpp" />
     <ClCompile Include="src\topo\events\MouseButtonEventKeyStates.cpp" />
     <ClCompile Include="src\topo\rendering\Camera.cpp" />
     <ClCompile Include="src\topo\rendering\ComputeLayer.cpp" />
@@ -228,31 +246,13 @@
     <ClCompile Include="src\topo\utils\WindowMessageMap.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="src\topo\shaders\ControlPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">Pixel</ShaderType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)cso\%(Filename).cso</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">$(ProjectDir)cso\%(Filename).cso</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)cso\%(Filename).cso</ObjectFileOutput>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
+    <FxCompile Include="src\topo\shaders\Control-ps.hlsl">
+      <ShaderType>Pixel</ShaderType>
+      <ShaderModel>6.4</ShaderModel>
     </FxCompile>
-    <FxCompile Include="src\topo\shaders\ControlVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)cso\%(Filename).cso</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">$(ProjectDir)cso\%(Filename).cso</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)cso\%(Filename).cso</ObjectFileOutput>
+    <FxCompile Include="src\topo\shaders\Control-vs.hlsl">
+      <ShaderType>Vertex</ShaderType>
+      <ShaderModel>6.4</ShaderModel>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -57,7 +57,8 @@ public:
 protected:
 	inline void ReadFileToBlob()
 	{
-		std::wstring w_str = s2ws(m_filename);
+		// Assume that all *.cso files are in a 'cso' directory within the current working directory
+		std::wstring w_str = L"cso/" + s2ws(m_filename);
 		GFX_THROW_INFO(
 			D3DReadFileToBlob(w_str.c_str(), m_blob.ReleaseAndGetAddressOf())
 		);

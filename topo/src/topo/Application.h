@@ -55,12 +55,23 @@ bool Application::LaunchWindow(const WindowProperties& props) noexcept
 				{
 					Window window(props);
 					window.InitializePage<T>();
+					window.PrepareToRun();
 
 					Timer timer{};
 					timer.Reset();
 
 					while (true)
 					{
+						timer.Tick();
+
+						// We MUST call window->Update() BEFORE attempting to process messages
+						// This is because window->Update() will reset the command list so that new commands may be issued.
+						// This is important because processing input may invoke the need to use the command list, but it
+						// would be closed. In this scenario, we would have to queue up those commands for when then command
+						// list is reset. Instead, it is just easier/safer to make sure the command list is reset before
+						// processing input
+						window.Update(m_timer);
+
 						if (this->ApplicationShutdownRequested())
 							break;
 
@@ -71,11 +82,11 @@ bool Application::LaunchWindow(const WindowProperties& props) noexcept
 							return;
 						}
 
-						timer.Tick(); 
-						window.DoFrame(timer);
+						window.Render(m_timer);
+						window.Present();
 					}
-
 				}
+#ifndef TOPO_DIST
 				catch (const topo::TopoException& e)
 				{
 					LOG_ERROR("{0}", e);
@@ -92,6 +103,13 @@ bool Application::LaunchWindow(const WindowProperties& props) noexcept
 					LOG_ERROR("Caught unknown exception");
 					return;
 				}
+#else
+				// We don't do logging in dist builds, so just catch any exception and terminate
+				catch (...)
+				{
+					return;
+				}
+#endif
 			}
 		);
 		return true;

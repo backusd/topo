@@ -11,6 +11,7 @@ int main(int argc, char** argv)
 		auto app = topo::CreateApplication();
 		return app->Run();
 	}
+#ifndef TOPO_DIST
 	catch (const topo::TopoException& e)
 	{
 		LOG_ERROR("{0}", e);
@@ -26,6 +27,14 @@ int main(int argc, char** argv)
 	}
 
 	return 1;
+
+#else
+	// We don't do logging in dist builds, so just catch any exception and terminate
+	catch (...)
+	{
+		return 1;
+	}
+#endif
 }
 
 #endif

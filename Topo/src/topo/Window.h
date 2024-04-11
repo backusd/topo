@@ -222,10 +222,7 @@ LRESULT CALLBACK WindowTemplate<T>::HandleMsgBase(HWND hWnd, UINT msg, WPARAM wP
 class TOPO_API Window : public WindowTemplate<Window>
 {
 public:
-	Window(const WindowProperties& props) : WindowTemplate(props)
-	{
-		m_deviceResources->RunInitializationCommands([this]() { this->InitializeRenderResources(); });
-	}
+	Window(const WindowProperties& props) : WindowTemplate(props) {}
 	Window(const Window&) = delete;
 	Window(Window&&) = delete;
 	Window& operator=(const Window&) = delete;
@@ -240,32 +237,19 @@ public:
 	template<typename T>
 	void InitializePage()
 	{
-		m_initialized = true;
 		m_page = std::make_unique<T>(m_height, m_width);
 		InitializeRenderer();
 	}
 
-	ND constexpr bool Initialized() const noexcept { return m_initialized; }
-
-	void DoFrame(const Timer& timer)
-	{
-		Update(timer);
-		Render(timer);
-		Present();
-	}
-
-	void InitializeRenderResources();
-
-private:
+	void PrepareToRun();
 	void Update(const Timer& timer);
 	void Render(const Timer& timer);
 	void Present();
 
+private:
 	
 	void InitializeRenderer();
 	void Shutdown();
-
-	bool m_initialized = false;
 };
 
 #pragma warning( pop )

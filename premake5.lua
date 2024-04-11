@@ -24,7 +24,9 @@ project "Topo"
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/src/**.hlsl",
+		"%{prj.name}/src/**.hlsli"
 	}
 
 	includedirs
@@ -36,6 +38,17 @@ project "Topo"
 	{
 		"DIRECTX12"
 	}
+
+	shaderobjectfileoutput ("../bin/" .. outputdir .. "/topo/cso/%%(Filename).cso")
+
+	filter { "files:**.hlsli" }
+		flags "ExcludeFromBuild"
+	filter { "files:**.hlsl" }
+		shadermodel "6.4"
+	filter { "files:**-ps.hlsl" }
+		shadertype "Pixel"
+	filter { "files:**-vs.hlsl" }
+		shadertype "Vertex"
 
 	filter "system:windows"
 		cppdialect "C++latest"
@@ -50,7 +63,10 @@ project "Topo"
 
 		postbuildcommands
 		{
-			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox")
+			("{COPYFILE} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox"),
+			("{RMDIR} ../Sandbox/cso"),
+			("{MKDIR} ../Sandbox/cso"),
+			("{COPYFILE} ../bin/" .. outputdir .. "/topo/cso/* ../Sandbox/cso")
 		}
 
 	filter "configurations:Debug"

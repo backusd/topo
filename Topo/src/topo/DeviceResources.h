@@ -49,7 +49,6 @@ public:
 	DeviceResources& operator=(const DeviceResources&) = delete;
 	DeviceResources& operator=(DeviceResources&&) = delete;
 
-	void RunInitializationCommands(std::function<void()> func);
 
 	void OnResize(int height, int width);
 	void FlushCommandQueue();
@@ -81,6 +80,7 @@ public:
 
 
 
+	void PrepareToRun();
 	void Update();
 	void PreRender();
 	void PostRender();
@@ -139,7 +139,7 @@ private:
 
 	// Resources that can be deleted once they are no longer referenced by the GPU
 	std::vector<std::tuple<UINT64, Microsoft::WRL::ComPtr<ID3D12Resource>>> m_resourcesToDelete;
-
+	
 
 #if defined(TOPO_DEBUG)
 public:
