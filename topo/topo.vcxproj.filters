@@ -139,6 +139,7 @@
     </ClInclude>
     <ClInclude Include="src\topo\rendering\AssetManager.h" />
     <ClInclude Include="src\topo\Input.h" />
+    <ClInclude Include="src\topo\rendering\MeshTEST.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -240,6 +241,7 @@
     </ClCompile>
     <ClCompile Include="src\topo\rendering\AssetManager.cpp" />
     <ClCompile Include="src\topo\Input.cpp" />
+    <ClCompile Include="src\topo\rendering\MeshTEST.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\topo\shaders\Control-ps.hlsl">

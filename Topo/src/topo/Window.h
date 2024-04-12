@@ -170,10 +170,8 @@ protected:
 	std::unique_ptr<Renderer> m_renderer;
 	D3D12_VIEWPORT m_viewport;
 	D3D12_RECT m_scissorRect;
-	std::unique_ptr<Shader> m_controlVS = nullptr;
-	std::unique_ptr<Shader> m_controlPS = nullptr;
 	std::unique_ptr<ConstantBufferMapped<PassConstants>>	m_passConstantsBuffer = nullptr;
-	std::shared_ptr<MeshGroup<Vertex>> m_meshGroup = nullptr;
+//	std::shared_ptr<MeshGroup<Vertex>> m_meshGroup = nullptr;
 
 	// Window Data
 	short		m_width;

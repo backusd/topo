@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Application.h"
+#include "rendering/AssetManager.h"
 
 namespace topo
 {
@@ -38,6 +39,10 @@ int Application::Run()
 			{
 				// When the main window is closed, call Terminate to close all open windows
 				TerminateAllChildWindows();
+
+				// Need to manually release all assets held by AssetManager, otherwise, there will
+				// be dangling resources on shutdown
+				AssetManager::Shutdown();
 
 				// if return optional has value, means we're quitting so return exit code
 				return *ecode;

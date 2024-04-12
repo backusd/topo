@@ -42,8 +42,8 @@ private:
 	static inline void SetKeyDownState(KeyCode keyCode, bool isDown) noexcept { return Get().SetKeyDownStateImpl(keyCode, isDown); }
 	static inline void SetMousePosition(float x, float y) noexcept { return Get().SetMousePositionImpl(x, y); }
 
-	void SetKeyDownStateImpl(KeyCode keyCode, bool isDown) noexcept { m_keyDownStates[static_cast<unsigned int>(keyCode)] = isDown; }
-	void SetMousePositionImpl(float x, float y) noexcept { m_mousePosition = { x, y }; }
+	inline void SetKeyDownStateImpl(KeyCode keyCode, bool isDown) noexcept { m_keyDownStates[static_cast<unsigned int>(keyCode)] = isDown; }
+	inline void SetMousePositionImpl(float x, float y) noexcept { m_mousePosition = { x, y }; }
 
 	std::array<bool, 0xFF> m_keyDownStates;
 	std::pair<float, float> m_mousePosition;

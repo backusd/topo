@@ -34,4 +34,10 @@ std::string ws2s(const std::wstring& wstr) noexcept
     );
     return s;
 }
+
+bool ends_with(std::string_view str, std::string_view suffix) noexcept
+{
+    return str.size() >= suffix.size() && 
+        str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0; 
+}
 }

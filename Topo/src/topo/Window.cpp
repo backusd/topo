@@ -405,9 +405,6 @@ void Window::Present()
 
 void Window::InitializeRenderer()
 {
-	m_controlVS = std::make_unique<Shader>("Control-vs.cso");
-	m_controlPS = std::make_unique<Shader>("Control-ps.cso");
-
 	std::vector<Vertex> squareVertices{
 	{{ -0.5f, 0.5f, 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
 	{{ 0.5f, 0.5f, 0.5f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
@@ -416,14 +413,24 @@ void Window::InitializeRenderer()
 	};
 	std::vector<std::uint16_t> squareIndices{ 0, 1, 3, 1, 2, 3 };
 
-	std::vector<std::vector<Vertex>> vertices;
-	vertices.push_back(std::move(squareVertices));
+	Mesh<Vertex> mesh(std::move(squareVertices), std::move(squareIndices));
 
-	std::vector<std::vector<std::uint16_t>> indices;
-	indices.push_back(std::move(squareIndices));
+	std::shared_ptr<MeshGroupBase> meshGroupShared = AssetManager::AddMeshGroup<Vertex>("Vertex", m_deviceResources);
+	MeshGroup<Vertex>* meshGroup = static_cast<MeshGroup<Vertex>*>(meshGroupShared.get());
+	meshGroup->PushBack(mesh);
+//	meshGroup->PushBack(mesh);
 
-	m_meshGroup = std::make_shared<MeshGroup<Vertex>>(m_deviceResources, vertices, indices);
-	SET_DEBUG_NAME_PTR(m_meshGroup, "MeshGroup");
+
+
+
+//	std::vector<std::vector<Vertex>> vertices;
+//	vertices.push_back(std::move(squareVertices));
+//
+//	std::vector<std::vector<std::uint16_t>> indices;
+//	indices.push_back(std::move(squareIndices));
+//
+//	m_meshGroup = std::make_shared<MeshGroup<Vertex>>(m_deviceResources, vertices, indices);
+//	SET_DEBUG_NAME_PTR(m_meshGroup, "MeshGroup");
 
 
 	constexpr unsigned int perPassCBRegister = 0;
@@ -448,21 +455,16 @@ void Window::InitializeRenderer()
 			m_passConstantsBuffer->CopyData(frameIndex, pc);
 		};
 
-	std::unique_ptr<InputLayout> inputLayout = std::make_unique<InputLayout>(
-		std::vector<D3D12_INPUT_ELEMENT_DESC>{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		}
-	);
-	SET_DEBUG_NAME_PTR(inputLayout, "Input Layout");
 
+	const Shader& vs = AssetManager::GetShader("Control-vs.cso");
+	const Shader& ps = AssetManager::GetShader("Control-ps.cso");
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
 	ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-	psoDesc.InputLayout = inputLayout->GetInputLayoutDesc();
+	psoDesc.InputLayout = vs.GetInputLayoutDesc();
 	psoDesc.pRootSignature = rootSig1->Get();
-	psoDesc.VS = m_controlVS->GetShaderByteCode();
-	psoDesc.PS = m_controlPS->GetShaderByteCode();
+	psoDesc.VS = vs.GetShaderByteCode();
+	psoDesc.PS = ps.GetShaderByteCode();
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	psoDesc.RasterizerState.FrontCounterClockwise = false;
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
@@ -478,7 +480,7 @@ void Window::InitializeRenderer()
 	psoDesc.DepthStencilState.DepthEnable = FALSE; 
 	psoDesc.DepthStencilState.StencilEnable = FALSE; 
 
-	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_deviceResources, m_meshGroup, psoDesc, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_deviceResources, meshGroupShared, psoDesc, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	SET_DEBUG_NAME(layer1, "Render Pass Layer #1");
 
 	RenderItem& squareRI = layer1.EmplaceBackRenderItem();
