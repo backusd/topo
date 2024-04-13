@@ -418,7 +418,7 @@ void Window::InitializeRenderer()
 	std::shared_ptr<MeshGroupBase> meshGroupShared = AssetManager::AddMeshGroup<Vertex>("Vertex", m_deviceResources);
 	MeshGroup<Vertex>* meshGroup = static_cast<MeshGroup<Vertex>*>(meshGroupShared.get());
 	meshGroup->PushBack(mesh);
-//	meshGroup->PushBack(mesh);
+	meshGroup->PushBack(mesh);
 
 
 

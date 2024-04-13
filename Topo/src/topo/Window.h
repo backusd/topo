@@ -36,11 +36,7 @@ namespace topo
 
 
 
-#ifdef TOPO_PLATFORM_WINDOWS
-#pragma warning( push )
-#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
-#endif
-struct TOPO_API WindowProperties
+struct WindowProperties
 {
 	constexpr WindowProperties(std::string_view title = "Topo Window", unsigned int width = 1280, unsigned int height = 720) noexcept :
 		Title(title), Width(width), Height(height)
@@ -50,9 +46,6 @@ struct TOPO_API WindowProperties
 	unsigned int Width = 1280;
 	unsigned int Height = 720;
 };
-#ifdef TOPO_PLATFORM_WINDOWS
-#pragma warning( pop )
-#endif
 
 #ifdef TOPO_PLATFORM_WINDOWS
 
@@ -214,10 +207,7 @@ LRESULT CALLBACK WindowTemplate<T>::HandleMsgBase(HWND hWnd, UINT msg, WPARAM wP
 // =======================================================================
 // Window
 // =======================================================================
-#pragma warning( push )
-#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
-
-class TOPO_API Window : public WindowTemplate<Window>
+class Window : public WindowTemplate<Window>
 {
 public:
 	Window(const WindowProperties& props) : WindowTemplate(props) {}
@@ -250,7 +240,6 @@ private:
 	void Shutdown();
 };
 
-#pragma warning( pop )
 
 #else
 #error Only Supporting Windows

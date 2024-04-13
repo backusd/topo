@@ -7,9 +7,8 @@
 
 namespace topo
 {
-#pragma warning( push )
-#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
-class TOPO_API TopoException {
+class TopoException 
+{
 public:
     TopoException(const std::string& errorMessage, const std::source_location& loc = std::source_location::current(), std::stacktrace trace = std::stacktrace::current()) :
         m_errorMessage(errorMessage),
@@ -35,13 +34,10 @@ protected:
     const std::source_location m_location;
     const std::stacktrace m_stacktrace;
 };
-#pragma warning( pop )
 
 
-#pragma warning( push )
-#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
 template<HasFormatterSpecialization DATA_T>
-class TOPO_API TopoExceptionWithData : public TopoException
+class TopoExceptionWithData : public TopoException
 {
 public:
     TopoExceptionWithData(const std::string& errorMessage, const DATA_T& data, const std::source_location& loc = std::source_location::current(), std::stacktrace trace = std::stacktrace::current()) :
@@ -70,7 +66,7 @@ public:
 private:
     DATA_T m_data;
 };
-#pragma warning( pop )
+
 }
 
 template <>

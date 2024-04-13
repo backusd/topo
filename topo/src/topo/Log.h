@@ -3,7 +3,7 @@
 
 namespace topo
 {
-	TOPO_API std::string app_current_time_and_date() noexcept;
+	std::string app_current_time_and_date() noexcept;
 	
 	// CORE Logging ========================================================================================
 

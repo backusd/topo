@@ -14,8 +14,10 @@ startproject "Sandbox"
 
 project "Topo"
 	location "Topo"
-	kind "SharedLib"
+	kind "StaticLib"
 	language "C++"
+	cppdialect "C++latest"
+	staticruntime "on"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")	
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -56,19 +58,15 @@ project "Topo"
 		shaderoptions { "/Qembed_debug" }
 
 	filter "system:windows"
-		cppdialect "C++latest"
-		staticruntime "Off"
 		systemversion "latest"
 
 		defines
 		{
-			"TOPO_PLATFORM_WINDOWS",
-			"TOPO_BUILD_DLL"
+			"TOPO_PLATFORM_WINDOWS"
 		}
 
 		postbuildcommands
 		{
-			("{COPYFILE} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox"),
 			("{RMDIR} ../Sandbox/cso"),
 			("{MKDIR} ../Sandbox/cso"),
 			("{COPYFILE} ../bin/" .. outputdir .. "/topo/cso/* ../Sandbox/cso")
@@ -80,15 +78,15 @@ project "Topo"
 			"TOPO_DEBUG",
 			"TOPO_ENABLE_ASSERTS"
 		}
-		symbols "On"
+		symbols "on"
 
 	filter "configurations:Release"
 		defines "TOPO_RELEASE"
-		optimize "On"
+		optimize "on"
 
 	filter "configurations:Dist"
 		defines "TOPO_DIST"
-		optimize "On"
+		optimize "on"
 
 
 
@@ -96,6 +94,8 @@ project "Sandbox"
 	location "Sandbox"
 	kind "ConsoleApp"
 	language "C++"
+	cppdialect "C++latest"
+	staticruntime "on"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")	
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -122,23 +122,24 @@ project "Sandbox"
 	}
 	
 	filter "system:windows"
-		cppdialect "C++latest"
-		staticruntime "Off"
 		systemversion "latest"
-
 		defines
 		{
 			"TOPO_PLATFORM_WINDOWS"
 		}
 
 	filter "configurations:Debug"
-		defines "TOPO_DEBUG"
-		symbols "On"
+		defines 
+		{
+			"TOPO_DEBUG",
+			"TOPO_ENABLE_ASSERTS"
+		}
+		symbols "on"
 
 	filter "configurations:Release"
 		defines "TOPO_RELEASE"
-		optimize "On"
+		optimize "on"
 
 	filter "configurations:Dist"
 		defines "TOPO_DIST"
-		optimize "On"
+		optimize "on"

@@ -35,6 +35,9 @@
     <ClInclude Include="src\topo\EntryPoint.h">
       <Filter>topo</Filter>
     </ClInclude>
+    <ClInclude Include="src\topo\Input.h">
+      <Filter>topo</Filter>
+    </ClInclude>
     <ClInclude Include="src\topo\KeyCode.h">
       <Filter>topo</Filter>
     </ClInclude>
@@ -62,6 +65,9 @@
     <ClInclude Include="src\topo\events\MouseButtonEventKeyStates.h">
       <Filter>topo\events</Filter>
     </ClInclude>
+    <ClInclude Include="src\topo\rendering\AssetManager.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\topo\rendering\Camera.h">
       <Filter>topo\rendering</Filter>
     </ClInclude>
@@ -78,6 +84,9 @@
       <Filter>topo\rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\topo\rendering\MeshGroup.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\MeshTEST.h">
       <Filter>topo\rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\topo\rendering\RenderItem.h">
@@ -137,9 +146,6 @@
     <ClInclude Include="src\topo\utils\d3dx12.h">
       <Filter>topo\utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\topo\rendering\AssetManager.h" />
-    <ClInclude Include="src\topo\Input.h" />
-    <ClInclude Include="src\topo\rendering\MeshTEST.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -147,6 +153,9 @@
       <Filter>topo</Filter>
     </ClCompile>
     <ClCompile Include="src\topo\DeviceResources.cpp">
+      <Filter>topo</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\Input.cpp">
       <Filter>topo</Filter>
     </ClCompile>
     <ClCompile Include="src\topo\Layout.cpp">
@@ -173,6 +182,9 @@
     <ClCompile Include="src\topo\events\MouseButtonEventKeyStates.cpp">
       <Filter>topo\events</Filter>
     </ClCompile>
+    <ClCompile Include="src\topo\rendering\AssetManager.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\topo\rendering\Camera.cpp">
       <Filter>topo\rendering</Filter>
     </ClCompile>
@@ -186,6 +198,9 @@
       <Filter>topo\rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\topo\rendering\MeshGroup.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\MeshTEST.cpp">
       <Filter>topo\rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\topo\rendering\RenderItem.cpp">
@@ -239,9 +254,6 @@
     <ClCompile Include="src\topo\utils\WindowMessageMap.cpp">
       <Filter>topo\utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\topo\rendering\AssetManager.cpp" />
-    <ClCompile Include="src\topo\Input.cpp" />
-    <ClCompile Include="src\topo\rendering\MeshTEST.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\topo\shaders\Control-ps.hlsl">

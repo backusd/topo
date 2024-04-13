@@ -5,9 +5,7 @@
 
 namespace topo
 {
-#pragma warning( push )
-#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
-class TOPO_API Button : public Control
+class Button : public Control
 {
 public:
 	Button();
@@ -27,5 +25,5 @@ private:
 private:
 	static bool m_isInitialized;
 };
-#pragma warning ( pop )
+
 }

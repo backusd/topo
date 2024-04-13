@@ -4,9 +4,7 @@
 
 namespace topo
 {
-#pragma warning( push )
-#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
-class TOPO_API Input
+class Input
 {
 public:
 	static inline bool IsKeyDown(KeyCode keyCode) noexcept { return Get().IsKeyDownImpl(keyCode); }
@@ -48,5 +46,5 @@ private:
 	std::array<bool, 0xFF> m_keyDownStates;
 	std::pair<float, float> m_mousePosition;
 };
-#pragma warning( pop )
+
 }

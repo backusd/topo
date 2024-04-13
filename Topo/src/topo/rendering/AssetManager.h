@@ -6,9 +6,7 @@
 
 namespace topo
 {
-#pragma warning( push )
-#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
-class TOPO_API AssetManager
+class AssetManager
 {
 	friend class Application;
 
@@ -94,5 +92,5 @@ private:
 	std::unordered_map<std::string, std::shared_ptr<MeshGroupBase>> m_meshGroups;
 	std::unordered_map<std::string, Shader> m_shaders;
 };
-#pragma warning( pop )
+
 }

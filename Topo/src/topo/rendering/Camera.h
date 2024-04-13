@@ -8,9 +8,7 @@ namespace topo
 {
 #ifdef DIRECTX12
 
-#pragma warning( push )
-#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
-class TOPO_API Camera
+class Camera
 {
 public:
 	Camera() noexcept;
@@ -169,7 +167,7 @@ private:
 	bool m_isInConstantRotationClockwise = false;
 	bool m_isInConstantRotationCounterClockwise = false;
 };
-#pragma warning( pop )
+
 
 
 #endif

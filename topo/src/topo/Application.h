@@ -8,9 +8,7 @@
 
 namespace topo
 {
-#pragma warning( push )
-#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
-class TOPO_API Application
+class Application
 {
 public:
 	Application(const WindowProperties& mainWindowProperties) noexcept;
@@ -126,7 +124,6 @@ bool Application::LaunchWindow(const WindowProperties& props) noexcept
 		return false;
 	}
 }
-#pragma warning( pop )
 
 std::unique_ptr<Application> CreateApplication();
 }

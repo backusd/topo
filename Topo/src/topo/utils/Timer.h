@@ -3,7 +3,7 @@
 
 namespace topo
 {
-class TOPO_API Timer
+class Timer
 {
 public:
 	Timer();

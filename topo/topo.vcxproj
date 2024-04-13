@@ -23,19 +23,19 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
@@ -54,36 +54,33 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
     <OutDir>..\bin\Debug-windows-x86_64\Topo\</OutDir>
     <IntDir>..\bin-int\Debug-windows-x86_64\Topo\</IntDir>
     <TargetName>Topo</TargetName>
-    <TargetExt>.dll</TargetExt>
+    <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\Release-windows-x86_64\Topo\</OutDir>
     <IntDir>..\bin-int\Release-windows-x86_64\Topo\</IntDir>
     <TargetName>Topo</TargetName>
-    <TargetExt>.dll</TargetExt>
+    <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
-    <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\Dist-windows-x86_64\Topo\</OutDir>
     <IntDir>..\bin-int\Dist-windows-x86_64\Topo\</IntDir>
     <TargetName>Topo</TargetName>
-    <TargetExt>.dll</TargetExt>
+    <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>DIRECTX12;TOPO_PLATFORM_WINDOWS;TOPO_BUILD_DLL;TOPO_DEBUG;TOPO_ENABLE_ASSERTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DIRECTX12;TOPO_PLATFORM_WINDOWS;TOPO_DEBUG;TOPO_ENABLE_ASSERTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
@@ -94,11 +91,9 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ImportLibrary>..\bin\Debug-windows-x86_64\Topo\Topo.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>copy /B /Y ..\bin\Debug-windows-x86_64\Topo\Topo.dll ..\bin\Debug-windows-x86_64\Sandbox
-rmdir /S /Q ..\Sandbox\cso
+      <Command>rmdir /S /Q ..\Sandbox\cso
 IF NOT EXIST ..\Sandbox\cso (mkdir ..\Sandbox\cso)
 copy /B /Y ..\bin\Debug-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     </PostBuildEvent>
@@ -108,14 +103,14 @@ copy /B /Y ..\bin\Debug-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>DIRECTX12;TOPO_PLATFORM_WINDOWS;TOPO_BUILD_DLL;TOPO_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DIRECTX12;TOPO_PLATFORM_WINDOWS;TOPO_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
@@ -126,11 +121,9 @@ copy /B /Y ..\bin\Debug-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <ImportLibrary>..\bin\Release-windows-x86_64\Topo\Topo.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>copy /B /Y ..\bin\Release-windows-x86_64\Topo\Topo.dll ..\bin\Release-windows-x86_64\Sandbox
-rmdir /S /Q ..\Sandbox\cso
+      <Command>rmdir /S /Q ..\Sandbox\cso
 IF NOT EXIST ..\Sandbox\cso (mkdir ..\Sandbox\cso)
 copy /B /Y ..\bin\Release-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     </PostBuildEvent>
@@ -140,14 +133,14 @@ copy /B /Y ..\bin\Release-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>DIRECTX12;TOPO_PLATFORM_WINDOWS;TOPO_BUILD_DLL;TOPO_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DIRECTX12;TOPO_PLATFORM_WINDOWS;TOPO_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
@@ -158,11 +151,9 @@ copy /B /Y ..\bin\Release-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <ImportLibrary>..\bin\Dist-windows-x86_64\Topo\Topo.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>copy /B /Y ..\bin\Dist-windows-x86_64\Topo\Topo.dll ..\bin\Dist-windows-x86_64\Sandbox
-rmdir /S /Q ..\Sandbox\cso
+      <Command>rmdir /S /Q ..\Sandbox\cso
 IF NOT EXIST ..\Sandbox\cso (mkdir ..\Sandbox\cso)
 copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     </PostBuildEvent>
@@ -179,19 +170,19 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClInclude Include="src\topo\Layout.h" />
     <ClInclude Include="src\topo\Log.h" />
     <ClInclude Include="src\topo\Page.h" />
-    <ClInclude Include="src\topo\rendering\AssetManager.h" />
-    <ClInclude Include="src\topo\rendering\MeshTEST.h" />
     <ClInclude Include="src\topo\TopoException.h" />
     <ClInclude Include="src\topo\Window.h" />
     <ClInclude Include="src\topo\controls\Button.h" />
     <ClInclude Include="src\topo\controls\Control.h" />
     <ClInclude Include="src\topo\events\MouseButtonEventKeyStates.h" />
+    <ClInclude Include="src\topo\rendering\AssetManager.h" />
     <ClInclude Include="src\topo\rendering\Camera.h" />
     <ClInclude Include="src\topo\rendering\ComputeLayer.h" />
     <ClInclude Include="src\topo\rendering\ConstantBuffer.h" />
     <ClInclude Include="src\topo\rendering\DescriptorVector.h" />
     <ClInclude Include="src\topo\rendering\InputLayout.h" />
     <ClInclude Include="src\topo\rendering\MeshGroup.h" />
+    <ClInclude Include="src\topo\rendering\MeshTEST.h" />
     <ClInclude Include="src\topo\rendering\RenderItem.h" />
     <ClInclude Include="src\topo\rendering\RenderPass.h" />
     <ClInclude Include="src\topo\rendering\RenderPassLayer.h" />
@@ -222,18 +213,18 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClCompile Include="src\topo\Layout.cpp" />
     <ClCompile Include="src\topo\Log.cpp" />
     <ClCompile Include="src\topo\Page.cpp" />
-    <ClCompile Include="src\topo\rendering\AssetManager.cpp" />
-    <ClCompile Include="src\topo\rendering\MeshTEST.cpp" />
     <ClCompile Include="src\topo\TopoException.cpp" />
     <ClCompile Include="src\topo\Window.cpp" />
     <ClCompile Include="src\topo\controls\Button.cpp" />
     <ClCompile Include="src\topo\controls\Control.cpp" />
     <ClCompile Include="src\topo\events\MouseButtonEventKeyStates.cpp" />
+    <ClCompile Include="src\topo\rendering\AssetManager.cpp" />
     <ClCompile Include="src\topo\rendering\Camera.cpp" />
     <ClCompile Include="src\topo\rendering\ComputeLayer.cpp" />
     <ClCompile Include="src\topo\rendering\DescriptorVector.cpp" />
     <ClCompile Include="src\topo\rendering\InputLayout.cpp" />
     <ClCompile Include="src\topo\rendering\MeshGroup.cpp" />
+    <ClCompile Include="src\topo\rendering\MeshTEST.cpp" />
     <ClCompile Include="src\topo\rendering\RenderItem.cpp" />
     <ClCompile Include="src\topo\rendering\RenderPass.cpp" />
     <ClCompile Include="src\topo\rendering\RenderPassLayer.cpp" />
