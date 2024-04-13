@@ -11,26 +11,26 @@ namespace topo
 // Defines a subrange of geometry in a MeshGeometry. This is for when multiple
 // geometries are stored in one vertex and index buffer. It provides the offsets
 // and data needed to draw a subset of geometry stores in the vertex and index buffers
-struct SubmeshGeometry
+struct MeshDescriptor
 {
-	SubmeshGeometry() = default;
-	SubmeshGeometry(UINT indexCount, UINT startIndexLocation, INT baseVertexLocation, const DirectX::BoundingBox& boundingBox, const DirectX::BoundingSphere& boundingSphere) noexcept :
+	MeshDescriptor() = default;
+	MeshDescriptor(UINT indexCount, UINT startIndexLocation, INT baseVertexLocation, UINT vertexCount, const DirectX::BoundingBox& boundingBox, const DirectX::BoundingSphere& boundingSphere) noexcept :
 		IndexCount(indexCount), StartIndexLocation(startIndexLocation), BaseVertexLocation(baseVertexLocation),
-		Bounds(boundingBox), Sphere(boundingSphere)
+		VertexCount(vertexCount), Bounds(boundingBox), Sphere(boundingSphere)
 	{}
+	MeshDescriptor(const MeshDescriptor&) = default;
+	MeshDescriptor(MeshDescriptor&&) noexcept = default;
+	MeshDescriptor& operator=(const MeshDescriptor&) = default;
+	MeshDescriptor& operator=(MeshDescriptor&&) noexcept = default;
 
 	UINT IndexCount = 0;
 	UINT StartIndexLocation = 0;
 	INT  BaseVertexLocation = 0;
+	UINT VertexCount = 0;
 
 	// Bounding box and sphere of the geometry defined by this submesh. 
 	DirectX::BoundingBox Bounds = {};
 	DirectX::BoundingSphere Sphere = {};
-};
-
-struct MeshHandle
-{
-
 };
 
 template<typename T>
@@ -84,7 +84,7 @@ private:
 };
 
 template<typename T>
-	requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
+requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
 void Mesh<T>::ComputeBounds() noexcept
 {
 	using namespace DirectX;
@@ -132,6 +132,26 @@ public:
 	{}
 	MeshGroupBase(MeshGroupBase&& rhs) noexcept;
 	MeshGroupBase& operator=(MeshGroupBase&& rhs) noexcept;
+	MeshGroupBase(const MeshGroupBase& rhs) noexcept :
+		m_deviceResources(rhs.m_deviceResources),
+		m_vertexBufferGPU(nullptr),
+		m_indexBufferGPU(nullptr),
+		m_vertexBufferView(rhs.m_vertexBufferView),
+		m_indexBufferView(rhs.m_indexBufferView),
+		m_submeshes(rhs.m_submeshes),
+		m_movedFrom(false)
+	{}
+	MeshGroupBase& operator=(const MeshGroupBase& rhs) noexcept
+	{
+		m_deviceResources = rhs.m_deviceResources;
+		m_vertexBufferGPU = nullptr;
+		m_indexBufferGPU = nullptr;
+		m_vertexBufferView = rhs.m_vertexBufferView;
+		m_indexBufferView = rhs.m_indexBufferView;
+		m_submeshes = rhs.m_submeshes;
+		m_movedFrom = false;
+		return *this;
+	}
 	inline virtual ~MeshGroupBase() noexcept { CleanUp(); }
 
 	inline void Bind(ID3D12GraphicsCommandList* commandList) const
@@ -140,12 +160,11 @@ public:
 		GFX_THROW_INFO_ONLY(commandList->IASetIndexBuffer(&m_indexBufferView));
 	}
 
-	ND inline const SubmeshGeometry& GetSubmesh(unsigned int index) const noexcept { return m_submeshes[index]; }
+	ND inline const MeshDescriptor& GetSubmesh(unsigned int index) const noexcept { return m_submeshes[index]; }
 	inline virtual void Update(int frameIndex) noexcept {}
 
 protected:
 	ND Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(const void* initData, UINT64 byteSize) const;
-	void UpdateBuffer(ID3D12Resource* buffer, const void* initData, UINT64 byteSize) const;
 	inline void CleanUp() noexcept
 	{
 		// If the MeshGroup is being destructed because it was moved from, then we don't want to delete the resources
@@ -168,14 +187,10 @@ protected:
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView = { 0, 0, 0 };
 	D3D12_INDEX_BUFFER_VIEW m_indexBufferView = { 0, 0, DXGI_FORMAT_R16_UINT };
 
-	std::vector<SubmeshGeometry> m_submeshes;
+	std::vector<MeshDescriptor> m_submeshes;
 
 	bool m_movedFrom = false;
 
-private:
-	// There is too much state to worry about copying, so just delete copy operations until we find a good use case
-	MeshGroupBase(const MeshGroupBase&) noexcept = delete;
-	MeshGroupBase& operator=(const MeshGroupBase&) noexcept = delete;
 
 
 	// In DIST builds, we don't name the object
@@ -194,7 +209,6 @@ protected:
 	std::string m_name;
 #endif
 };
-
 
 // ============================================================================================
 // MeshGroup 
@@ -219,14 +233,41 @@ public:
 		m_indices = std::move(rhs.m_indices);
 		return *this;
 	}
+	inline MeshGroup(const MeshGroup& rhs) :
+		MeshGroupBase(rhs),
+		m_vertices(rhs.m_vertices),
+		m_indices(rhs.m_indices)
+	{
+		FinalizePushBack(true);
+	}
+	inline MeshGroup& operator=(const MeshGroup& rhs)
+	{
+		MeshGroupBase::operator=(rhs);
+
+		bool previouslyEmpty = m_vertices.size() == 0;
+
+		m_vertices = rhs.m_vertices;
+		m_indices = rhs.m_indices;
+
+		FinalizePushBack(previouslyEmpty);
+		return *this;
+	}
+
+	MeshGroup<T> CopySubset(unsigned int indexOfMeshToCopy);
+	MeshGroup<T> CopySubset(std::span<unsigned int> indicesOfMeshesToCopy);
+
 	inline virtual ~MeshGroup() noexcept override { CleanUp(); }
 
-	MeshHandle PushBack(const Mesh<T>& mesh);
+	// Return the index for the mesh in the group
+	unsigned int PushBack(const Mesh<T>& mesh);
+	unsigned int PushBack(Mesh<T>&& mesh);
+	std::vector<unsigned int> PushBack(const std::vector<Mesh<T>>& meshes);
+	std::vector<unsigned int> PushBack(std::vector<Mesh<T>>&& meshes);
 
 private:
-	// There is too much state to worry about copying, so just delete copy operations until we find a good use case
-	MeshGroup(const MeshGroup&) noexcept = delete;
-	MeshGroup& operator=(const MeshGroup&) noexcept = delete;
+	void PushBackImpl(const Mesh<T>& mesh);
+	void PushBackImpl(Mesh<T>&& mesh);
+	void FinalizePushBack(bool previouslyEmpty);
 
 	// System memory copies. 
 	std::vector<T> m_vertices;
@@ -235,265 +276,164 @@ private:
 
 template<typename T>
 requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
-MeshHandle MeshGroup<T>::PushBack(const Mesh<T>& mesh)
+unsigned int MeshGroup<T>::PushBack(const Mesh<T>& mesh)
 {
-	using namespace DirectX;
+	bool previouslyEmpty = m_vertices.size() == 0;
+
+	PushBackImpl(mesh);
+	FinalizePushBack(previouslyEmpty);
+
+	return static_cast<unsigned int>(m_submeshes.size() - 1);
+}
+
+template<typename T>
+requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
+unsigned int MeshGroup<T>::PushBack(Mesh<T>&& mesh)
+{
+	bool previouslyEmpty = m_submeshes.size() == 0;
+
+	PushBackImpl(mesh);
+	FinalizePushBack(previouslyEmpty);
+
+	return static_cast<unsigned int>(m_submeshes.size() - 1);
+}
+
+template<typename T>
+requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
+std::vector<unsigned int> MeshGroup<T>::PushBack(const std::vector<Mesh<T>>& meshes)
+{
+	std::vector<unsigned int> ret;
+	ret.reserve(meshes.size());
 
 	bool previouslyEmpty = m_vertices.size() == 0;
 
-	// Create the new submesh structure for the mesh we are about to add
-	m_submeshes.emplace_back(static_cast<UINT>(mesh.m_indices.size()), static_cast<UINT>(m_indices.size()),
-		static_cast<INT>(m_vertices.size()), mesh.m_bounds, mesh.m_sphere);
+	// reserve space for all new vertices/indices
+	size_t v_count = m_vertices.size();
+	size_t i_count = m_indices.size();
+	for (const auto& mesh : meshes)
+	{
+		v_count += mesh.m_vertices.size();
+		i_count += mesh.m_indices.size();
+	}
+	m_vertices.reserve(v_count);
+	m_indices.reserve(i_count);
+	
+	unsigned int iii = static_cast<unsigned int>(m_submeshes.size());
+	for (const auto& mesh : meshes)
+	{
+		ret.push_back(iii++);
+		PushBackImpl(mesh);
+	}
 
-	// Reserve space and add new vertices
+	FinalizePushBack(previouslyEmpty);
+
+	return ret;
+}
+
+template<typename T>
+requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
+std::vector<unsigned int> MeshGroup<T>::PushBack(std::vector<Mesh<T>>&& meshes)
+{
+	std::vector<unsigned int> ret;
+	ret.reserve(meshes.size());
+
+	bool previouslyEmpty = m_vertices.size() == 0;
+
+	// reserve space for all new vertices/indices
+	size_t v_count = m_vertices.size();
+	size_t i_count = m_indices.size();
+	for (const auto& mesh : meshes)
+	{
+		v_count += mesh.m_vertices.size();
+		i_count += mesh.m_vertices.size();
+	}
+	m_vertices.reserve(v_count);
+	m_indices.reserve(i_count);
+
+	unsigned int iii = static_cast<unsigned int>(m_submeshes.size());
+	for (auto& mesh : meshes)
+	{
+		ret.push_back(iii++);
+		PushBackImpl(std::move(mesh));
+	}
+
+	FinalizePushBack(previouslyEmpty);
+
+	return ret;
+}
+
+template<typename T>
+requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
+void MeshGroup<T>::PushBackImpl(const Mesh<T>& mesh)
+{
+	bool previouslyEmpty = m_vertices.size() == 0;
+
+	// Create the new submesh structure for the mesh we are about to add
+	m_submeshes.emplace_back(
+		static_cast<UINT>(mesh.m_indices.size()), 
+		static_cast<UINT>(m_indices.size()),
+		static_cast<INT>(m_vertices.size()), 
+		static_cast<UINT>(mesh.m_vertices.size()),
+		mesh.m_bounds, mesh.m_sphere);
+
+	// Reserve space and add new vertices/indices
 	m_vertices.reserve(m_vertices.size() + mesh.m_vertices.size());
 	m_vertices.insert(m_vertices.end(), mesh.m_vertices.begin(), mesh.m_vertices.end());
-
-	// Reserve space and add new indices
 	m_indices.reserve(m_indices.size() + mesh.m_indices.size());
 	m_indices.insert(m_indices.end(), mesh.m_indices.begin(), mesh.m_indices.end());
+}
 
-	// Compute the vertex/index buffer view data
-	m_vertexBufferView.StrideInBytes = sizeof(T);
-	m_vertexBufferView.SizeInBytes = static_cast<UINT>(m_vertices.size()) * sizeof(T);
-	m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
-	m_indexBufferView.SizeInBytes = static_cast<UINT>(m_indices.size()) * sizeof(std::uint16_t);
+template<typename T>
+requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
+void MeshGroup<T>::PushBackImpl(Mesh<T>&& mesh)
+{
+	bool previouslyEmpty = m_vertices.size() == 0;
 
-	// If the buffer was previously empty, then we need to create them. Otherwise, we can just copy
-	// in the new data to replace the old data
+	// Create the new submesh structure for the mesh we are about to add
+	m_submeshes.emplace_back(
+		static_cast<UINT>(mesh.m_indices.size()),
+		static_cast<UINT>(m_indices.size()),
+		static_cast<INT>(m_vertices.size()),
+		static_cast<UINT>(mesh.m_vertices.size()),
+		mesh.m_bounds, mesh.m_sphere);
+
+	// Add new vertices/indices. Because we are being passed an r-value, if we are previously empty,
+	// we can just move the data
 	if (previouslyEmpty)
 	{
-		m_vertexBufferGPU = CreateDefaultBuffer(m_vertices.data(), m_vertexBufferView.SizeInBytes);
-		m_indexBufferGPU = CreateDefaultBuffer(m_indices.data(), m_indexBufferView.SizeInBytes);
+		ASSERT(m_vertices.size() == 0, "Cannot be previously empty but have vertices");
+		ASSERT(m_indices.size() == 0, "Cannot be previously empty but have indices");
+
+		m_vertices = std::move(mesh.m_vertices);
+		m_indices = std::move(mesh.m_indices);
 	}
 	else
 	{
-		// TODO: IMPROVEMENT!! Right now we send all vertex/index data to the GPU every time we want
-		// to update the MeshGroup. Instead we should only be sending the new data
-		UpdateBuffer(m_vertexBufferGPU.Get(), m_vertices.data(), m_vertexBufferView.SizeInBytes);
-		UpdateBuffer(m_indexBufferGPU.Get(), m_indices.data(), m_indexBufferView.SizeInBytes);
+		m_vertices.reserve(m_vertices.size() + mesh.m_vertices.size());
+		m_vertices.insert(m_vertices.end(), mesh.m_vertices.begin(), mesh.m_vertices.end());
+		m_indices.reserve(m_indices.size() + mesh.m_indices.size());
+		m_indices.insert(m_indices.end(), mesh.m_indices.begin(), mesh.m_indices.end());
 	}
-
-	// Get the buffer locations
-	m_vertexBufferView.BufferLocation = m_vertexBufferGPU->GetGPUVirtualAddress();
-	m_indexBufferView.BufferLocation = m_indexBufferGPU->GetGPUVirtualAddress();
-
-#ifndef TOPO_DIST
-	SetDebugName(m_name);
-#endif
-
-	return MeshHandle();
 }
 
-
-
-/*
-// Defines a subrange of geometry in a MeshGeometry.  This is for when multiple
-// geometries are stored in one vertex and index buffer.  It provides the offsets
-// and data needed to draw a subset of geometry stores in the vertex and index 
-// buffers so that we can implement the technique described by Figure 6.3.
-struct SubmeshGeometry
-{
-	UINT IndexCount = 0;
-	UINT StartIndexLocation = 0;
-	INT  BaseVertexLocation = 0;
-
-	// Bounding box and sphere of the geometry defined by this submesh. 
-	DirectX::BoundingBox Bounds;
-	DirectX::BoundingSphere Sphere;
-};
-
-//
-// MeshGroupBase ======================================================================================================
-//
-class MeshGroupBase
-{
-public:
-	inline MeshGroupBase(std::shared_ptr<DeviceResources> deviceResources) noexcept : 
-		m_deviceResources(deviceResources) 
-	{}
-	MeshGroupBase(MeshGroupBase&& rhs) noexcept;
-	MeshGroupBase& operator=(MeshGroupBase&& rhs) noexcept;
-	inline virtual ~MeshGroupBase() noexcept {}
-
-	inline void Bind(ID3D12GraphicsCommandList* commandList) const
-	{
-		GFX_THROW_INFO_ONLY(commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView));
-		GFX_THROW_INFO_ONLY(commandList->IASetIndexBuffer(&m_indexBufferView));
-	}
-
-	ND inline const SubmeshGeometry& GetSubmesh(unsigned int index) const noexcept { return m_submeshes[index]; }
-	inline virtual void Update(int frameIndex) noexcept {}
-
-protected:
-	ND Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(const void* initData, UINT64 byteSize) const;
-	inline void CleanUp() noexcept
-	{
-		// If the MeshGroup is being destructed because it was moved from, then we don't want to delete the resources
-		// because they now belong to a new MeshGroup object. However, if the object simply went out of scope or was
-		// intentially deleted, then the resources are no longer necessary and should be delayed deleted
-		if (!m_movedFrom)
-		{
-			m_deviceResources->DelayedDelete(m_vertexBufferGPU);
-			m_deviceResources->DelayedDelete(m_indexBufferGPU);
-		}
-	}
-
-	std::shared_ptr<DeviceResources> m_deviceResources;
-
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_vertexBufferGPU = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_indexBufferGPU = nullptr;
-
-	// Keep track of views for the two buffers
-	// NOTE: All values are dummy values except the DXGI_FORMAT value for the index buffer view
-	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView = { 0, 0, 0 };
-	D3D12_INDEX_BUFFER_VIEW m_indexBufferView = { 0, 0, DXGI_FORMAT_R16_UINT };
-
-	std::vector<SubmeshGeometry> m_submeshes;
-
-	bool m_movedFrom = false;
-
-private:
-	// There is too much state to worry about copying, so just delete copy operations until we find a good use case
-	MeshGroupBase(const MeshGroupBase&) noexcept = delete;
-	MeshGroupBase& operator=(const MeshGroupBase&) noexcept = delete;
-
-
-// In DIST builds, we don't name the object
-#ifndef TOPO_DIST
-public:
-	void SetDebugName(std::string_view name) noexcept
-	{
-		m_name = name;
-		std::string resource1Name = m_name + "-VertexBufferGPU";
-		std::string resource2Name = m_name + "-IndexBufferGPU";
-		m_vertexBufferGPU->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(resource1Name.size()), resource1Name.data());
-		m_indexBufferGPU->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(resource2Name.size()), resource2Name.data());
-	}
-	ND const std::string& GetDebugName() const noexcept { return m_name; }
-protected:
-	std::string m_name;
-#endif
-};
-
-
-//
-// MeshGroup ======================================================================================================
-//
 template<typename T>
 requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
-class MeshGroup : public MeshGroupBase
+void MeshGroup<T>::FinalizePushBack(bool previouslyEmpty)
 {
-public:
-	MeshGroup(std::shared_ptr<DeviceResources> deviceResources,
-		const std::vector<std::vector<T>>& vertices,
-		const std::vector<std::vector<std::uint16_t>>& indices);
-	inline MeshGroup(MeshGroup&& rhs) noexcept :
-		MeshGroupBase(std::move(rhs)),
-		m_vertices(std::move(rhs.m_vertices)),
-		m_indices(std::move(rhs.m_indices))
-	{
-		// See this SO post above calling std::move(rhs) but then proceding to use the rhs object: https://stackoverflow.com/questions/22977230/move-constructors-in-inheritance-hierarchy
-	}
-	inline MeshGroup& operator=(MeshGroup&& rhs) noexcept
-	{
-		// See this SO post above calling std::move(rhs) but then proceding to use the rhs object: https://stackoverflow.com/questions/22977230/move-constructors-in-inheritance-hierarchy
-
-		MeshGroupBase::operator=(std::move(rhs));
-		m_vertices = std::move(rhs.m_vertices);
-		m_indices = std::move(rhs.m_indices);
-		return *this;
-	}
-	inline virtual ~MeshGroup() noexcept override { CleanUp(); }
-
-private:
-	// There is too much state to worry about copying, so just delete copy operations until we find a good use case
-	MeshGroup(const MeshGroup&) noexcept = delete;
-	MeshGroup& operator=(const MeshGroup&) noexcept = delete;
-
-	// System memory copies. 
-	std::vector<T> m_vertices;
-	std::vector<std::uint16_t> m_indices;
-};
-
-template<typename T>
-requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
-MeshGroup<T>::MeshGroup(std::shared_ptr<DeviceResources> deviceResources,
-	const std::vector<std::vector<T>>& vertices,
-	const std::vector<std::vector<std::uint16_t>>& indices) :
-	MeshGroupBase(deviceResources)
-{
-	using namespace DirectX;
-
-	ASSERT(vertices.size() > 0, "No vertices to add");
-	ASSERT(vertices.size() == indices.size(), "There must be a 1:1 correspondence between the number of vertex lists and index lists");
-
-	// Compute the total number of vertices and indices
-	size_t totalVertices = 0;
-	size_t totalIndices = 0;
-	for (const std::vector<T>& vec : vertices)
-		totalVertices += vec.size();
-	for (const std::vector<std::uint16_t>& vec : indices)
-		totalIndices += vec.size();
-
-	// reserve space for all vertices & indices
-	m_vertices.reserve(totalVertices);
-	m_indices.reserve(totalIndices);
-
-	// Loop over the list of vertex lists creating a submesh for each one
-	for (unsigned int iii = 0; iii < vertices.size(); ++iii)
-	{
-		// Create the new submesh structure for the mesh we are about to add
-		SubmeshGeometry submesh;
-		submesh.IndexCount = (UINT)indices[iii].size();
-		submesh.StartIndexLocation = (UINT)m_indices.size();
-		submesh.BaseVertexLocation = (INT)m_vertices.size();
-		m_submeshes.push_back(submesh);
-
-		XMVECTOR vMin = DirectX::XMVectorSet(+FLT_MAX, +FLT_MAX, +FLT_MAX, 0.0f);
-		XMVECTOR vMax = DirectX::XMVectorSet(-FLT_MAX, -FLT_MAX, -FLT_MAX, 0.0f);
-
-		// Add the vertices and indices
-		for (const T& v : vertices[iii])
-		{
-			m_vertices.push_back(v);
-
-			// Compute the min/max for the bounding box
-			XMFLOAT3 position = v.Position(); // This is guaranteed to work because we impose the concept: HasMemberFunctionPositionThatReturnsXMFLOAT3
-			XMVECTOR p = XMLoadFloat3(&position);
-			vMin = XMVectorMin(vMin, p);
-			vMax = XMVectorMax(vMax, p);
-		}
-		for (const std::uint16_t& i : indices[iii])
-			m_indices.push_back(i);
-
-		// Compute the bounding box
-		XMVECTOR center = 0.5f * (vMin + vMax);
-		XMStoreFloat3(&submesh.Bounds.Center, center);
-		XMStoreFloat3(&submesh.Bounds.Extents, 0.5f * (vMax - vMin));
-
-		// Compute the bounding sphere
-		XMVECTOR furthestPoint = center;
-
-		for (const T& v : m_vertices)
-		{
-			XMFLOAT3 position = v.Position(); // This is guaranteed to work because we impose the concept: HasMemberFunctionPositionThatReturnsXMFLOAT3 
-			XMVECTOR p = XMLoadFloat3(&position);
-			if (XMVectorGetX(XMVector3Length(p - center)) > XMVectorGetX(XMVector3Length(furthestPoint - center)))
-				furthestPoint = p;
-		}
-
-		submesh.Sphere.Center = submesh.Bounds.Center;
-		submesh.Sphere.Radius = XMVectorGetX(XMVector3Length(furthestPoint));
-	}
-
 	// Compute the vertex/index buffer view data
 	m_vertexBufferView.StrideInBytes = sizeof(T);
 	m_vertexBufferView.SizeInBytes = static_cast<UINT>(m_vertices.size()) * sizeof(T);
 	m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
 	m_indexBufferView.SizeInBytes = static_cast<UINT>(m_indices.size()) * sizeof(std::uint16_t);
 
-	// Create the vertex and index buffers with the initial data
+	// If the buffers were previously not empty, then we need to do a delayed delete of the resources
+	if (!previouslyEmpty)
+	{
+		m_deviceResources->DelayedDelete(m_vertexBufferGPU);
+		m_deviceResources->DelayedDelete(m_indexBufferGPU);
+	}
+
+	// Create all new buffers to hold the new data
 	m_vertexBufferGPU = CreateDefaultBuffer(m_vertices.data(), m_vertexBufferView.SizeInBytes);
 	m_indexBufferGPU = CreateDefaultBuffer(m_indices.data(), m_indexBufferView.SizeInBytes);
 
@@ -506,8 +446,98 @@ MeshGroup<T>::MeshGroup(std::shared_ptr<DeviceResources> deviceResources,
 #endif
 }
 
-//
-// DynamicMeshBase ======================================================================================================
+template<typename T>
+requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
+MeshGroup<T> MeshGroup<T>::CopySubset(unsigned int indexOfMeshToCopy)
+{
+	ASSERT(indexOfMeshToCopy < m_submeshes.size(), "Index out of range");
+
+	MeshGroup<T> dest(m_deviceResources);
+
+	const MeshDescriptor& md = m_submeshes[indexOfMeshToCopy];
+
+	dest.m_submeshes.emplace_back(
+		md.IndexCount,
+		0, 
+		0,
+		md.VertexCount,
+		md.Bounds,
+		md.Sphere
+	);
+
+	dest.m_vertices.reserve(md.VertexCount);
+	std::copy(
+		m_vertices.begin() + md.BaseVertexLocation, 
+		m_vertices.begin() + md.BaseVertexLocation + md.VertexCount, 
+		std::back_inserter(dest.m_vertices)
+	);
+
+	dest.m_indices.reserve(md.IndexCount);
+	std::copy(
+		m_indices.begin() + md.StartIndexLocation,
+		m_indices.begin() + md.StartIndexLocation + md.IndexCount,
+		std::back_inserter(dest.m_indices)
+	);
+
+	dest.FinalizePushBack(true); 
+	return dest;
+}
+template<typename T>
+requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
+MeshGroup<T> MeshGroup<T>::CopySubset(std::span<unsigned int> indicesOfMeshesToCopy)
+{
+	MeshGroup<T> dest(m_deviceResources);
+
+	// Reserve space
+	size_t indexCount = 0;
+	size_t vertexCount = 0;
+	for (unsigned int index : indicesOfMeshesToCopy)
+	{
+		ASSERT(index < m_submeshes.size(), "Index out of range"); 
+		indexCount += m_submeshes[index].IndexCount;
+		vertexCount += m_submeshes[index].VertexCount;
+	}
+	dest.m_indices.reserve(indexCount);
+	dest.m_vertices.reserve(vertexCount);
+
+	// Copy in new data
+	int nextIndexStartPosition = 0;
+	int nextVertexStartPosition = 0;
+	for (unsigned int index : indicesOfMeshesToCopy)
+	{
+		const MeshDescriptor& md = m_submeshes[index];
+
+		dest.m_submeshes.emplace_back(
+			md.IndexCount,
+			nextIndexStartPosition,
+			nextVertexStartPosition,
+			md.VertexCount,
+			md.Bounds,
+			md.Sphere
+		);
+		nextIndexStartPosition += md.IndexCount;
+		nextVertexStartPosition += md.VertexCount;
+
+		std::copy(
+			m_vertices.begin() + md.BaseVertexLocation,
+			m_vertices.begin() + md.BaseVertexLocation + md.VertexCount,
+			std::back_inserter(dest.m_vertices)
+		);
+
+		std::copy(
+			m_indices.begin() + md.StartIndexLocation,
+			m_indices.begin() + md.StartIndexLocation + md.IndexCount,
+			std::back_inserter(dest.m_indices)
+		);
+	}
+
+	dest.FinalizePushBack(true);
+	return dest;
+}
+
+
+// =====================================================================================================
+// DynamicMeshBase 
 //
 // NOTE: For dynamic meshes, we make the simplification that the underlying MeshGroup will ONLY hold a single mesh.
 //       The reason for this is that we have to change the vertex/index buffer view each frame as well as copy data
@@ -542,8 +572,8 @@ private:
 };
 
 
-//
-// DynamicMeshGroup ======================================================================================================
+// =====================================================================================================
+// DynamicMeshGroup 
 //
 template<typename T>
 class DynamicMeshGroup : public DynamicMeshGroupBase
@@ -561,7 +591,7 @@ public:
 		ASSERT(m_indices.size() > 0, "No indices");
 
 		// Create the submesh structure for the single mesh
-		SubmeshGeometry submesh;
+		MeshDescriptor submesh;
 		submesh.IndexCount = (UINT)m_indices.size();
 		submesh.StartIndexLocation = 0;
 		submesh.BaseVertexLocation = 0;
@@ -670,6 +700,5 @@ private:
 	BYTE* m_mappedVertexData = nullptr;
 	BYTE* m_mappedIndexData = nullptr;
 };
-*/
 #endif
 }

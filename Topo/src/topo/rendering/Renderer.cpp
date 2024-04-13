@@ -108,7 +108,7 @@ void Renderer::Render(int frameIndex)
 			if (!layer.PreWork(layer, commandList))		// Pre-Work method (example usage: setting stencil value)
 				continue;
 
-			MeshGroupBase* meshGroup = layer.GetMeshGroup().get();
+			MeshGroupBase* meshGroup = layer.GetMeshGroup();
 			meshGroup->Bind(commandList);
 			GFX_THROW_INFO_ONLY(commandList->IASetPrimitiveTopology(layer.GetTopology()));
 
@@ -132,7 +132,7 @@ void Renderer::Render(int frameIndex)
 					);
 				}
 
-				SubmeshGeometry mesh = meshGroup->GetSubmesh(item.GetSubmeshIndex());
+				const MeshDescriptor& mesh = meshGroup->GetSubmesh(item.GetSubmeshIndex());
 				GFX_THROW_INFO_ONLY(
 					commandList->DrawIndexedInstanced(mesh.IndexCount, item.GetInstanceCount(), mesh.StartIndexLocation, mesh.BaseVertexLocation, 0)
 				);

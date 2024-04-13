@@ -24,34 +24,11 @@ public:
 		m_rootSignature = std::make_shared<RootSignature>(deviceResources, desc);
 		ASSERT(m_rootSignature != nullptr, "Root signature should not be nullptr");
 	}
-	inline RenderPass(RenderPass&& rhs) noexcept :
-		PreWork(std::move(rhs.PreWork)),
-		PostWork(std::move(rhs.PostWork)),
-		m_rootSignature(rhs.m_rootSignature),
-		m_constantBufferViews(std::move(rhs.m_constantBufferViews)),
-		m_renderPassLayers(std::move(rhs.m_renderPassLayers)),
-		m_computeLayers(std::move(rhs.m_computeLayers))
-#ifndef TOPO_DIST
-		, m_name(std::move(rhs.m_name))
-#endif
-	{}
-	inline RenderPass& operator=(RenderPass&& rhs) noexcept
-	{
-		PreWork = std::move(rhs.PreWork);
-		PostWork = std::move(rhs.PostWork);
-		m_rootSignature = rhs.m_rootSignature;
-		m_constantBufferViews = std::move(rhs.m_constantBufferViews);
-		m_renderPassLayers = std::move(rhs.m_renderPassLayers);
-		m_computeLayers = std::move(rhs.m_computeLayers);
-
-#ifndef TOPO_DIST
-		m_name = std::move(rhs.m_name);
-#endif
-		return *this;
-	}
+	RenderPass(RenderPass&& rhs) noexcept = default;
+	RenderPass& operator=(RenderPass&& rhs) noexcept = default;
 
 	RenderPassLayer& EmplaceBackRenderPassLayer(std::shared_ptr<DeviceResources> deviceResources,
-		std::shared_ptr<MeshGroupBase> meshGroup,
+		MeshGroupBase* meshGroup,
 		const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc,
 		D3D12_PRIMITIVE_TOPOLOGY topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
 	{
@@ -109,6 +86,9 @@ private:
 
 	// 0+ render layers
 	std::vector<ComputeLayer> m_computeLayers;
+
+
+
 
 // In DIST builds, we don't name the object
 #ifndef TOPO_DIST

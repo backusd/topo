@@ -412,16 +412,43 @@ void Window::InitializeRenderer()
 	{{ -0.5f, -0.5f, 0.5f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
 	};
 	std::vector<std::uint16_t> squareIndices{ 0, 1, 3, 1, 2, 3 };
-
 	Mesh<Vertex> mesh(std::move(squareVertices), std::move(squareIndices));
 
-	std::shared_ptr<MeshGroupBase> meshGroupShared = AssetManager::AddMeshGroup<Vertex>("Vertex", m_deviceResources);
-	MeshGroup<Vertex>* meshGroup = static_cast<MeshGroup<Vertex>*>(meshGroupShared.get());
-	meshGroup->PushBack(mesh);
-	meshGroup->PushBack(mesh);
+	std::vector<Vertex> v1{
+		{{ -0.2f, 0.2f, 0.2f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+		{{ 0.2f, 0.2f, 0.2f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+		{{ 0.2f, -0.2f, 0.2f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+		{{ -0.2f, -0.2f, 0.2f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
+	};
+	std::vector<std::uint16_t> i1{ 0, 1, 3, 1, 2, 3 };
+	Mesh<Vertex> m1(std::move(v1), std::move(i1));
 
+	std::vector<Vertex> v2{
+		{{ -0.8f, 0.8f, 0.8f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+		{{ 0.8f, 0.8f, 0.8f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+		{{ 0.8f, -0.8f, 0.8f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+		{{ -0.8f, -0.8f, 0.8f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
+	};
+	std::vector<std::uint16_t> i2{ 0, 1, 3, 1, 2, 3 };
+	Mesh<Vertex> m2(std::move(v2), std::move(i2));
 
+	std::vector<Mesh<Vertex>> meshes;
+	meshes.push_back(std::move(mesh));
+	meshes.push_back(std::move(m1));
+	meshes.push_back(std::move(m2));
 
+//	std::shared_ptr<MeshGroupBase> meshGroupShared = AssetManager::AddMeshGroup<Vertex>("Vertex", m_deviceResources);
+//	MeshGroup<Vertex>* meshGroup = static_cast<MeshGroup<Vertex>*>(meshGroupShared.get());
+
+	std::unique_ptr<MeshGroup<Vertex>> meshGroup = std::make_unique<MeshGroup<Vertex>>(m_deviceResources);
+	meshGroup->PushBack(std::move(meshes));
+//	m_meshGroup->PushBack(m1);
+
+	std::vector<unsigned int> indices = { 0, 2 };
+	MeshGroup<Vertex> meshGroupCopy = meshGroup->CopySubset(indices);
+	m_meshGroup = std::make_unique<MeshGroup<Vertex>>(std::move(meshGroupCopy));
+
+	unsigned int meshIndex = 1;
 
 //	std::vector<std::vector<Vertex>> vertices;
 //	vertices.push_back(std::move(squareVertices));
@@ -480,12 +507,11 @@ void Window::InitializeRenderer()
 	psoDesc.DepthStencilState.DepthEnable = FALSE; 
 	psoDesc.DepthStencilState.StencilEnable = FALSE; 
 
-	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_deviceResources, meshGroupShared, psoDesc, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_deviceResources, m_meshGroup.get(), psoDesc, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	SET_DEBUG_NAME(layer1, "Render Pass Layer #1");
 
-	RenderItem& squareRI = layer1.EmplaceBackRenderItem();
+	RenderItem& squareRI = layer1.EmplaceBackRenderItem(meshIndex);
 	SET_DEBUG_NAME(squareRI, "Square RenderItem"); 
-
 }
 
 #else

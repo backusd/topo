@@ -164,7 +164,7 @@ protected:
 	D3D12_VIEWPORT m_viewport;
 	D3D12_RECT m_scissorRect;
 	std::unique_ptr<ConstantBufferMapped<PassConstants>>	m_passConstantsBuffer = nullptr;
-//	std::shared_ptr<MeshGroup<Vertex>> m_meshGroup = nullptr;
+	std::unique_ptr<MeshGroup<Vertex>> m_meshGroup = nullptr;
 
 	// Window Data
 	short		m_width;

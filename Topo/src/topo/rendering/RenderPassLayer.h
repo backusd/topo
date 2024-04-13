@@ -10,7 +10,7 @@ class RenderPassLayer
 {
 public:
 	inline RenderPassLayer(std::shared_ptr<DeviceResources> deviceResources,
-							std::shared_ptr<MeshGroupBase> meshGroup,
+							MeshGroupBase* meshGroup,
 							const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc,
 							D3D12_PRIMITIVE_TOPOLOGY topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST) :
 		m_deviceResources(deviceResources),
@@ -23,36 +23,8 @@ public:
 		ASSERT(meshGroup != nullptr, "MeshGroup must be set in the constructor");
 		CreatePSO(desc);
 	}
-	inline RenderPassLayer(RenderPassLayer&& rhs) noexcept :
-		m_deviceResources(rhs.m_deviceResources),
-		PreWork(std::move(rhs.PreWork)),
-		PostWork(std::move(rhs.PostWork)),
-		m_renderItems(std::move(rhs.m_renderItems)),
-		m_pipelineState(rhs.m_pipelineState),
-		m_topology(rhs.m_topology),
-		m_meshes(std::move(rhs.m_meshes)),
-		m_stencilRef(rhs.m_stencilRef),
-		m_active(rhs.m_active)
-#ifndef TOPO_DIST
-		, m_name(std::move(rhs.m_name))
-#endif
-	{}
-	inline RenderPassLayer& operator=(RenderPassLayer&& rhs) noexcept
-	{
-		m_deviceResources = rhs.m_deviceResources;
-		PreWork = std::move(rhs.PreWork);
-		PostWork = std::move(rhs.PostWork);
-		m_renderItems = std::move(rhs.m_renderItems);
-		m_pipelineState = rhs.m_pipelineState;
-		m_topology = rhs.m_topology;
-		m_meshes = std::move(rhs.m_meshes);
-		m_stencilRef = rhs.m_stencilRef;
-		m_active = rhs.m_active;
-#ifndef TOPO_DIST
-		m_name = std::move(rhs.m_name);
-#endif
-		return *this;
-	}
+	RenderPassLayer(RenderPassLayer&& rhs) noexcept = default;
+	RenderPassLayer& operator=(RenderPassLayer&& rhs) noexcept = default;
 
 
 	inline void CreatePSO(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc)
@@ -70,7 +42,7 @@ public:
 				item.Update(timer, frameIndex);
 		}
 
-		// This is a virtual method that only actually does anything for DynamicMesh
+		// This is a virtual method that only does anything for DynamicMesh
 		m_meshes->Update(frameIndex);
 	}
 
@@ -83,7 +55,7 @@ public:
 
 	ND inline ID3D12PipelineState* GetPSO() const noexcept { return m_pipelineState.Get(); }
 	ND constexpr D3D12_PRIMITIVE_TOPOLOGY GetTopology() const noexcept { return m_topology; }
-	ND inline std::shared_ptr<MeshGroupBase> GetMeshGroup() const noexcept { return m_meshes; }
+	ND inline MeshGroupBase* GetMeshGroup() const noexcept { return m_meshes; }
 	ND constexpr bool IsActive() const noexcept { return m_active; }
 	ND constexpr std::optional<unsigned int> GetStencilRef() const noexcept { return m_stencilRef; }
 
@@ -107,9 +79,12 @@ private:
 	std::vector<RenderItem>						m_renderItems;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineState;
 	D3D12_PRIMITIVE_TOPOLOGY					m_topology;
-	std::shared_ptr<MeshGroupBase>				m_meshes; // shared_ptr because it is possible (if not likely) that different layers will want to reference the same mesh
+	MeshGroupBase*								m_meshes;		// raw pointer because it just needs to reference/read the mesh data. A different class should own the meshes
 	bool										m_active;
 	std::optional<unsigned int>					m_stencilRef;
+
+
+
 
 
 // In DIST builds, we don't name the object
