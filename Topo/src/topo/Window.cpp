@@ -437,8 +437,6 @@ void Window::InitializeRenderer()
 	meshes.push_back(std::move(m1));
 	meshes.push_back(std::move(m2));
 
-//	std::shared_ptr<MeshGroupBase> meshGroupShared = AssetManager::AddMeshGroup<Vertex>("Vertex", m_deviceResources);
-//	MeshGroup<Vertex>* meshGroup = static_cast<MeshGroup<Vertex>*>(meshGroupShared.get());
 
 	std::unique_ptr<MeshGroup<Vertex>> meshGroup = std::make_unique<MeshGroup<Vertex>>(m_deviceResources);
 	meshGroup->PushBack(std::move(meshes));

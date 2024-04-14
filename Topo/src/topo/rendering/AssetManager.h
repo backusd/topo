@@ -11,13 +11,9 @@ class AssetManager
 	friend class Application;
 
 private:
-//	using AddMeshGroupReturnType = std::pair<std::_List_iterator<std::_List_val<std::_List_simple_types<std::pair<const std::string, std::unique_ptr<MeshGroupBase>>>>>, bool>;
 	using AddShaderReturnType = std::pair<std::_List_iterator<std::_List_val<std::_List_simple_types<std::pair<const std::string, Shader>>>>, bool>;
 
 public:
-	template<typename T>
-	static std::shared_ptr<MeshGroupBase> AddMeshGroup(std::string_view name, std::shared_ptr<DeviceResources> deviceResources) noexcept { return Get().AddMeshGroupImpl<T>(name, deviceResources); }
-	
 	static AddShaderReturnType AddShader(std::string_view shaderFileName) { return Get().AddShaderImpl(shaderFileName); }
 	static AddShaderReturnType AddShader(std::string_view shaderFileName, const std::vector<D3D12_INPUT_ELEMENT_DESC>& inputs) { return Get().AddShaderImpl(shaderFileName, inputs); }
 	static AddShaderReturnType AddShader(std::string_view shaderFileName, std::vector<D3D12_INPUT_ELEMENT_DESC>&& inputs) { return Get().AddShaderImpl(shaderFileName, std::move(inputs)); }
@@ -32,7 +28,6 @@ private:
 	static void Shutdown() { Get().ShutdownImpl(); }
 	void ShutdownImpl()
 	{
-		m_meshGroups.clear();
 		m_shaders.clear();
 	}
 
@@ -74,22 +69,8 @@ private:
 	}
 
 
-	template<typename T>
-	std::shared_ptr<MeshGroupBase> AddMeshGroupImpl(std::string_view name, std::shared_ptr<DeviceResources> deviceResources) noexcept
-	{
-		std::shared_ptr<MeshGroupBase> meshGroup = std::make_shared<MeshGroup<T>>(deviceResources);
-		//m_meshGroups[std::string(name)] = std::move(meshGroup);
-
-		auto [itr, success] = m_meshGroups.emplace(std::piecewise_construct,
-			std::forward_as_tuple(name), 
-			std::forward_as_tuple(meshGroup));
-
-		return meshGroup;
-	}
 
 
-
-	std::unordered_map<std::string, std::shared_ptr<MeshGroupBase>> m_meshGroups;
 	std::unordered_map<std::string, Shader> m_shaders;
 };
 
