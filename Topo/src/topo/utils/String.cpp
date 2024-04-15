@@ -18,6 +18,21 @@ std::wstring s2ws(const std::string& str) noexcept
     );
     return w;
 }
+std::wstring s2ws(std::string_view str) noexcept
+{
+    // See here for where this came from: https://stackoverflow.com/questions/4804298/how-to-convert-wstring-into-string
+    // 
+    // Create a wstring with the same size as str
+    std::wstring w(str.length(), 0);
+
+    // Cast each character in str to a wchar_t and assign into the result wstring
+    std::transform(str.begin(), str.end(), w.begin(), [](char c) -> wchar_t
+        {
+            return static_cast<wchar_t>(c);
+        }
+    );
+    return w;
+}
 
 std::string ws2s(const std::wstring& wstr) noexcept
 {

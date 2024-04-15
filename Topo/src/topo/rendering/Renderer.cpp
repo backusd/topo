@@ -71,19 +71,9 @@ void Renderer::Render(int frameIndex)
 		if (!pass.PreWork(pass, commandList))
 			continue;
 
-		// Set only a single root signature per RenderPass
-		GFX_THROW_INFO_ONLY(commandList->SetGraphicsRootSignature(pass.GetRootSignature()->Get()));
-
-		// Bind any per-pass constant buffer views
-		for (const RootConstantBufferView& cbv : pass.GetRootConstantBufferViews())
-		{
-			GFX_THROW_INFO_ONLY(
-				commandList->SetGraphicsRootConstantBufferView(
-					cbv.GetRootParameterIndex(),
-					cbv.GetConstantBuffer()->GetGPUVirtualAddress(frameIndex)
-				)
-			);
-		}
+		// Bind the RenderPass data. This will set a single root signature for the render pass
+		// and bind all RootConstantBufferViews owned by the pass
+		pass.Bind(commandList, frameIndex);
 
 		// Render the render layers for the pass
 		for (const RenderPassLayer& layer : pass.GetRenderPassLayers())

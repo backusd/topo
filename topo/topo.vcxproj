@@ -170,6 +170,8 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClInclude Include="src\topo\Layout.h" />
     <ClInclude Include="src\topo\Log.h" />
     <ClInclude Include="src\topo\Page.h" />
+    <ClInclude Include="src\topo\rendering\SamplerData.h" />
+    <ClInclude Include="src\topo\rendering\Texture.h" />
     <ClInclude Include="src\topo\TopoException.h" />
     <ClInclude Include="src\topo\Window.h" />
     <ClInclude Include="src\topo\controls\Button.h" />
@@ -182,7 +184,6 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClInclude Include="src\topo\rendering\DescriptorVector.h" />
     <ClInclude Include="src\topo\rendering\InputLayout.h" />
     <ClInclude Include="src\topo\rendering\MeshGroup.h" />
-    <ClInclude Include="src\topo\rendering\MeshTEST.h" />
     <ClInclude Include="src\topo\rendering\RenderItem.h" />
     <ClInclude Include="src\topo\rendering\RenderPass.h" />
     <ClInclude Include="src\topo\rendering\RenderPassLayer.h" />
@@ -213,6 +214,8 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClCompile Include="src\topo\Layout.cpp" />
     <ClCompile Include="src\topo\Log.cpp" />
     <ClCompile Include="src\topo\Page.cpp" />
+    <ClCompile Include="src\topo\rendering\SamplerData.cpp" />
+    <ClCompile Include="src\topo\rendering\Texture.cpp" />
     <ClCompile Include="src\topo\TopoException.cpp" />
     <ClCompile Include="src\topo\Window.cpp" />
     <ClCompile Include="src\topo\controls\Button.cpp" />
@@ -224,7 +227,6 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClCompile Include="src\topo\rendering\DescriptorVector.cpp" />
     <ClCompile Include="src\topo\rendering\InputLayout.cpp" />
     <ClCompile Include="src\topo\rendering\MeshGroup.cpp" />
-    <ClCompile Include="src\topo\rendering\MeshTEST.cpp" />
     <ClCompile Include="src\topo\rendering\RenderItem.cpp" />
     <ClCompile Include="src\topo\rendering\RenderPass.cpp" />
     <ClCompile Include="src\topo\rendering\RenderPassLayer.cpp" />
@@ -252,6 +254,17 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
       <ShaderType>Vertex</ShaderType>
       <ShaderModel>6.4</ShaderModel>
     </FxCompile>
+    <FxCompile Include="src\topo\shaders\Crate-ps.hlsl">
+      <ShaderType>Pixel</ShaderType>
+      <ShaderModel>6.4</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="src\topo\shaders\Crate-vs.hlsl">
+      <ShaderType>Vertex</ShaderType>
+      <ShaderModel>6.4</ShaderModel>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\topo\shaders\LightingUtil.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

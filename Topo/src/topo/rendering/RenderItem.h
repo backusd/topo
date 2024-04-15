@@ -16,7 +16,7 @@ public:
 	{
 		// Loop over the constant buffer views and descriptor tables to update them
 		for (auto& rcbv : m_constantBufferViews)
-			rcbv.Update(timer, frameIndex);
+			rcbv.GetConstantBuffer()->Update(timer, frameIndex);
 
 		for (auto& dt : m_descriptorTables)
 			dt.Update(&dt, timer, frameIndex);

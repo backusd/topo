@@ -7,6 +7,8 @@
 
 #include "rendering/MeshGroup.h"
 #include "rendering/AssetManager.h"
+#include "utils/GeometryGenerator.h"
+#include "rendering/SamplerData.h"
 
 #include <windowsx.h> // Included so we can use GET_X_LPARAM/GET_Y_LPARAM
 
@@ -405,57 +407,214 @@ void Window::Present()
 
 void Window::InitializeRenderer()
 {
+	m_camera = std::make_unique<Camera>();
+	m_camera->LookAt({ 0.0f, 0.0f, -5.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
+	m_camera->SetLens(static_cast<float>(0.25 * std::numbers::pi), 
+		static_cast<float>(this->GetWidth()) / static_cast<float>(this->GetHeight()),
+		1.0f, 1000.0f);
+
+	auto il = std::vector<D3D12_INPUT_ELEMENT_DESC>{
+		{ "COLOR",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+	AssetManager::AddShader("Crate-vs.cso", std::move(il));
+	AssetManager::AddShader("Crate-ps.cso");
+
+
+	GeometryGenerator geoGen;
+	GeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3); 
+//	GeometryGenerator::MeshData box = geoGen.CreateSphere(1.0f, 20, 20);
+
+	std::vector<std::uint16_t> crateIndices = box.GetIndices16();
+	std::vector<CrateVertex> crateVertices(box.Vertices.size());
+	for (unsigned int iii = 0; iii < box.Vertices.size(); ++iii)
+	{
+		crateVertices[iii].Pos = box.Vertices[iii].Position;
+		crateVertices[iii].Normal = box.Vertices[iii].Normal;
+		crateVertices[iii].TexC = box.Vertices[iii].TexC;
+	}
+	Mesh<CrateVertex> crateMesh(std::move(crateVertices), std::move(crateIndices));
+	m_meshGroupCrate = std::make_unique<MeshGroup<CrateVertex>>(m_deviceResources);
+	m_meshGroupCrate->PushBack(std::move(crateMesh));
+
+	m_passConstantBufferCrate = std::make_unique<ConstantBufferMapped<CratePassConstants>>(m_deviceResources);
+	m_passConstantBufferCrate->Update = [this](const Timer& timer, int frameIndex)
+		{
+			using namespace DirectX;
+
+			CratePassConstants pc{};
+			XMMATRIX view = m_camera->GetView();
+			XMMATRIX proj = m_camera->GetProj();
+
+			XMVECTOR viewDet = XMMatrixDeterminant(view);
+			XMVECTOR projDet = XMMatrixDeterminant(proj);
+
+			XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+			XMVECTOR viewProjDet = XMMatrixDeterminant(viewProj);
+
+			XMMATRIX invView = XMMatrixInverse(&viewDet, view);
+			XMMATRIX invProj = XMMatrixInverse(&projDet, proj);
+			XMMATRIX invViewProj = XMMatrixInverse(&viewProjDet, viewProj);
+
+			XMStoreFloat4x4(&pc.View, XMMatrixTranspose(view));
+			XMStoreFloat4x4(&pc.InvView, XMMatrixTranspose(invView));
+			XMStoreFloat4x4(&pc.Proj, XMMatrixTranspose(proj));
+			XMStoreFloat4x4(&pc.InvProj, XMMatrixTranspose(invProj));
+			XMStoreFloat4x4(&pc.ViewProj, XMMatrixTranspose(viewProj));
+			XMStoreFloat4x4(&pc.InvViewProj, XMMatrixTranspose(invViewProj));
+			pc.EyePosW = m_eyePosition;
+			pc.RenderTargetSize = XMFLOAT2(static_cast<float>(this->GetWidth()), static_cast<float>(this->GetHeight()));
+			pc.InvRenderTargetSize = XMFLOAT2(1.0f / static_cast<float>(this->GetWidth()), 1.0f / static_cast<float>(this->GetHeight()));
+			pc.NearZ = 1.0f;
+			pc.FarZ = 1000.0f;
+			pc.TotalTime = timer.TotalTime();
+			pc.DeltaTime = timer.DeltaTime();
+			pc.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+			pc.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
+			pc.Lights[0].Strength = { 0.6f, 0.6f, 0.6f };
+			pc.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
+			pc.Lights[1].Strength = { 0.3f, 0.3f, 0.3f };
+			pc.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
+			pc.Lights[2].Strength = { 0.15f, 0.15f, 0.15f };
+
+			m_passConstantBufferCrate->CopyData(frameIndex, pc);
+		};
+
+	m_materialConstantBuffer = std::make_unique<ConstantBufferMapped<Material>>(m_deviceResources);
+	m_materialConstantBuffer->Update = [this](const Timer& timer, int frameIndex)
+		{
+			using namespace DirectX;
+
+			Material mat{};
+			mat.DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+			mat.FresnelR0 = XMFLOAT3(0.05f, 0.05f, 0.05f);
+			mat.Roughness = 0.2f;
+
+			m_materialConstantBuffer->CopyData(frameIndex, mat); 
+		};
+
+	m_objectConstantBuffer = std::make_unique<ConstantBufferMapped<ObjectData>>(m_deviceResources);
+	m_objectConstantBuffer->Update = [this](const Timer& timer, int frameIndex)
+		{
+			using namespace DirectX;
+
+			ObjectData data{};
+			XMMATRIX world = XMMatrixTranslation(0.0f, 0.0f, 0.0f) * XMMatrixScaling(1.0f, 1.0f, 1.0f);
+			XMStoreFloat4x4(&data.World, XMMatrixTranspose(world)); 
+
+			m_objectConstantBuffer->CopyData(frameIndex, data); 
+		};
+
+	m_sd0.Filter   = FILTER::MIN_MAG_MIP_POINT;
+	m_sd0.AddressU = TEXTURE_ADDRESS_MODE::WRAP; 
+	m_sd0.AddressV = TEXTURE_ADDRESS_MODE::WRAP;
+	m_sd0.AddressW = TEXTURE_ADDRESS_MODE::WRAP;
+
+	m_sd1.Filter = FILTER::MIN_MAG_MIP_POINT; 
+	m_sd1.AddressU = TEXTURE_ADDRESS_MODE::CLAMP;
+	m_sd1.AddressV = TEXTURE_ADDRESS_MODE::CLAMP;
+	m_sd1.AddressW = TEXTURE_ADDRESS_MODE::CLAMP;
+
+	m_sd2.Filter = FILTER::MIN_MAG_MIP_LINEAR;
+	m_sd2.AddressU = TEXTURE_ADDRESS_MODE::WRAP;
+	m_sd2.AddressV = TEXTURE_ADDRESS_MODE::WRAP;
+	m_sd2.AddressW = TEXTURE_ADDRESS_MODE::WRAP;
+
+	m_sd3.Filter = FILTER::MIN_MAG_MIP_LINEAR;
+	m_sd3.AddressU = TEXTURE_ADDRESS_MODE::CLAMP;
+	m_sd3.AddressV = TEXTURE_ADDRESS_MODE::CLAMP;
+	m_sd3.AddressW = TEXTURE_ADDRESS_MODE::CLAMP;
+
+	m_sd4.Filter = FILTER::ANISOTROPIC;
+	m_sd4.AddressU = TEXTURE_ADDRESS_MODE::WRAP;
+	m_sd4.AddressV = TEXTURE_ADDRESS_MODE::WRAP;
+	m_sd4.AddressW = TEXTURE_ADDRESS_MODE::WRAP;
+	m_sd4.MipLODBias = 0.0f;
+	m_sd4.MaxAnisotropy = 8;
+
+	m_sd5.Filter = FILTER::ANISOTROPIC;
+	m_sd5.AddressU = TEXTURE_ADDRESS_MODE::CLAMP;
+	m_sd5.AddressV = TEXTURE_ADDRESS_MODE::CLAMP;
+	m_sd5.AddressW = TEXTURE_ADDRESS_MODE::CLAMP;
+	m_sd5.MipLODBias = 0.0f;
+	m_sd5.MaxAnisotropy = 8;
+
+	m_texture = std::make_unique<Texture>(m_deviceResources, "WoodCrate01.dds");
+
+	RenderPassSignature signature{
+		TextureDescription{ 0 }, 
+		ConstantBufferDescription{ 0, m_objectConstantBuffer.get() },
+		ConstantBufferDescription{ 1, m_passConstantBufferCrate.get() },
+		ConstantBufferDescription{ 2, m_materialConstantBuffer.get() },
+		SamplerDescription{ 0, &m_sd0 },
+		SamplerDescription{ 1, &m_sd1 },
+		SamplerDescription{ 2, &m_sd2 },
+		SamplerDescription{ 3, &m_sd3 },
+		SamplerDescription{ 4, &m_sd4 },
+		SamplerDescription{ 5, &m_sd5 }
+	};
+
+	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(m_deviceResources, signature);
+	SET_DEBUG_NAME(pass1, "Render Pass #1");
+
+	const Shader& vs = AssetManager::GetShader("Crate-vs.cso");
+	const Shader& ps = AssetManager::GetShader("Crate-ps.cso");
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+	ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+	psoDesc.InputLayout = vs.GetInputLayoutDesc();
+	psoDesc.pRootSignature = pass1.GetRootSignature()->Get();
+	psoDesc.VS = vs.GetShaderByteCode();
+	psoDesc.PS = ps.GetShaderByteCode();
+	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	psoDesc.RasterizerState.FrontCounterClockwise = false;
+	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	psoDesc.SampleMask = UINT_MAX;
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	psoDesc.NumRenderTargets = 1;
+	psoDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
+	psoDesc.SampleDesc.Count = 1;
+	psoDesc.SampleDesc.Quality = 0;
+	psoDesc.DSVFormat = m_deviceResources->GetDepthStencilFormat();
+
+	psoDesc.DepthStencilState.DepthEnable = TRUE;
+	psoDesc.DepthStencilState.StencilEnable = FALSE;
+
+	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_deviceResources, m_meshGroupCrate.get(), psoDesc, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	SET_DEBUG_NAME(layer1, "Render Pass Layer #1");
+
+	RenderItem& crateRI = layer1.EmplaceBackRenderItem();
+	SET_DEBUG_NAME(crateRI, "Crate RenderItem");
+
+	auto& dt = crateRI.GetRootDescriptorTables().emplace_back(0, m_texture->GetSRVHandle());
+
+
+
+
+
+
+
+	/*
 	std::vector<Vertex> squareVertices{
-	{{ -0.5f, 0.5f, 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
-	{{ 0.5f, 0.5f, 0.5f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
-	{{ 0.5f, -0.5f, 0.5f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
-	{{ -0.5f, -0.5f, 0.5f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
+		{{ -0.5f, 0.5f, 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+		{{ 0.5f, 0.5f, 0.5f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+		{{ 0.5f, -0.5f, 0.5f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+		{{ -0.5f, -0.5f, 0.5f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
 	};
 	std::vector<std::uint16_t> squareIndices{ 0, 1, 3, 1, 2, 3 };
 	Mesh<Vertex> mesh(std::move(squareVertices), std::move(squareIndices));
 
-	std::vector<Vertex> v1{
-		{{ -0.2f, 0.2f, 0.2f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
-		{{ 0.2f, 0.2f, 0.2f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
-		{{ 0.2f, -0.2f, 0.2f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
-		{{ -0.2f, -0.2f, 0.2f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
-	};
-	std::vector<std::uint16_t> i1{ 0, 1, 3, 1, 2, 3 };
-	Mesh<Vertex> m1(std::move(v1), std::move(i1));
-
-	std::vector<Vertex> v2{
-		{{ -0.8f, 0.8f, 0.8f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
-		{{ 0.8f, 0.8f, 0.8f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
-		{{ 0.8f, -0.8f, 0.8f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
-		{{ -0.8f, -0.8f, 0.8f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
-	};
-	std::vector<std::uint16_t> i2{ 0, 1, 3, 1, 2, 3 };
-	Mesh<Vertex> m2(std::move(v2), std::move(i2));
-
-	std::vector<Mesh<Vertex>> meshes;
-	meshes.push_back(std::move(mesh));
-	meshes.push_back(std::move(m1));
-	meshes.push_back(std::move(m2));
-
-
 	std::unique_ptr<MeshGroup<Vertex>> meshGroup = std::make_unique<MeshGroup<Vertex>>(m_deviceResources);
-	meshGroup->PushBack(std::move(meshes));
-//	m_meshGroup->PushBack(m1);
+	meshGroup->PushBack(std::move(mesh));
 
 	std::vector<unsigned int> indices = { 0, 2 };
 	MeshGroup<Vertex> meshGroupCopy = meshGroup->CopySubset(indices);
 	m_meshGroup = std::make_unique<MeshGroup<Vertex>>(std::move(meshGroupCopy));
-
-	unsigned int meshIndex = 1;
-
-//	std::vector<std::vector<Vertex>> vertices;
-//	vertices.push_back(std::move(squareVertices));
-//
-//	std::vector<std::vector<std::uint16_t>> indices;
-//	indices.push_back(std::move(squareIndices));
-//
-//	m_meshGroup = std::make_shared<MeshGroup<Vertex>>(m_deviceResources, vertices, indices);
-//	SET_DEBUG_NAME_PTR(m_meshGroup, "MeshGroup");
+	SET_DEBUG_NAME_PTR(m_meshGroup, "MeshGroup");
+	unsigned int meshIndex = 0;
 
 	m_passConstantsBuffer = std::make_unique<ConstantBufferMapped<PassConstants>>(m_deviceResources);
 	m_passConstantsBuffer->Update = [this](const Timer& timer, int frameIndex)
@@ -464,30 +623,14 @@ void Window::InitializeRenderer()
 			m_passConstantsBuffer->CopyData(frameIndex, pc);
 		};
 
-	RenderPassSignature sig{ { 0, m_passConstantsBuffer.get() } };
+	RenderPassSignature sig{ 
+		ConstantBufferDescription{ 0, m_passConstantsBuffer.get() } 
+	};
 
 	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(m_deviceResources, sig);
+	SET_DEBUG_NAME(pass1, "Render Pass #1");
 
 
-//	constexpr unsigned int perPassCBRegister = 0;
-//
-//	// Root parameter can be a table, root descriptor or root constants.
-//	// *** Perfomance TIP: Order from most frequent to least frequent.
-//	CD3DX12_ROOT_PARAMETER slotRootParameter[1];
-//	slotRootParameter[0].InitAsConstantBufferView(perPassCBRegister);	// Object/Instance Constant Buffer  
-//	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(1, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-//
-//	std::shared_ptr<RootSignature> rootSig1 = std::make_shared<RootSignature>(m_deviceResources, rootSigDesc); 
-//	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(rootSig1);
-//	SET_DEBUG_NAME(pass1, "Render Pass #1");
-//	
-//	RootConstantBufferView& perPassConstantsCBV = pass1.EmplaceBackRootConstantBufferView(perPassCBRegister, m_passConstantsBuffer.get());
-//	SET_DEBUG_NAME(perPassConstantsCBV, "Per Pass RootConstantBufferView");
-//	perPassConstantsCBV.Update = [this](const Timer& timer, int frameIndex)
-//		{
-//			PassConstants pc{ static_cast<float>(this->GetWidth()), static_cast<float>(this->GetHeight()) };
-//			m_passConstantsBuffer->CopyData(frameIndex, pc);
-//		};
 
 
 	const Shader& vs = AssetManager::GetShader("Control-vs.cso");
@@ -519,6 +662,8 @@ void Window::InitializeRenderer()
 
 	RenderItem& squareRI = layer1.EmplaceBackRenderItem(meshIndex);
 	SET_DEBUG_NAME(squareRI, "Square RenderItem"); 
+
+	*/
 }
 
 #else

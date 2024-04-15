@@ -3,27 +3,52 @@
 #include "RootConstantBufferView.h"
 #include "RenderPassLayer.h"
 #include "ComputeLayer.h"
-
-
+#include "Texture.h"
+#include "SamplerData.h"
 
 namespace topo
 {
 #ifdef DIRECTX12
 
+struct TextureDescription
+{
+	unsigned int		BaseRegister = 0;
+	unsigned int		Count = 1;
+	unsigned int		RegisterSpace = 0;
+};
+struct SamplerDescription
+{
+	unsigned int Register;
+	SamplerData* Desc;
+};
 struct ConstantBufferDescription
 {
 	unsigned int		Register;
 	ConstantBufferBase* ConstantBuffer;
+	unsigned int		RegisterSpace = 0;
+};
+struct ShaderResourceViewDescription
+{
+	unsigned int		Register = 0;
+	unsigned int		RegisterSpace = 0;
+};
+struct UnorderedAccessViewDescription
+{
+	unsigned int		Register = 0;
+	unsigned int		RegisterSpace = 0;
 };
 class RenderPassSignature
 {
 public:
 	RenderPassSignature() {};
-	RenderPassSignature(const std::vector<ConstantBufferDescription>& cbs) : ConstantBufferDescs(cbs) {}
-	RenderPassSignature(std::vector<ConstantBufferDescription>&& cbs) : ConstantBufferDescs(std::move(cbs)) {}
-	RenderPassSignature(const std::initializer_list<ConstantBufferDescription>& cbs) : ConstantBufferDescs(cbs) {}
+	RenderPassSignature(const std::initializer_list<std::variant<TextureDescription, ConstantBufferDescription, ShaderResourceViewDescription, UnorderedAccessViewDescription, SamplerDescription>>& rootParams) :
+		m_rootParameters(rootParams)
+	{}
 
-	std::vector<ConstantBufferDescription> ConstantBufferDescs;
+	const std::vector<std::variant<TextureDescription, ConstantBufferDescription, ShaderResourceViewDescription, UnorderedAccessViewDescription, SamplerDescription>>& GetSignatureParameters() const { return m_rootParameters; }
+
+private:
+	std::vector<std::variant<TextureDescription, ConstantBufferDescription, ShaderResourceViewDescription, UnorderedAccessViewDescription, SamplerDescription>> m_rootParameters;
 };
 
 class RenderPass
@@ -31,37 +56,92 @@ class RenderPass
 public:
 	RenderPass(std::shared_ptr<DeviceResources> deviceResources, const RenderPassSignature& signature) : m_rootSignature(nullptr)
 	{
-		std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameters(signature.ConstantBufferDescs.size());
-		for (unsigned int iii = 0; iii < slotRootParameters.size(); ++iii)
+		const auto& signatureParams = signature.GetSignatureParameters();
+
+		std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
+		std::vector<D3D12_STATIC_SAMPLER_DESC> samplerDescriptions;
+		std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameters;
+
+		unsigned int rootParamIndex = 0;
+
+		for (const auto& sigParam : signatureParams)
 		{
-			slotRootParameters[iii].InitAsConstantBufferView(signature.ConstantBufferDescs[iii].Register);
+			if (std::holds_alternative<TextureDescription>(sigParam))
+			{
+				ranges.clear();
+
+				const TextureDescription& texDesc = std::get<TextureDescription>(sigParam);
+
+				auto& range = ranges.emplace_back();
+				range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, texDesc.Count, texDesc.BaseRegister, texDesc.RegisterSpace);
+
+				auto& param = slotRootParameters.emplace_back();
+				param.InitAsDescriptorTable(1, &range);
+
+				++rootParamIndex;
+			}
+			else if (std::holds_alternative<ConstantBufferDescription>(sigParam))
+			{
+				const ConstantBufferDescription& cbDesc = std::get<ConstantBufferDescription>(sigParam);
+
+				auto& param = slotRootParameters.emplace_back(); 
+				param.InitAsConstantBufferView(cbDesc.Register); 
+
+				RootConstantBufferView& cbv = EmplaceBackRootConstantBufferView(rootParamIndex, cbDesc.ConstantBuffer);
+
+				++rootParamIndex;
+			}
+			else if (std::holds_alternative<ShaderResourceViewDescription>(sigParam))
+			{
+				const ShaderResourceViewDescription& desc = std::get<ShaderResourceViewDescription>(sigParam);
+				auto& param = slotRootParameters.emplace_back();
+				param.InitAsShaderResourceView(desc.Register, desc.RegisterSpace);
+
+				++rootParamIndex;
+			}
+			else if (std::holds_alternative<UnorderedAccessViewDescription>(sigParam))
+			{
+				const UnorderedAccessViewDescription& desc = std::get<UnorderedAccessViewDescription>(sigParam);
+				auto& param = slotRootParameters.emplace_back();
+				param.InitAsUnorderedAccessView(desc.Register, desc.RegisterSpace);
+
+				++rootParamIndex;
+			}
+			else if (std::holds_alternative<SamplerDescription>(sigParam))
+			{
+				const SamplerDescription& desc = std::get<SamplerDescription>(sigParam);
+				const SamplerData& data = *(desc.Desc);
+				
+				D3D12_STATIC_SAMPLER_DESC d{};
+				d.Filter = static_cast<D3D12_FILTER>(data.Filter); 
+				d.AddressU = static_cast<D3D12_TEXTURE_ADDRESS_MODE>(data.AddressU);
+				d.AddressV = static_cast<D3D12_TEXTURE_ADDRESS_MODE>(data.AddressV);
+				d.AddressW = static_cast<D3D12_TEXTURE_ADDRESS_MODE>(data.AddressW);
+				d.MipLODBias = data.MipLODBias;
+				d.MaxAnisotropy = data.MaxAnisotropy;
+				d.ComparisonFunc = static_cast<D3D12_COMPARISON_FUNC>(data.ComparisonFunc);
+				d.BorderColor = static_cast<D3D12_STATIC_BORDER_COLOR>(data.BorderColor);
+				d.MinLOD = data.MinLOD;
+				d.MaxLOD = data.MaxLOD;
+				d.ShaderRegister = desc.Register;
+				d.RegisterSpace = data.RegisterSpace;
+				d.ShaderVisibility = static_cast<D3D12_SHADER_VISIBILITY>(data.ShaderVisibility);
+				
+				samplerDescriptions.push_back(d);
+			}
 		}
 
-		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(static_cast<unsigned int>(slotRootParameters.size()),
-			slotRootParameters.data(), 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
+			static_cast<unsigned int>(slotRootParameters.size()),
+			slotRootParameters.data(), 
+			static_cast<unsigned int>(samplerDescriptions.size()),
+			samplerDescriptions.size() == 0 ? nullptr : samplerDescriptions.data(),
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 		m_rootSignature = std::make_shared<RootSignature>(deviceResources, rootSigDesc);
-
-		// Create the Constant Buffer Views
-		for (const ConstantBufferDescription& cbDesc : signature.ConstantBufferDescs)
-		{
-			RootConstantBufferView& cbv = EmplaceBackRootConstantBufferView(cbDesc.Register, cbDesc.ConstantBuffer);
-			cbv.Update = cbDesc.ConstantBuffer->Update;
-		}
+		ASSERT(m_rootSignature != nullptr, "Something went wrong - Root signature should not be nullptr");
 	}
 
-
-	inline RenderPass(std::shared_ptr<RootSignature> rootSig) noexcept :
-		m_rootSignature(rootSig)
-	{
-		ASSERT(m_rootSignature != nullptr, "Root signature should not be nullptr");
-	}
-	inline RenderPass(std::shared_ptr<DeviceResources> deviceResources, const D3D12_ROOT_SIGNATURE_DESC& desc) :
-		m_rootSignature(nullptr)
-	{
-		m_rootSignature = std::make_shared<RootSignature>(deviceResources, desc);
-		ASSERT(m_rootSignature != nullptr, "Root signature should not be nullptr");
-	}
 	RenderPass(RenderPass&&) noexcept = default;
 	RenderPass& operator=(RenderPass&&) noexcept = default;
 
@@ -73,11 +153,27 @@ public:
 		return m_renderPassLayers.emplace_back(deviceResources, meshGroup, desc, topology);
 	}
 
+	inline void Bind(ID3D12GraphicsCommandList* commandList, int frameIndex)
+	{
+		ASSERT(commandList != nullptr, "Command List should not be nullptr");
+
+		GFX_THROW_INFO_ONLY(commandList->SetGraphicsRootSignature(m_rootSignature->Get())); 
+	
+		for (const RootConstantBufferView& cbv : m_constantBufferViews)
+		{
+			GFX_THROW_INFO_ONLY(
+				commandList->SetGraphicsRootConstantBufferView(
+					cbv.GetRootParameterIndex(),
+					cbv.GetConstantBuffer()->GetGPUVirtualAddress(frameIndex)
+				)
+			);
+		}
+	}
 	inline void Update(const Timer& timer, int frameIndex)
 	{
 		// Loop over the constant buffer views to update per-pass constants
 		for (auto& rcbv : m_constantBufferViews)
-			rcbv.Update(timer, frameIndex);
+			rcbv.GetConstantBuffer()->Update(timer, frameIndex);
 	}
 
 
@@ -131,7 +227,21 @@ private:
 // In DIST builds, we don't name the object
 #ifndef TOPO_DIST
 public:
-	void SetDebugName(std::string_view name) noexcept { m_name = name; }
+	void SetDebugName(std::string_view name) noexcept 
+	{ 
+		m_name = name; 
+
+		SET_DEBUG_NAME_PTR(m_rootSignature, std::format("{0} - Root Signature", name)); 
+
+		for (unsigned int iii = 0; iii < m_constantBufferViews.size(); ++iii)
+			SET_DEBUG_NAME(m_constantBufferViews[iii], std::format("{0} - Constant Buffer View #{1}", name, iii));
+
+		for (unsigned int iii = 0; iii < m_renderPassLayers.size(); ++iii)
+			SET_DEBUG_NAME(m_renderPassLayers[iii], std::format("{0} - Render Pass Layer #{1}", name, iii));
+
+		for (unsigned int iii = 0; iii < m_computeLayers.size(); ++iii)
+			SET_DEBUG_NAME(m_computeLayers[iii], std::format("{0} - Compute Layer #{1}", name, iii));
+	}
 	ND const std::string& GetDebugName() const noexcept { return m_name; }
 private:
 	std::string m_name;

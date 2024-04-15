@@ -9,6 +9,8 @@
 #include "utils/Timer.h"
 #include "rendering/Renderer.h"
 
+#include "rendering/Texture.h"
+
 #ifdef TOPO_PLATFORM_WINDOWS
 #define THROW_WINDOW_LAST_EXCEPT() auto _err = GetLastError(); throw EXCEPTION(std::format("Window Exception\n[Error Code] {0:#x} ({0})\n[Description] {1}", _err, ::topo::TranslateErrorCode(_err)))
 #else
@@ -17,10 +19,47 @@
 
 namespace topo
 {
+	struct Light
+	{
+		DirectX::XMFLOAT3 Strength = { 0.5f, 0.5f, 0.5f };
+		float FalloffStart = 1.0f;                          // point/spot light only
+		DirectX::XMFLOAT3 Direction = { 0.0f, -1.0f, 0.0f };// directional/spot light only
+		float FalloffEnd = 10.0f;                           // point/spot light only
+		DirectX::XMFLOAT3 Position = { 0.0f, 0.0f, 0.0f };  // point/spot light only
+		float SpotPower = 64.0f;                            // spot light only
+	};
+
+#define MaxLights 16
+
 	struct PassConstants
 	{
 		float Width;
 		float Height;
+	};
+	struct CratePassConstants
+	{
+		DirectX::XMFLOAT4X4 View = MathHelper::Identity4x4();
+		DirectX::XMFLOAT4X4 InvView = MathHelper::Identity4x4();
+		DirectX::XMFLOAT4X4 Proj = MathHelper::Identity4x4();
+		DirectX::XMFLOAT4X4 InvProj = MathHelper::Identity4x4();
+		DirectX::XMFLOAT4X4 ViewProj = MathHelper::Identity4x4();
+		DirectX::XMFLOAT4X4 InvViewProj = MathHelper::Identity4x4();
+		DirectX::XMFLOAT3 EyePosW = { 0.0f, 0.0f, 0.0f };
+		float cbPerObjectPad1 = 0.0f;
+		DirectX::XMFLOAT2 RenderTargetSize = { 0.0f, 0.0f };
+		DirectX::XMFLOAT2 InvRenderTargetSize = { 0.0f, 0.0f };
+		float NearZ = 0.0f;
+		float FarZ = 0.0f;
+		float TotalTime = 0.0f;
+		float DeltaTime = 0.0f;
+
+		DirectX::XMFLOAT4 AmbientLight = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+		// Indices [0, NUM_DIR_LIGHTS) are directional lights;
+		// indices [NUM_DIR_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHTS) are point lights;
+		// indices [NUM_DIR_LIGHTS+NUM_POINT_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHT+NUM_SPOT_LIGHTS)
+		// are spot lights for a maximum of MaxLights per object.
+		Light Lights[MaxLights];
 	};
 
 	struct Vertex
@@ -28,6 +67,46 @@ namespace topo
 		DirectX::XMFLOAT4 position;
 		DirectX::XMFLOAT4 color;
 		DirectX::XMFLOAT3 Position() const noexcept { return { position.x, position.y, position.z }; }
+	};
+	struct CrateVertex
+	{
+		DirectX::XMFLOAT4 Color = { 0.75f, 0.0f, 0.0f, 1.0f };
+
+		DirectX::XMFLOAT3 Pos;
+		DirectX::XMFLOAT3 Normal;
+		DirectX::XMFLOAT2 TexC;
+		DirectX::XMFLOAT3 Position() const noexcept { return Pos; }
+	};
+	struct Material
+	{
+//		// Unique material name for lookup.
+//		std::string Name;
+//
+//		// Index into constant buffer corresponding to this material.
+//		int MatCBIndex = -1;
+//
+//		// Index into SRV heap for diffuse texture.
+//		int DiffuseSrvHeapIndex = -1;
+//
+//		// Index into SRV heap for normal texture.
+//		int NormalSrvHeapIndex = -1;
+//
+//		// Dirty flag indicating the material has changed and we need to update the constant buffer.
+//		// Because we have a material constant buffer for each FrameResource, we have to apply the
+//		// update to each FrameResource.  Thus, when we modify a material we should set 
+//		// NumFramesDirty = gNumFrameResources so that each frame resource gets the update.
+//		int NumFramesDirty = gNumFrameResources;
+
+		// Material constant buffer data used for shading.
+		DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+		DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
+		float Roughness = .25f;
+		DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
+	};
+	struct ObjectData
+	{
+		DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
+		DirectX::XMFLOAT4X4 TexTransform = MathHelper::Identity4x4();
 	};
 
 
@@ -163,8 +242,30 @@ protected:
 	std::unique_ptr<Renderer> m_renderer;
 	D3D12_VIEWPORT m_viewport;
 	D3D12_RECT m_scissorRect;
+
+	// 2D Test
 	std::unique_ptr<ConstantBufferMapped<PassConstants>>	m_passConstantsBuffer = nullptr;
 	std::unique_ptr<MeshGroup<Vertex>> m_meshGroup = nullptr;
+
+
+	// 3D Test
+	std::unique_ptr<MeshGroup<CrateVertex>> m_meshGroupCrate = nullptr;
+	std::unique_ptr<ConstantBufferMapped<CratePassConstants>> m_passConstantBufferCrate = nullptr;
+	std::unique_ptr<ConstantBufferMapped<Material>> m_materialConstantBuffer = nullptr;
+	std::unique_ptr<ConstantBufferMapped<ObjectData>> m_objectConstantBuffer = nullptr;
+	DirectX::XMFLOAT3 m_eyePosition = {};
+	std::unique_ptr<Camera> m_camera = nullptr;
+	std::unique_ptr<Texture> m_texture = nullptr;
+
+	SamplerData m_sd0{};
+	SamplerData m_sd1{};
+	SamplerData m_sd2{};
+	SamplerData m_sd3{};
+	SamplerData m_sd4{};
+	SamplerData m_sd5{};
+
+
+
 
 	// Window Data
 	short		m_width;

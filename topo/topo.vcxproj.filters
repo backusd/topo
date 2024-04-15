@@ -86,9 +86,6 @@
     <ClInclude Include="src\topo\rendering\MeshGroup.h">
       <Filter>topo\rendering</Filter>
     </ClInclude>
-    <ClInclude Include="src\topo\rendering\MeshTEST.h">
-      <Filter>topo\rendering</Filter>
-    </ClInclude>
     <ClInclude Include="src\topo\rendering\RenderItem.h">
       <Filter>topo\rendering</Filter>
     </ClInclude>
@@ -146,6 +143,8 @@
     <ClInclude Include="src\topo\utils\d3dx12.h">
       <Filter>topo\utils</Filter>
     </ClInclude>
+    <ClInclude Include="src\topo\rendering\Texture.h" />
+    <ClInclude Include="src\topo\rendering\SamplerData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -200,9 +199,6 @@
     <ClCompile Include="src\topo\rendering\MeshGroup.cpp">
       <Filter>topo\rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\topo\rendering\MeshTEST.cpp">
-      <Filter>topo\rendering</Filter>
-    </ClCompile>
     <ClCompile Include="src\topo\rendering\RenderItem.cpp">
       <Filter>topo\rendering</Filter>
     </ClCompile>
@@ -254,6 +250,8 @@
     <ClCompile Include="src\topo\utils\WindowMessageMap.cpp">
       <Filter>topo\utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\topo\rendering\Texture.cpp" />
+    <ClCompile Include="src\topo\rendering\SamplerData.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\topo\shaders\Control-ps.hlsl">
@@ -262,5 +260,16 @@
     <FxCompile Include="src\topo\shaders\Control-vs.hlsl">
       <Filter>topo\shaders</Filter>
     </FxCompile>
+    <FxCompile Include="src\topo\shaders\Crate-ps.hlsl">
+      <Filter>topo\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="src\topo\shaders\Crate-vs.hlsl">
+      <Filter>topo\shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\topo\shaders\LightingUtil.hlsli">
+      <Filter>topo\shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

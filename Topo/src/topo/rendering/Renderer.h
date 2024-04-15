@@ -47,8 +47,6 @@ public:
 	constexpr void PushBackRenderPass(RenderPass&& pass) noexcept { m_renderPasses.push_back(std::move(pass)); }
 
 	inline RenderPass& EmplaceBackRenderPass(std::shared_ptr<DeviceResources> deviceResources, const RenderPassSignature& signature) { return m_renderPasses.emplace_back(deviceResources, signature); }
-	inline RenderPass& EmplaceBackRenderPass(std::shared_ptr<RootSignature> rootSig) noexcept { return m_renderPasses.emplace_back(rootSig); }
-	inline RenderPass& EmplaceBackRenderPass(std::shared_ptr<DeviceResources> deviceResources, const D3D12_ROOT_SIGNATURE_DESC& desc) noexcept { return m_renderPasses.emplace_back(deviceResources, desc); }
 
 private:
 	// There is too much state to worry about copying (and expensive ?), so just delete copy operations until we find a good use case

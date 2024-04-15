@@ -25,7 +25,7 @@ public:
 
 	// No Setters yet... wait until you have a use case
 
-	std::function<void(const Timer&, int)> Update = [](const Timer&, int) {};
+//	std::function<void(const Timer&, int)> Update = [](const Timer&, int) {};
 
 private:
 	UINT				m_rootParameterIndex;

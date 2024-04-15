@@ -78,7 +78,7 @@ public:
 
 	ND constexpr int GetCurrentFrameIndex() const noexcept { return m_currentFrameIndex; }
 
-
+	ND inline DescriptorVector* GetDescriptorVector() const noexcept { return m_descriptorVector.get(); }
 
 	void PrepareToRun();
 	void Update();
