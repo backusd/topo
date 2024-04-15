@@ -9,6 +9,7 @@
 #include "rendering/AssetManager.h"
 #include "utils/GeometryGenerator.h"
 #include "rendering/SamplerData.h"
+#include "rendering/PipelineStateDesc.h"
 
 #include <windowsx.h> // Included so we can use GET_X_LPARAM/GET_Y_LPARAM
 
@@ -544,52 +545,46 @@ void Window::InitializeRenderer()
 	m_texture = std::make_unique<Texture>(m_deviceResources, "WoodCrate01.dds");
 
 	RenderPassSignature signature{
-		TextureDescription{ 0 }, 
-		ConstantBufferDescription{ 0, m_objectConstantBuffer.get() },
-		ConstantBufferDescription{ 1, m_passConstantBufferCrate.get() },
-		ConstantBufferDescription{ 2, m_materialConstantBuffer.get() },
-		SamplerDescription{ 0, &m_sd0 },
-		SamplerDescription{ 1, &m_sd1 },
-		SamplerDescription{ 2, &m_sd2 },
-		SamplerDescription{ 3, &m_sd3 },
-		SamplerDescription{ 4, &m_sd4 },
-		SamplerDescription{ 5, &m_sd5 }
+		TextureParameter{ 0 }, 
+		ConstantBufferParameter{ 0 },
+		ConstantBufferParameter{ 1 },
+		ConstantBufferParameter{ 2 },
+		SamplerParameter{ 0, &m_sd0 },
+		SamplerParameter{ 1, &m_sd1 },
+		SamplerParameter{ 2, &m_sd2 },
+		SamplerParameter{ 3, &m_sd3 },
+		SamplerParameter{ 4, &m_sd4 },
+		SamplerParameter{ 5, &m_sd5 }
 	};
 
 	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(m_deviceResources, signature);
 	SET_DEBUG_NAME(pass1, "Render Pass #1");
 
+	pass1.EmplaceBackRootConstantBufferView(2, m_passConstantBufferCrate.get());
+	pass1.EmplaceBackRootConstantBufferView(3, m_materialConstantBuffer.get());
+
 	const Shader& vs = AssetManager::GetShader("Crate-vs.cso");
 	const Shader& ps = AssetManager::GetShader("Crate-ps.cso");
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
-	ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-	psoDesc.InputLayout = vs.GetInputLayoutDesc();
-	psoDesc.pRootSignature = pass1.GetRootSignature()->Get();
-	psoDesc.VS = vs.GetShaderByteCode();
-	psoDesc.PS = ps.GetShaderByteCode();
-	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	psoDesc.RasterizerState.FrontCounterClockwise = false;
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
-	psoDesc.SampleDesc.Count = 1;
-	psoDesc.SampleDesc.Quality = 0;
-	psoDesc.DSVFormat = m_deviceResources->GetDepthStencilFormat();
+	PipelineStateDesc psDesc{};
+	psDesc.RootSignature = pass1.GetRootSignature();
+	psDesc.VertexShader = &vs;
+	psDesc.PixelShader = &ps;
+	psDesc.SampleMask = UINT_MAX; /// ??? Why?
+	psDesc.NumRenderTargets = 1;
+	psDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
+	psDesc.DSVFormat = m_deviceResources->GetDepthStencilFormat();
 
-	psoDesc.DepthStencilState.DepthEnable = TRUE;
-	psoDesc.DepthStencilState.StencilEnable = FALSE;
 
-	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_deviceResources, m_meshGroupCrate.get(), psoDesc, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_deviceResources, m_meshGroupCrate.get(), psDesc, PRIMITIVE_TOPOLOGY::TRIANGLELIST);
 	SET_DEBUG_NAME(layer1, "Render Pass Layer #1");
 
 	RenderItem& crateRI = layer1.EmplaceBackRenderItem();
 	SET_DEBUG_NAME(crateRI, "Crate RenderItem");
 
-	auto& dt = crateRI.GetRootDescriptorTables().emplace_back(0, m_texture->GetSRVHandle());
+	crateRI.EmplaceBackRootConstantBufferView(1, m_objectConstantBuffer.get());
+
+	auto& dt = crateRI.GetRootDescriptorTables().emplace_back(0, m_texture->GetSRVHandle()); 
 
 
 

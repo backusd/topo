@@ -170,8 +170,10 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClInclude Include="src\topo\Layout.h" />
     <ClInclude Include="src\topo\Log.h" />
     <ClInclude Include="src\topo\Page.h" />
+    <ClInclude Include="src\topo\rendering\PipelineStateDesc.h" />
     <ClInclude Include="src\topo\rendering\SamplerData.h" />
     <ClInclude Include="src\topo\rendering\Texture.h" />
+    <ClInclude Include="src\topo\rendering\Utility.h" />
     <ClInclude Include="src\topo\TopoException.h" />
     <ClInclude Include="src\topo\Window.h" />
     <ClInclude Include="src\topo\controls\Button.h" />
@@ -214,8 +216,10 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClCompile Include="src\topo\Layout.cpp" />
     <ClCompile Include="src\topo\Log.cpp" />
     <ClCompile Include="src\topo\Page.cpp" />
+    <ClCompile Include="src\topo\rendering\PipelineStateDesc.cpp" />
     <ClCompile Include="src\topo\rendering\SamplerData.cpp" />
     <ClCompile Include="src\topo\rendering\Texture.cpp" />
+    <ClCompile Include="src\topo\rendering\Utility.cpp" />
     <ClCompile Include="src\topo\TopoException.cpp" />
     <ClCompile Include="src\topo\Window.cpp" />
     <ClCompile Include="src\topo\controls\Button.cpp" />

@@ -5,6 +5,7 @@
 #include "topo/utils/DxgiInfoManager.h"
 #include "topo/utils/TranslateErrorCode.h"
 #include "rendering/DescriptorVector.h"
+#include "rendering/Utility.h"
 
 
 
@@ -58,8 +59,8 @@ public:
 	ND inline ID3D12GraphicsCommandList* GetCommandList() const noexcept { return m_commandList.Get(); }
 	ND inline ID3D12CommandQueue* GetCommandQueue() const noexcept { return m_commandQueue.Get(); }
 	ND inline ID3D12Device* GetDevice() const noexcept { return m_d3dDevice.Get(); }
-	ND inline DXGI_FORMAT GetBackBufferFormat() const noexcept { return m_backBufferFormat; }
-	ND inline DXGI_FORMAT GetDepthStencilFormat() const noexcept { return m_depthStencilFormat; }
+	ND inline FORMAT GetBackBufferFormat() const noexcept { return m_backBufferFormat; }
+	ND inline FORMAT GetDepthStencilFormat() const noexcept { return m_depthStencilFormat; }
 	ND inline IDXGISwapChain1* GetSwapChain() const noexcept { return m_swapChain.Get(); }
 
 	ND ID3D12Resource* CurrentBackBuffer() const noexcept;
@@ -134,8 +135,8 @@ private:
 	UINT m_cbvSrvUavDescriptorSize = 0;
 
 	D3D_DRIVER_TYPE m_d3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
-	DXGI_FORMAT m_backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-	DXGI_FORMAT m_depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	FORMAT m_backBufferFormat   = FORMAT::R8G8B8A8_UNORM; 
+	FORMAT m_depthStencilFormat = FORMAT::D24_UNORM_S8_UINT; 
 
 	// Resources that can be deleted once they are no longer referenced by the GPU
 	std::vector<std::tuple<UINT64, Microsoft::WRL::ComPtr<ID3D12Resource>>> m_resourcesToDelete;

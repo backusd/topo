@@ -145,6 +145,8 @@
     </ClInclude>
     <ClInclude Include="src\topo\rendering\Texture.h" />
     <ClInclude Include="src\topo\rendering\SamplerData.h" />
+    <ClInclude Include="src\topo\rendering\PipelineStateDesc.h" />
+    <ClInclude Include="src\topo\rendering\Utility.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -252,6 +254,8 @@
     </ClCompile>
     <ClCompile Include="src\topo\rendering\Texture.cpp" />
     <ClCompile Include="src\topo\rendering\SamplerData.cpp" />
+    <ClCompile Include="src\topo\rendering\PipelineStateDesc.cpp" />
+    <ClCompile Include="src\topo\rendering\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\topo\shaders\Control-ps.hlsl">

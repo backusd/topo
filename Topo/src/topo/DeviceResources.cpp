@@ -206,7 +206,7 @@ void DeviceResources::CreateSwapChain()
 		sd.BufferDesc.Height = m_height;
 		sd.BufferDesc.RefreshRate.Numerator = 60;
 		sd.BufferDesc.RefreshRate.Denominator = 1;
-		sd.BufferDesc.Format = m_backBufferFormat;
+		sd.BufferDesc.Format = static_cast<DXGI_FORMAT>(m_backBufferFormat);
 		sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 		sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 		sd.SampleDesc.Count = 1;
@@ -238,7 +238,7 @@ void DeviceResources::CreateSwapChain()
 
 		sd.Width = m_width; // Match the size of the window.
 		sd.Height = m_height;
-		sd.Format = m_backBufferFormat; // This is the most common swap chain format.
+		sd.Format = static_cast<DXGI_FORMAT>(m_backBufferFormat); // This is the most common swap chain format.
 		sd.SampleDesc.Count = 1;
 		sd.SampleDesc.Quality = 0;
 		sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -340,7 +340,7 @@ void DeviceResources::OnResize(int height, int width)
 			SwapChainBufferCount,
 			m_width,
 			m_height,
-			m_backBufferFormat,
+			static_cast<DXGI_FORMAT>(m_backBufferFormat),
 			DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
 		)
 	);
@@ -381,7 +381,7 @@ void DeviceResources::OnResize(int height, int width)
 	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
 	D3D12_CLEAR_VALUE optClear = {};
-	optClear.Format = m_depthStencilFormat;
+	optClear.Format = static_cast<DXGI_FORMAT>(m_depthStencilFormat);
 	optClear.DepthStencil.Depth = 1.0f;
 	optClear.DepthStencil.Stencil = 0;
 
@@ -404,7 +404,7 @@ void DeviceResources::OnResize(int height, int width)
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-	dsvDesc.Format = m_depthStencilFormat;
+	dsvDesc.Format = static_cast<DXGI_FORMAT>(m_depthStencilFormat);
 	dsvDesc.Texture2D.MipSlice = 0;
 
 	m_d3dDevice->CreateDepthStencilView(m_depthStencilBuffer.Get(), &dsvDesc, DepthStencilView());
@@ -613,7 +613,7 @@ void DeviceResources::LogAdapterOutputs(IDXGIAdapter* adapter)
 
 		LOG_INFO("{0}", ws2s(text));
 
-		LogOutputDisplayModes(output, m_backBufferFormat);
+		LogOutputDisplayModes(output, static_cast<DXGI_FORMAT>(m_backBufferFormat));
 
 		ReleaseCom(output);
 

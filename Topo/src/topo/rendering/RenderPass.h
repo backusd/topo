@@ -5,50 +5,51 @@
 #include "ComputeLayer.h"
 #include "Texture.h"
 #include "SamplerData.h"
+#include "PipelineStateDesc.h"
 
 namespace topo
 {
 #ifdef DIRECTX12
 
-struct TextureDescription
+struct TextureParameter
 {
 	unsigned int		BaseRegister = 0;
 	unsigned int		Count = 1;
 	unsigned int		RegisterSpace = 0;
 };
-struct SamplerDescription
+struct SamplerParameter
 {
 	unsigned int Register;
 	SamplerData* Desc;
 };
-struct ConstantBufferDescription
+struct ConstantBufferParameter
 {
 	unsigned int		Register;
-	ConstantBufferBase* ConstantBuffer;
 	unsigned int		RegisterSpace = 0;
 };
-struct ShaderResourceViewDescription
+struct ShaderResourceViewParameter
 {
 	unsigned int		Register = 0;
 	unsigned int		RegisterSpace = 0;
 };
-struct UnorderedAccessViewDescription
+struct UnorderedAccessViewParameter
 {
 	unsigned int		Register = 0;
 	unsigned int		RegisterSpace = 0;
 };
 class RenderPassSignature
 {
+	using ParameterType = std::variant<TextureParameter, ConstantBufferParameter, ShaderResourceViewParameter, UnorderedAccessViewParameter, SamplerParameter>;
 public:
 	RenderPassSignature() {};
-	RenderPassSignature(const std::initializer_list<std::variant<TextureDescription, ConstantBufferDescription, ShaderResourceViewDescription, UnorderedAccessViewDescription, SamplerDescription>>& rootParams) :
+	RenderPassSignature(const std::initializer_list<ParameterType>& rootParams) :
 		m_rootParameters(rootParams)
 	{}
 
-	const std::vector<std::variant<TextureDescription, ConstantBufferDescription, ShaderResourceViewDescription, UnorderedAccessViewDescription, SamplerDescription>>& GetSignatureParameters() const { return m_rootParameters; }
+	const std::vector<ParameterType>& GetSignatureParameters() const { return m_rootParameters; }
 
 private:
-	std::vector<std::variant<TextureDescription, ConstantBufferDescription, ShaderResourceViewDescription, UnorderedAccessViewDescription, SamplerDescription>> m_rootParameters;
+	std::vector<ParameterType> m_rootParameters;
 };
 
 class RenderPass
@@ -62,54 +63,42 @@ public:
 		std::vector<D3D12_STATIC_SAMPLER_DESC> samplerDescriptions;
 		std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameters;
 
-		unsigned int rootParamIndex = 0;
-
 		for (const auto& sigParam : signatureParams)
 		{
-			if (std::holds_alternative<TextureDescription>(sigParam))
+			if (std::holds_alternative<TextureParameter>(sigParam))
 			{
 				ranges.clear();
 
-				const TextureDescription& texDesc = std::get<TextureDescription>(sigParam);
+				const TextureParameter& texDesc = std::get<TextureParameter>(sigParam);
 
 				auto& range = ranges.emplace_back();
 				range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, texDesc.Count, texDesc.BaseRegister, texDesc.RegisterSpace);
 
 				auto& param = slotRootParameters.emplace_back();
 				param.InitAsDescriptorTable(1, &range);
-
-				++rootParamIndex;
 			}
-			else if (std::holds_alternative<ConstantBufferDescription>(sigParam))
+			else if (std::holds_alternative<ConstantBufferParameter>(sigParam))
 			{
-				const ConstantBufferDescription& cbDesc = std::get<ConstantBufferDescription>(sigParam);
+				const ConstantBufferParameter& cbDesc = std::get<ConstantBufferParameter>(sigParam);
 
 				auto& param = slotRootParameters.emplace_back(); 
 				param.InitAsConstantBufferView(cbDesc.Register); 
-
-				RootConstantBufferView& cbv = EmplaceBackRootConstantBufferView(rootParamIndex, cbDesc.ConstantBuffer);
-
-				++rootParamIndex;
 			}
-			else if (std::holds_alternative<ShaderResourceViewDescription>(sigParam))
+			else if (std::holds_alternative<ShaderResourceViewParameter>(sigParam))
 			{
-				const ShaderResourceViewDescription& desc = std::get<ShaderResourceViewDescription>(sigParam);
+				const ShaderResourceViewParameter& desc = std::get<ShaderResourceViewParameter>(sigParam);
 				auto& param = slotRootParameters.emplace_back();
 				param.InitAsShaderResourceView(desc.Register, desc.RegisterSpace);
-
-				++rootParamIndex;
 			}
-			else if (std::holds_alternative<UnorderedAccessViewDescription>(sigParam))
+			else if (std::holds_alternative<UnorderedAccessViewParameter>(sigParam))
 			{
-				const UnorderedAccessViewDescription& desc = std::get<UnorderedAccessViewDescription>(sigParam);
+				const UnorderedAccessViewParameter& desc = std::get<UnorderedAccessViewParameter>(sigParam);
 				auto& param = slotRootParameters.emplace_back();
 				param.InitAsUnorderedAccessView(desc.Register, desc.RegisterSpace);
-
-				++rootParamIndex;
 			}
-			else if (std::holds_alternative<SamplerDescription>(sigParam))
+			else if (std::holds_alternative<SamplerParameter>(sigParam))
 			{
-				const SamplerDescription& desc = std::get<SamplerDescription>(sigParam);
+				const SamplerParameter& desc = std::get<SamplerParameter>(sigParam);
 				const SamplerData& data = *(desc.Desc);
 				
 				D3D12_STATIC_SAMPLER_DESC d{};
@@ -147,8 +136,8 @@ public:
 
 	RenderPassLayer& EmplaceBackRenderPassLayer(std::shared_ptr<DeviceResources> deviceResources,
 		MeshGroupBase* meshGroup,
-		const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc,
-		D3D12_PRIMITIVE_TOPOLOGY topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
+		const PipelineStateDesc& desc,
+		PRIMITIVE_TOPOLOGY topology = PRIMITIVE_TOPOLOGY::TRIANGLELIST) 
 	{
 		return m_renderPassLayers.emplace_back(deviceResources, meshGroup, desc, topology);
 	}
