@@ -50,6 +50,8 @@ public:
 		return m_uploadBuffer->GetGPUVirtualAddress() + static_cast<UINT64>(frameIndex) * m_elementByteSizeOffsetter;
 	}
 
+	std::function<void(const Timer&, int)> Update = [](const Timer&, int) {};
+
 protected:
 	ConstantBufferBase(const ConstantBufferBase& rhs) = delete;
 	ConstantBufferBase& operator=(const ConstantBufferBase& rhs) = delete;

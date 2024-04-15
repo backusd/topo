@@ -10,9 +10,47 @@ namespace topo
 {
 #ifdef DIRECTX12
 
+struct ConstantBufferDescription
+{
+	unsigned int		Register;
+	ConstantBufferBase* ConstantBuffer;
+};
+class RenderPassSignature
+{
+public:
+	RenderPassSignature() {};
+	RenderPassSignature(const std::vector<ConstantBufferDescription>& cbs) : ConstantBufferDescs(cbs) {}
+	RenderPassSignature(std::vector<ConstantBufferDescription>&& cbs) : ConstantBufferDescs(std::move(cbs)) {}
+	RenderPassSignature(const std::initializer_list<ConstantBufferDescription>& cbs) : ConstantBufferDescs(cbs) {}
+
+	std::vector<ConstantBufferDescription> ConstantBufferDescs;
+};
+
 class RenderPass
 {
 public:
+	RenderPass(std::shared_ptr<DeviceResources> deviceResources, const RenderPassSignature& signature) : m_rootSignature(nullptr)
+	{
+		std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameters(signature.ConstantBufferDescs.size());
+		for (unsigned int iii = 0; iii < slotRootParameters.size(); ++iii)
+		{
+			slotRootParameters[iii].InitAsConstantBufferView(signature.ConstantBufferDescs[iii].Register);
+		}
+
+		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(static_cast<unsigned int>(slotRootParameters.size()),
+			slotRootParameters.data(), 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+		m_rootSignature = std::make_shared<RootSignature>(deviceResources, rootSigDesc);
+
+		// Create the Constant Buffer Views
+		for (const ConstantBufferDescription& cbDesc : signature.ConstantBufferDescs)
+		{
+			RootConstantBufferView& cbv = EmplaceBackRootConstantBufferView(cbDesc.Register, cbDesc.ConstantBuffer);
+			cbv.Update = cbDesc.ConstantBuffer->Update;
+		}
+	}
+
+
 	inline RenderPass(std::shared_ptr<RootSignature> rootSig) noexcept :
 		m_rootSignature(rootSig)
 	{
@@ -24,8 +62,8 @@ public:
 		m_rootSignature = std::make_shared<RootSignature>(deviceResources, desc);
 		ASSERT(m_rootSignature != nullptr, "Root signature should not be nullptr");
 	}
-	RenderPass(RenderPass&& rhs) noexcept = default;
-	RenderPass& operator=(RenderPass&& rhs) noexcept = default;
+	RenderPass(RenderPass&&) noexcept = default;
+	RenderPass& operator=(RenderPass&&) noexcept = default;
 
 	RenderPassLayer& EmplaceBackRenderPassLayer(std::shared_ptr<DeviceResources> deviceResources,
 		MeshGroupBase* meshGroup,

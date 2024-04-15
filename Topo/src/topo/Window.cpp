@@ -457,28 +457,37 @@ void Window::InitializeRenderer()
 //	m_meshGroup = std::make_shared<MeshGroup<Vertex>>(m_deviceResources, vertices, indices);
 //	SET_DEBUG_NAME_PTR(m_meshGroup, "MeshGroup");
 
-
-	constexpr unsigned int perPassCBRegister = 0;
-
-	// Root parameter can be a table, root descriptor or root constants.
-	// *** Perfomance TIP: Order from most frequent to least frequent.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[1];
-	slotRootParameter[0].InitAsConstantBufferView(perPassCBRegister);	// Object/Instance Constant Buffer  
-
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(1, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-	std::shared_ptr<RootSignature> rootSig1 = std::make_shared<RootSignature>(m_deviceResources, rootSigDesc); 
-	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(rootSig1);
-	SET_DEBUG_NAME(pass1, "Render Pass #1");
-
 	m_passConstantsBuffer = std::make_unique<ConstantBufferMapped<PassConstants>>(m_deviceResources);
-	RootConstantBufferView& perPassConstantsCBV = pass1.EmplaceBackRootConstantBufferView(perPassCBRegister, m_passConstantsBuffer.get());
-	SET_DEBUG_NAME(perPassConstantsCBV, "Per Pass RootConstantBufferView");
-	perPassConstantsCBV.Update = [this](const Timer& timer, int frameIndex)
+	m_passConstantsBuffer->Update = [this](const Timer& timer, int frameIndex)
 		{
 			PassConstants pc{ static_cast<float>(this->GetWidth()), static_cast<float>(this->GetHeight()) };
 			m_passConstantsBuffer->CopyData(frameIndex, pc);
 		};
+
+	RenderPassSignature sig{ { 0, m_passConstantsBuffer.get() } };
+
+	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(m_deviceResources, sig);
+
+
+//	constexpr unsigned int perPassCBRegister = 0;
+//
+//	// Root parameter can be a table, root descriptor or root constants.
+//	// *** Perfomance TIP: Order from most frequent to least frequent.
+//	CD3DX12_ROOT_PARAMETER slotRootParameter[1];
+//	slotRootParameter[0].InitAsConstantBufferView(perPassCBRegister);	// Object/Instance Constant Buffer  
+//	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(1, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+//
+//	std::shared_ptr<RootSignature> rootSig1 = std::make_shared<RootSignature>(m_deviceResources, rootSigDesc); 
+//	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(rootSig1);
+//	SET_DEBUG_NAME(pass1, "Render Pass #1");
+//	
+//	RootConstantBufferView& perPassConstantsCBV = pass1.EmplaceBackRootConstantBufferView(perPassCBRegister, m_passConstantsBuffer.get());
+//	SET_DEBUG_NAME(perPassConstantsCBV, "Per Pass RootConstantBufferView");
+//	perPassConstantsCBV.Update = [this](const Timer& timer, int frameIndex)
+//		{
+//			PassConstants pc{ static_cast<float>(this->GetWidth()), static_cast<float>(this->GetHeight()) };
+//			m_passConstantsBuffer->CopyData(frameIndex, pc);
+//		};
 
 
 	const Shader& vs = AssetManager::GetShader("Control-vs.cso");
@@ -487,7 +496,7 @@ void Window::InitializeRenderer()
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
 	ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 	psoDesc.InputLayout = vs.GetInputLayoutDesc();
-	psoDesc.pRootSignature = rootSig1->Get();
+	psoDesc.pRootSignature = pass1.GetRootSignature()->Get();
 	psoDesc.VS = vs.GetShaderByteCode();
 	psoDesc.PS = ps.GetShaderByteCode();
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
