@@ -38,6 +38,8 @@ TextureBackingObject::TextureBackingObject(std::shared_ptr<DeviceResources> devi
 	// Create a SRV and keep track of the index needed to look up this descriptor
 	DescriptorVector* dv = m_deviceResources->GetDescriptorVector();
 	m_srvDescriptorIndex = dv->EmplaceBackShaderResourceView(m_textureResource.Get(), &srvDesc);
+
+	SET_DEBUG_NAME_PTR(this, std::format("{0} {1}", m_deviceResources->Name(), m_filename));
 }
 
 
@@ -45,35 +47,57 @@ TextureBackingObject::TextureBackingObject(std::shared_ptr<DeviceResources> devi
 Texture::Texture(const Texture& rhs) :
 	m_texture(rhs.m_texture)
 {
-	std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
-	AssetManager::TextureIncrementCount(key); 
+	if (m_texture != nullptr)
+	{
+		std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
+		AssetManager::TextureIncrementCount(key);
+		SET_DEBUG_NAME_PTR(this, key);
+	}
 }
 Texture::Texture(Texture&& rhs) noexcept :
 	m_texture(rhs.m_texture)
 {
-	std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
-	AssetManager::TextureIncrementCount(key);
+	// Set rhs texture to nullptr on the moved-from object so that it won't decrement the ref count
+	rhs.m_texture = nullptr;
+
+#ifndef TOPO_DIST
+	if (m_texture != nullptr)
+		SET_DEBUG_NAME_PTR(this, std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename));
+#endif
 }
 Texture& Texture::operator=(const Texture& rhs)
 {
 	m_texture = rhs.m_texture;
-	std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
-	AssetManager::TextureIncrementCount(key);
+
+	if (m_texture != nullptr)
+	{
+		std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
+		AssetManager::TextureIncrementCount(key);
+		SET_DEBUG_NAME_PTR(this, key);
+	}
+	
 	return *this;
 }
 Texture& Texture::operator=(Texture&& rhs) noexcept
 {
 	m_texture = rhs.m_texture;
-	std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
-	AssetManager::TextureIncrementCount(key);
+
+	// Set rhs texture to nullptr on the moved-from object so that it won't decrement the ref count
+	rhs.m_texture = nullptr;
+
+#ifndef TOPO_DIST
+	if (m_texture != nullptr)
+		SET_DEBUG_NAME_PTR(this, std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename));
+#endif
 	return *this;
 }
 Texture::~Texture()
 {
-	// When a shader has been moved from, m_key will no longer hold any data
-	// Therefore, we should only decrement the count if m_key still holds a value
-	std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
-	AssetManager::TextureDecrementCount(key);
+	if (m_texture != nullptr)
+	{
+		std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
+		AssetManager::TextureDecrementCount(key);
+	}
 }
 
 

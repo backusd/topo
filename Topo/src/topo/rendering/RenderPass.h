@@ -55,8 +55,12 @@ private:
 class RenderPass
 {
 public:
-	RenderPass(std::shared_ptr<DeviceResources> deviceResources, const RenderPassSignature& signature) : m_rootSignature(nullptr)
+	RenderPass(std::shared_ptr<DeviceResources> deviceResources, const RenderPassSignature& signature) : 
+		m_deviceResources(deviceResources),
+		m_rootSignature(nullptr)
 	{
+		ASSERT(m_deviceResources != nullptr, "No device resources");
+
 		const auto& signatureParams = signature.GetSignatureParameters();
 
 		std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
@@ -127,18 +131,16 @@ public:
 			samplerDescriptions.size() == 0 ? nullptr : samplerDescriptions.data(),
 			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-		m_rootSignature = std::make_shared<RootSignature>(deviceResources, rootSigDesc);
+		m_rootSignature = std::make_shared<RootSignature>(m_deviceResources, rootSigDesc);
 		ASSERT(m_rootSignature != nullptr, "Something went wrong - Root signature should not be nullptr");
 	}
 
 	RenderPass(RenderPass&&) noexcept = default;
 	RenderPass& operator=(RenderPass&&) noexcept = default;
 
-	RenderPassLayer& EmplaceBackRenderPassLayer(std::shared_ptr<DeviceResources> deviceResources,
-		MeshGroupBase* meshGroup,
-		const PipelineStateDesc& desc) 
+	RenderPassLayer& EmplaceBackRenderPassLayer(MeshGroupBase* meshGroup, const PipelineStateDesc& desc) 
 	{
-		return m_renderPassLayers.emplace_back(deviceResources, meshGroup, desc);
+		return m_renderPassLayers.emplace_back(m_deviceResources, meshGroup, desc);
 	}
 
 	inline void Bind(ID3D12GraphicsCommandList* commandList, int frameIndex)
@@ -196,6 +198,8 @@ private:
 	RenderPass(const RenderPass&) = delete;
 	RenderPass& operator=(const RenderPass&) = delete;
 
+	// Device Resources
+	std::shared_ptr<DeviceResources> m_deviceResources;
 
 	// Shared pointer because root signatures may be shared
 	std::shared_ptr<RootSignature> m_rootSignature;

@@ -500,7 +500,9 @@ void Window::InitializeRenderer()
 			using namespace DirectX;
 
 			ObjectData data{};
-			XMMATRIX world = XMMatrixTranslation(0.0f, 0.0f, 0.0f) * XMMatrixScaling(1.0f, 1.0f, 1.0f);
+			XMMATRIX world = XMMatrixTranslation(0.0f, 0.0f, 0.0f) *
+				XMMatrixScaling(1.0f, 1.0f, 1.0f) *
+				XMMatrixRotationY(sinf(timer.TotalTime()));
 			XMStoreFloat4x4(&data.World, XMMatrixTranspose(world)); 
 
 			m_objectConstantBuffer->CopyData(frameIndex, data); 
@@ -542,9 +544,20 @@ void Window::InitializeRenderer()
 
 
 
-	Texture texture = AssetManager::CheckoutTexture(m_deviceResources, "WoodCrate01.dds");
+	Texture t1  = AssetManager::CheckoutTexture(m_deviceResources, "bricks.dds");
+	Texture t2  = AssetManager::CheckoutTexture(m_deviceResources, "bricks2.dds");
+	Texture t3  = AssetManager::CheckoutTexture(m_deviceResources, "bricks3.dds");
+	Texture t4  = AssetManager::CheckoutTexture(m_deviceResources, "checkboard.dds");
+	Texture t5  = AssetManager::CheckoutTexture(m_deviceResources, "grass.dds");
+	Texture t6  = AssetManager::CheckoutTexture(m_deviceResources, "ice.dds");
+	Texture t7  = AssetManager::CheckoutTexture(m_deviceResources, "stone.dds");
+	Texture t8  = AssetManager::CheckoutTexture(m_deviceResources, "tile.dds");
+	Texture t9  = AssetManager::CheckoutTexture(m_deviceResources, "water1.dds");
+	Texture t10 = AssetManager::CheckoutTexture(m_deviceResources, "WireFence.dds");
+	Texture t11 = AssetManager::CheckoutTexture(m_deviceResources, "WoodCrate01.dds");
+	Texture t12 = AssetManager::CheckoutTexture(m_deviceResources, "WoodCrate02.dds");
 
-
+	Texture t = t12;
 
 	RenderPassSignature signature{
 		TextureParameter{ 0 }, 
@@ -559,7 +572,7 @@ void Window::InitializeRenderer()
 		SamplerParameter{ 5, &m_sd5 }
 	};
 
-	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(m_deviceResources, signature);
+	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(signature);
 	SET_DEBUG_NAME(pass1, "Render Pass #1");
 
 	pass1.BindConstantBuffer(2, m_passConstantBufferCrate.get());
@@ -577,15 +590,14 @@ void Window::InitializeRenderer()
 	psDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
 	psDesc.DSVFormat = m_deviceResources->GetDepthStencilFormat();
 
-
-	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_deviceResources, m_meshGroupCrate.get(), psDesc);
+	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_meshGroupCrate.get(), psDesc);
 	SET_DEBUG_NAME(layer1, "Render Pass Layer #1");
 
 	RenderItem& crateRI = layer1.EmplaceBackRenderItem();
 	SET_DEBUG_NAME(crateRI, "Crate RenderItem");
 
 	crateRI.BindConstantBuffer(1, m_objectConstantBuffer.get());
-	crateRI.BindTexture(0, texture);
+	crateRI.BindTexture(0, t);
 
 
 

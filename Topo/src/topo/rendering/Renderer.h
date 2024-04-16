@@ -46,7 +46,7 @@ public:
 
 	constexpr void PushBackRenderPass(RenderPass&& pass) noexcept { m_renderPasses.push_back(std::move(pass)); }
 
-	inline RenderPass& EmplaceBackRenderPass(std::shared_ptr<DeviceResources> deviceResources, const RenderPassSignature& signature) { return m_renderPasses.emplace_back(deviceResources, signature); }
+	inline RenderPass& EmplaceBackRenderPass(const RenderPassSignature& signature) { return m_renderPasses.emplace_back(m_deviceResources, signature); }
 
 private:
 	// There is too much state to worry about copying (and expensive ?), so just delete copy operations until we find a good use case
