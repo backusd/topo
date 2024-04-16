@@ -566,17 +566,12 @@ void Window::InitializeRenderer()
 	pass1.BindConstantBuffer(3, m_materialConstantBuffer.get());
 
 	Shader vs = AssetManager::CheckoutShader("Crate-vs.cso", std::move(il));
-
-	Shader ps1;
-	{
-		Shader ps = AssetManager::CheckoutShader("Crate-ps.cso");
-		ps1 = std::move(ps);
-	}
+	Shader ps = AssetManager::CheckoutShader("Crate-ps.cso");
 
 	PipelineStateDesc psDesc{};
 	psDesc.RootSignature = pass1.GetRootSignature();
-	psDesc.VertexShader = std::move(vs);
-	psDesc.PixelShader = std::move(ps1);
+	psDesc.VertexShader = vs;
+	psDesc.PixelShader = ps;
 	psDesc.SampleMask = UINT_MAX; /// ??? Why?
 	psDesc.NumRenderTargets = 1;
 	psDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();

@@ -66,8 +66,12 @@ private:
 	static inline void Shutdown() { Get().ShutdownImpl(); }
 	inline void ShutdownImpl()
 	{
-		m_shaders.clear();
-		m_deviceResources = nullptr;
+		// NOTE: We shouldn't need to manually clean up reference counted resources. On program
+		//       shutdown, their destructors should appropriately clean everything up
+
+		//m_shaders.clear();
+		//m_textures.clear();
+		//m_deviceResources = nullptr;
 	}
 
 	AssetManager() noexcept {}
