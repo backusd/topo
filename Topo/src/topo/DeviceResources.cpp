@@ -18,8 +18,9 @@ DxgiInfoManager DeviceResources::m_infoManager = DxgiInfoManager();
 #endif
 
 
-DeviceResources::DeviceResources(HWND hWnd, int width, int height) :
+DeviceResources::DeviceResources(HWND hWnd, int width, int height, std::string_view uniqueName) :
 	m_hWnd(hWnd),
+	m_name(uniqueName),
 	m_height(height),
 	m_width(width)
 {

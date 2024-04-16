@@ -126,11 +126,11 @@ void AssetManager::ShaderDecrementCountImpl(const std::string& key) noexcept
 
 
 // Textures
-Texture AssetManager::CheckoutTextureImpl(std::string_view textureFileName)
+Texture AssetManager::CheckoutTextureImpl(std::shared_ptr<DeviceResources> deviceResources, std::string_view textureFileName)
 {
 	Texture texture;
 
-	std::string key(textureFileName);
+	std::string key = std::format("{0} {1}", deviceResources->Name(), textureFileName);
 	auto entry = m_textures.find(key);
 
 	// If the key does not exist, then emplace a new ShaderAndRefCount value (which will initialize a ref count of 1)
@@ -139,7 +139,7 @@ Texture AssetManager::CheckoutTextureImpl(std::string_view textureFileName)
 		// Doing a piecewise_construct means we can manually forward the necessary parameters to the key/value constructors
 		auto itr = m_textures.emplace(std::piecewise_construct,
 			std::forward_as_tuple(key),
-			std::forward_as_tuple(m_deviceResources, textureFileName));
+			std::forward_as_tuple(deviceResources, textureFileName));
 
 		// emplace returns a pair, and the second value is a bool for whether or not the emplace succeeded
 		if (!(itr.second))

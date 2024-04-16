@@ -44,7 +44,7 @@ class DescriptorVector;
 class DeviceResources
 {
 public:
-	DeviceResources(HWND hWnd, int width, int height); // Constructor to use when building for Win32 and we do have an HWND
+	DeviceResources(HWND hWnd, int width, int height, std::string_view uniqueName); // Constructor to use when building for Win32 and we do have an HWND
 	DeviceResources(const DeviceResources&) = delete;
 	DeviceResources(DeviceResources&&) = delete;
 	DeviceResources& operator=(const DeviceResources&) = delete;
@@ -90,7 +90,7 @@ public:
 	void DelayedDelete(Microsoft::WRL::ComPtr<ID3D12Resource> resource) noexcept;
 	void CleanupResources() noexcept;
 
-
+	ND inline const std::string& Name() const noexcept { return m_name; }
 private:
 	void CreateDevice();
 	void CreateCommandObjects();
@@ -98,6 +98,7 @@ private:
 	void CreateRtvAndDsvDescriptorHeaps();
 
 	HWND m_hWnd;
+	std::string m_name;
 
 	int m_height;
 	int m_width;

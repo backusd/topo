@@ -45,30 +45,35 @@ TextureBackingObject::TextureBackingObject(std::shared_ptr<DeviceResources> devi
 Texture::Texture(const Texture& rhs) :
 	m_texture(rhs.m_texture)
 {
-	AssetManager::TextureIncrementCount(m_texture->Filename());
+	std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
+	AssetManager::TextureIncrementCount(key); 
 }
 Texture::Texture(Texture&& rhs) noexcept :
 	m_texture(rhs.m_texture)
 {
-	AssetManager::TextureIncrementCount(m_texture->Filename());
+	std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
+	AssetManager::TextureIncrementCount(key);
 }
 Texture& Texture::operator=(const Texture& rhs)
 {
 	m_texture = rhs.m_texture;
-	AssetManager::TextureIncrementCount(m_texture->Filename());
+	std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
+	AssetManager::TextureIncrementCount(key);
 	return *this;
 }
 Texture& Texture::operator=(Texture&& rhs) noexcept
 {
 	m_texture = rhs.m_texture;
-	AssetManager::TextureIncrementCount(m_texture->Filename());
+	std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
+	AssetManager::TextureIncrementCount(key);
 	return *this;
 }
 Texture::~Texture()
 {
 	// When a shader has been moved from, m_key will no longer hold any data
 	// Therefore, we should only decrement the count if m_key still holds a value
-	AssetManager::TextureDecrementCount(m_texture->Filename());
+	std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
+	AssetManager::TextureDecrementCount(key);
 }
 
 

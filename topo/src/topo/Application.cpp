@@ -13,7 +13,6 @@ Application::Application(const WindowProperties& mainWindowProperties) noexcept 
 {
 	ASSERT(s_application == nullptr, "Not allowed to create a second instance of Application");
 	s_application = this;
-	AssetManager::Initialize(m_window.GetDeviceResources());
 }
 
 int Application::Run()
@@ -40,10 +39,6 @@ int Application::Run()
 			{
 				// When the main window is closed, call Terminate to close all open windows
 				TerminateAllChildWindows();
-
-				// Need to manually release all assets held by AssetManager, otherwise, there will
-				// be dangling resources on shutdown
-				AssetManager::Shutdown();
 
 				// if return optional has value, means we're quitting so return exit code
 				return *ecode;

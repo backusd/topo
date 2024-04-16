@@ -8,6 +8,7 @@ namespace topo
 {
 class TextureBackingObject
 {
+	friend class Texture;
 public:
 	TextureBackingObject(std::shared_ptr<DeviceResources> deviceResources, std::string_view filename);
 	TextureBackingObject(const TextureBackingObject& rhs) = default;

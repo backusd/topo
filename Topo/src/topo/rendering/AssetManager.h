@@ -49,7 +49,7 @@ public:
 	static Shader CheckoutShader(std::string_view shaderFileName, std::vector<D3D12_INPUT_ELEMENT_DESC>&& inputs) { return Get().CheckoutShaderImpl(shaderFileName, std::move(inputs)); }
 
 	// Textures
-	static Texture CheckoutTexture(std::string_view textureFileName) { return Get().CheckoutTextureImpl(textureFileName); }
+	static Texture CheckoutTexture(std::shared_ptr<DeviceResources> deviceResources, std::string_view textureFileName) { return Get().CheckoutTextureImpl(deviceResources, textureFileName); }
 
 
 private:
@@ -57,21 +57,6 @@ private:
 	{
 		static AssetManager am{};
 		return am;
-	}
-	static inline void Initialize(std::shared_ptr<DeviceResources> deviceResources) { Get().InitializeImpl(deviceResources); }
-	inline void InitializeImpl(std::shared_ptr<DeviceResources> deviceResources)
-	{
-		m_deviceResources = deviceResources;
-	}
-	static inline void Shutdown() { Get().ShutdownImpl(); }
-	inline void ShutdownImpl()
-	{
-		// NOTE: We shouldn't need to manually clean up reference counted resources. On program
-		//       shutdown, their destructors should appropriately clean everything up
-
-		//m_shaders.clear();
-		//m_textures.clear();
-		//m_deviceResources = nullptr;
 	}
 
 	AssetManager() noexcept {}
@@ -94,10 +79,9 @@ private:
 	static void TextureDecrementCount(const std::string& key) noexcept { Get().TextureDecrementCountImpl(key); }
 	void TextureIncrementCountImpl(const std::string& key) noexcept;
 	void TextureDecrementCountImpl(const std::string& key) noexcept;
-	Texture CheckoutTextureImpl(std::string_view textureFileName);
+	Texture CheckoutTextureImpl(std::shared_ptr<DeviceResources> deviceResources, std::string_view textureFileName);
 
 
-	std::shared_ptr<DeviceResources> m_deviceResources = nullptr;
 	std::unordered_map<std::string, ShaderBackingObjectAndRefCount> m_shaders;
 	std::unordered_map<std::string, TextureBackingObjectAndRefCount> m_textures;
 };

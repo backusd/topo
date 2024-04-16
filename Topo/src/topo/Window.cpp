@@ -322,7 +322,7 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		CREATESTRUCTW* cs = reinterpret_cast<CREATESTRUCTW*>(lParam);
 		m_height = cs->cy;
 		m_width = cs->cx;
-		m_deviceResources = std::make_shared<DeviceResources>(hWnd, m_width, m_height);
+		m_deviceResources = std::make_shared<DeviceResources>(hWnd, m_width, m_height, m_title);
 
 		m_viewport.Width = m_width;
 		m_viewport.Height = m_height;
@@ -542,7 +542,7 @@ void Window::InitializeRenderer()
 
 
 
-	Texture texture = AssetManager::CheckoutTexture("WoodCrate01.dds");
+	Texture texture = AssetManager::CheckoutTexture(m_deviceResources, "WoodCrate01.dds");
 
 
 
