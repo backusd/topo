@@ -51,7 +51,6 @@ Texture::Texture(const Texture& rhs) :
 	{
 		std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
 		AssetManager::TextureIncrementCount(key);
-		SET_DEBUG_NAME_PTR(this, key);
 	}
 }
 Texture::Texture(Texture&& rhs) noexcept :
@@ -59,11 +58,6 @@ Texture::Texture(Texture&& rhs) noexcept :
 {
 	// Set rhs texture to nullptr on the moved-from object so that it won't decrement the ref count
 	rhs.m_texture = nullptr;
-
-#ifndef TOPO_DIST
-	if (m_texture != nullptr)
-		SET_DEBUG_NAME_PTR(this, std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename));
-#endif
 }
 Texture& Texture::operator=(const Texture& rhs)
 {
@@ -73,7 +67,6 @@ Texture& Texture::operator=(const Texture& rhs)
 	{
 		std::string key = std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename);
 		AssetManager::TextureIncrementCount(key);
-		SET_DEBUG_NAME_PTR(this, key);
 	}
 	
 	return *this;
@@ -85,10 +78,6 @@ Texture& Texture::operator=(Texture&& rhs) noexcept
 	// Set rhs texture to nullptr on the moved-from object so that it won't decrement the ref count
 	rhs.m_texture = nullptr;
 
-#ifndef TOPO_DIST
-	if (m_texture != nullptr)
-		SET_DEBUG_NAME_PTR(this, std::format("{0} {1}", m_texture->m_deviceResources->Name(), m_texture->m_filename));
-#endif
 	return *this;
 }
 Texture::~Texture()

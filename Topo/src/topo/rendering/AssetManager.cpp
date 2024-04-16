@@ -34,6 +34,7 @@ Shader AssetManager::CheckoutShaderImpl(std::string_view shaderFileName)
 	}
 
 	shader.m_shader = &(entry->second.shader);
+	SET_DEBUG_NAME_PTR(shader.m_shader, key);
 	return shader;
 }
 Shader AssetManager::CheckoutShaderImpl(std::string_view shaderFileName, const std::vector<D3D12_INPUT_ELEMENT_DESC>& inputs)
@@ -65,6 +66,7 @@ Shader AssetManager::CheckoutShaderImpl(std::string_view shaderFileName, const s
 	}
 
 	shader.m_shader = &(entry->second.shader);
+	SET_DEBUG_NAME_PTR(shader.m_shader, key);
 	return shader;
 }
 Shader AssetManager::CheckoutShaderImpl(std::string_view shaderFileName, std::vector<D3D12_INPUT_ELEMENT_DESC>&& inputs)
@@ -96,6 +98,7 @@ Shader AssetManager::CheckoutShaderImpl(std::string_view shaderFileName, std::ve
 	}
 
 	shader.m_shader = &(entry->second.shader);
+	SET_DEBUG_NAME_PTR(shader.m_shader, key);
 	return shader;
 }
 void AssetManager::ShaderIncrementCountImpl(const std::string& key) noexcept
@@ -155,6 +158,7 @@ Texture AssetManager::CheckoutTextureImpl(std::shared_ptr<DeviceResources> devic
 	}
 
 	texture.m_texture = &(entry->second.texture);
+	SET_DEBUG_NAME_PTR(texture.m_texture, key);
 	return texture;
 }
 
