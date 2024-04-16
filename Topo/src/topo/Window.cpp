@@ -420,8 +420,6 @@ void Window::InitializeRenderer()
 		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
-//	AssetManager::AddShader("Crate-vs.cso", std::move(il));
-//	AssetManager::AddShader("Crate-ps.cso");
 
 
 	GeometryGenerator geoGen;
@@ -437,7 +435,7 @@ void Window::InitializeRenderer()
 		crateVertices[iii].TexC = box.Vertices[iii].TexC;
 	}
 	Mesh<CrateVertex> crateMesh(std::move(crateVertices), std::move(crateIndices));
-	m_meshGroupCrate = std::make_unique<MeshGroup<CrateVertex>>(m_deviceResources);
+	m_meshGroupCrate = std::make_unique<MeshGroup<CrateVertex>>(m_deviceResources, PRIMITIVE_TOPOLOGY::TRIANGLELIST);
 	m_meshGroupCrate->PushBack(std::move(crateMesh));
 
 	m_passConstantBufferCrate = std::make_unique<ConstantBufferMapped<CratePassConstants>>(m_deviceResources);
@@ -542,7 +540,11 @@ void Window::InitializeRenderer()
 	m_sd5.MipLODBias = 0.0f;
 	m_sd5.MaxAnisotropy = 8;
 
-	m_texture = std::make_unique<Texture>(m_deviceResources, "WoodCrate01.dds");
+
+
+	Texture texture = AssetManager::CheckoutTexture("WoodCrate01.dds");
+
+
 
 	RenderPassSignature signature{
 		TextureParameter{ 0 }, 
@@ -560,32 +562,35 @@ void Window::InitializeRenderer()
 	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(m_deviceResources, signature);
 	SET_DEBUG_NAME(pass1, "Render Pass #1");
 
-	pass1.EmplaceBackRootConstantBufferView(2, m_passConstantBufferCrate.get());
-	pass1.EmplaceBackRootConstantBufferView(3, m_materialConstantBuffer.get());
+	pass1.BindConstantBuffer(2, m_passConstantBufferCrate.get());
+	pass1.BindConstantBuffer(3, m_materialConstantBuffer.get());
 
 	Shader vs = AssetManager::CheckoutShader("Crate-vs.cso", std::move(il));
-	Shader ps = AssetManager::CheckoutShader("Crate-ps.cso");
+
+	Shader ps1;
+	{
+		Shader ps = AssetManager::CheckoutShader("Crate-ps.cso");
+		ps1 = std::move(ps);
+	}
 
 	PipelineStateDesc psDesc{};
 	psDesc.RootSignature = pass1.GetRootSignature();
 	psDesc.VertexShader = std::move(vs);
-	psDesc.PixelShader = std::move(ps);
+	psDesc.PixelShader = std::move(ps1);
 	psDesc.SampleMask = UINT_MAX; /// ??? Why?
 	psDesc.NumRenderTargets = 1;
 	psDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
 	psDesc.DSVFormat = m_deviceResources->GetDepthStencilFormat();
 
 
-	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_deviceResources, m_meshGroupCrate.get(), psDesc, PRIMITIVE_TOPOLOGY::TRIANGLELIST);
+	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_deviceResources, m_meshGroupCrate.get(), psDesc);
 	SET_DEBUG_NAME(layer1, "Render Pass Layer #1");
 
 	RenderItem& crateRI = layer1.EmplaceBackRenderItem();
 	SET_DEBUG_NAME(crateRI, "Crate RenderItem");
 
-	crateRI.EmplaceBackRootConstantBufferView(1, m_objectConstantBuffer.get());
-
-	auto& dt = crateRI.GetRootDescriptorTables().emplace_back(0, m_texture->GetSRVHandle()); 
-
+	crateRI.BindConstantBuffer(1, m_objectConstantBuffer.get());
+	crateRI.BindTexture(0, texture);
 
 
 

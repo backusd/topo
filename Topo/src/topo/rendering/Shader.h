@@ -67,6 +67,8 @@ public:
 		ASSERT(m_inputLayout != nullptr, "No InputLayout. Should only be calling Shader->GetInputLayoutDesc() for vertex shaders");
 		return m_inputLayout->GetInputLayoutDesc();
 	}
+	ND inline const std::string& Filename() const noexcept { return m_filename; }
+
 
 protected:
 	// We hold a unique_ptr to the InputLayout so copying is non-trivial
@@ -112,11 +114,9 @@ class Shader
 
 public:
 	inline Shader() noexcept :
-		m_key(),
 		m_shader(nullptr)
 	{}
-	inline Shader(std::string_view key, ShaderBackingObject* shader) :
-		m_key(key), 
+	inline Shader(ShaderBackingObject* shader) :
 		m_shader(shader)
 	{}
 	Shader(const Shader& rhs);
@@ -129,7 +129,6 @@ public:
 	ND constexpr D3D12_INPUT_LAYOUT_DESC GetInputLayoutDesc() const noexcept { return m_shader->GetInputLayoutDesc(); }
 
 private:
-	std::string m_key;
 	ShaderBackingObject* m_shader;
 };
 

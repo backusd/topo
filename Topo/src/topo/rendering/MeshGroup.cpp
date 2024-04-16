@@ -15,7 +15,8 @@ MeshGroupBase::MeshGroupBase(MeshGroupBase&& rhs) noexcept :
 	m_indexBufferGPU(rhs.m_indexBufferGPU),
 	m_vertexBufferView(rhs.m_vertexBufferView),
 	m_indexBufferView(rhs.m_indexBufferView),
-	m_submeshes(std::move(rhs.m_submeshes))
+	m_submeshes(std::move(rhs.m_submeshes)),
+	m_topology(rhs.m_topology)
 #ifndef TOPO_DIST
 	, m_name(std::move(rhs.m_name))
 #endif
@@ -31,6 +32,7 @@ MeshGroupBase& MeshGroupBase::operator=(MeshGroupBase&& rhs) noexcept
 	m_vertexBufferView = rhs.m_vertexBufferView;
 	m_indexBufferView = rhs.m_indexBufferView;
 	m_submeshes = std::move(rhs.m_submeshes);
+	m_topology = rhs.m_topology;
 #ifndef TOPO_DIST
 	m_name = std::move(rhs.m_name);
 #endif

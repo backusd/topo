@@ -1,6 +1,7 @@
 #pragma once
 #include "RootConstantBufferView.h"
 #include "RootDescriptorTable.h"
+#include "Texture.h"
 
 namespace topo
 {
@@ -22,13 +23,15 @@ public:
 			dt.Update(&dt, timer, frameIndex);
 	}
 
-	constexpr void PushBackRootConstantBufferView(RootConstantBufferView&& rcbv) noexcept { m_constantBufferViews.push_back(std::move(rcbv)); }
-	constexpr void PushBackRootConstantBufferView(const RootConstantBufferView& rcbv) noexcept { m_constantBufferViews.push_back(rcbv); }
-	constexpr RootConstantBufferView& EmplaceBackRootConstantBufferView(UINT rootParameterIndex, ConstantBufferBase* cb) noexcept { return m_constantBufferViews.emplace_back(rootParameterIndex, cb); }
+	constexpr void BindConstantBuffer(UINT rootParameterIndex, ConstantBufferBase* cb) noexcept { m_constantBufferViews.emplace_back(rootParameterIndex, cb); }
+	constexpr void BindTexture(UINT rootParameterIndex, const Texture& texture) noexcept
+	{
+		m_descriptorTables.emplace_back(rootParameterIndex, texture);
+	}
 
-	constexpr void PushBackRootDescriptorTable(RootDescriptorTable&& rdt) noexcept { m_descriptorTables.push_back(std::move(rdt)); }
-	constexpr void PushBackRootDescriptorTable(const RootDescriptorTable& rdt) noexcept { m_descriptorTables.push_back(rdt); }
-	constexpr RootDescriptorTable& EmplaceBackRootDescriptorTable(UINT rootParameterIndex, D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle) noexcept { return m_descriptorTables.emplace_back(rootParameterIndex, descriptorHandle); }
+//	constexpr void PushBackRootDescriptorTable(RootDescriptorTable&& rdt) noexcept { m_descriptorTables.push_back(std::move(rdt)); }
+//	constexpr void PushBackRootDescriptorTable(const RootDescriptorTable& rdt) noexcept { m_descriptorTables.push_back(rdt); }
+//	constexpr RootDescriptorTable& EmplaceBackRootDescriptorTable(UINT rootParameterIndex, D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle) noexcept { return m_descriptorTables.emplace_back(rootParameterIndex, descriptorHandle); }
 
 	// See here for article on 'deducing this' pattern: https://devblogs.microsoft.com/cppblog/cpp23-deducing-this/
 	template <class Self>

@@ -13,27 +13,25 @@ class RenderPassLayer
 public:
 	inline RenderPassLayer(std::shared_ptr<DeviceResources> deviceResources,
 							MeshGroupBase* meshGroup,
-							const PipelineStateDesc& desc,
-							PRIMITIVE_TOPOLOGY topology = PRIMITIVE_TOPOLOGY::TRIANGLELIST) :
+							const PipelineStateDesc& desc) :
 		m_deviceResources(deviceResources),
 		m_pipelineState(nullptr),
-		m_topology(topology),
 		m_meshes(meshGroup),
 		m_stencilRef(std::nullopt),
 		m_active(true)
 	{
 		ASSERT(meshGroup != nullptr, "MeshGroup must be set in the constructor");
-		CreatePSO(desc, DeducePrimitiveTopologyType(m_topology));
+		CreatePSO(desc);
 	}
 	RenderPassLayer(RenderPassLayer&& rhs) noexcept = default;
 	RenderPassLayer& operator=(RenderPassLayer&& rhs) noexcept = default;
 
 
-	inline void CreatePSO(const PipelineStateDesc& desc, PRIMITIVE_TOPOLOGY_TYPE topoType)
+	inline void CreatePSO(const PipelineStateDesc& desc)
 	{
 #ifdef DIRECTX12
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = desc.ConvertToDirectX12();
-		psoDesc.PrimitiveTopologyType = static_cast<D3D12_PRIMITIVE_TOPOLOGY_TYPE>(topoType);
+		psoDesc.PrimitiveTopologyType = static_cast<D3D12_PRIMITIVE_TOPOLOGY_TYPE>(m_meshes->GetTopologyType());
 		GFX_THROW_INFO(
 			m_deviceResources->GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState))
 		);
@@ -42,12 +40,6 @@ public:
 #endif
 	}
 
-	inline void BindTopology(ID3D12GraphicsCommandList* commandList) const
-	{
-		GFX_THROW_INFO_ONLY(
-			commandList->IASetPrimitiveTopology(static_cast<D3D12_PRIMITIVE_TOPOLOGY>(m_topology)) 
-		);
-	}
 	inline void Update(const Timer& timer, int frameIndex)
 	{
 		for (RenderItem& item : m_renderItems)
@@ -68,7 +60,6 @@ public:
 	ND constexpr auto&& GetRenderItems(this Self&& self) noexcept { return std::forward<Self>(self).m_renderItems; }
 
 	ND inline ID3D12PipelineState* GetPSO() const noexcept { return m_pipelineState.Get(); }
-	ND constexpr PRIMITIVE_TOPOLOGY GetTopology() const noexcept { return m_topology; }
 	ND inline MeshGroupBase* GetMeshGroup() const noexcept { return m_meshes; }
 	ND constexpr bool IsActive() const noexcept { return m_active; }
 	ND constexpr std::optional<unsigned int> GetStencilRef() const noexcept { return m_stencilRef; }
@@ -92,7 +83,6 @@ private:
 
 	std::vector<RenderItem>						m_renderItems;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineState;
-	PRIMITIVE_TOPOLOGY							m_topology;
 	MeshGroupBase*								m_meshes;		// raw pointer because it just needs to reference/read the mesh data. A different class should own the meshes
 	bool										m_active;
 	std::optional<unsigned int>					m_stencilRef;

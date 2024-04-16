@@ -136,10 +136,9 @@ public:
 
 	RenderPassLayer& EmplaceBackRenderPassLayer(std::shared_ptr<DeviceResources> deviceResources,
 		MeshGroupBase* meshGroup,
-		const PipelineStateDesc& desc,
-		PRIMITIVE_TOPOLOGY topology = PRIMITIVE_TOPOLOGY::TRIANGLELIST) 
+		const PipelineStateDesc& desc) 
 	{
-		return m_renderPassLayers.emplace_back(deviceResources, meshGroup, desc, topology);
+		return m_renderPassLayers.emplace_back(deviceResources, meshGroup, desc);
 	}
 
 	inline void Bind(ID3D12GraphicsCommandList* commandList, int frameIndex)
@@ -185,7 +184,7 @@ public:
 	constexpr void PushBackRenderPassLayer(RenderPassLayer&& rpl) noexcept { m_renderPassLayers.push_back(std::move(rpl)); }
 	constexpr void PushBackComputeLayer(ComputeLayer&& cl) noexcept { m_computeLayers.push_back(std::move(cl)); }
 
-	constexpr RootConstantBufferView& EmplaceBackRootConstantBufferView(UINT rootParameterIndex, ConstantBufferBase* cb) noexcept { return m_constantBufferViews.emplace_back(rootParameterIndex, cb); }
+	constexpr void BindConstantBuffer(UINT rootParameterIndex, ConstantBufferBase* cb) noexcept { m_constantBufferViews.emplace_back(rootParameterIndex, cb); }
 
 	// Function pointers for Pre/Post-Work 
 	// PreWork needs to return a bool: false -> signals early exit (i.e. do not make a Draw call for this layer)

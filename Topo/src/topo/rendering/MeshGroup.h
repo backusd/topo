@@ -127,8 +127,9 @@ void Mesh<T>::ComputeBounds() noexcept
 class MeshGroupBase
 {
 public:
-	inline MeshGroupBase(std::shared_ptr<DeviceResources> deviceResources) noexcept :
-		m_deviceResources(deviceResources)
+	inline MeshGroupBase(std::shared_ptr<DeviceResources> deviceResources, PRIMITIVE_TOPOLOGY topology) noexcept :
+		m_deviceResources(deviceResources),
+		m_topology(topology)
 	{}
 	MeshGroupBase(MeshGroupBase&& rhs) noexcept;
 	MeshGroupBase& operator=(MeshGroupBase&& rhs) noexcept;
@@ -139,6 +140,7 @@ public:
 		m_vertexBufferView(rhs.m_vertexBufferView),
 		m_indexBufferView(rhs.m_indexBufferView),
 		m_submeshes(rhs.m_submeshes),
+		m_topology(rhs.m_topology),
 		m_movedFrom(false)
 	{}
 	MeshGroupBase& operator=(const MeshGroupBase& rhs) noexcept
@@ -149,6 +151,7 @@ public:
 		m_vertexBufferView = rhs.m_vertexBufferView;
 		m_indexBufferView = rhs.m_indexBufferView;
 		m_submeshes = rhs.m_submeshes;
+		m_topology = rhs.m_topology;
 		m_movedFrom = false;
 		return *this;
 	}
@@ -158,7 +161,12 @@ public:
 	{
 		GFX_THROW_INFO_ONLY(commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView));
 		GFX_THROW_INFO_ONLY(commandList->IASetIndexBuffer(&m_indexBufferView));
+		GFX_THROW_INFO_ONLY(
+			commandList->IASetPrimitiveTopology(static_cast<D3D12_PRIMITIVE_TOPOLOGY>(m_topology))
+		);
 	}
+	ND constexpr PRIMITIVE_TOPOLOGY GetTopology() const noexcept { return m_topology; }
+	ND constexpr PRIMITIVE_TOPOLOGY_TYPE GetTopologyType() const noexcept { return DeducePrimitiveTopologyType(m_topology); }
 
 	ND inline const MeshDescriptor& GetSubmesh(unsigned int index) const noexcept { return m_submeshes[index]; }
 	inline virtual void Update(int frameIndex) noexcept {}
@@ -188,6 +196,7 @@ protected:
 	D3D12_INDEX_BUFFER_VIEW m_indexBufferView = { 0, 0, DXGI_FORMAT_R16_UINT };
 
 	std::vector<MeshDescriptor> m_submeshes;
+	PRIMITIVE_TOPOLOGY m_topology;
 
 	bool m_movedFrom = false;
 
@@ -218,8 +227,8 @@ requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
 class MeshGroup : public MeshGroupBase
 {
 public:
-	MeshGroup(std::shared_ptr<DeviceResources> deviceResources) noexcept :
-		MeshGroupBase(deviceResources)
+	MeshGroup(std::shared_ptr<DeviceResources> deviceResources, PRIMITIVE_TOPOLOGY topology = PRIMITIVE_TOPOLOGY::TRIANGLELIST) noexcept :
+		MeshGroupBase(deviceResources, topology) 
 	{}
 	inline MeshGroup(MeshGroup&& rhs) noexcept :
 		MeshGroupBase(std::move(rhs)), // See this SO post above calling std::move(rhs) but then proceding to use the rhs object: https://stackoverflow.com/questions/22977230/move-constructors-in-inheritance-hierarchy
@@ -482,6 +491,7 @@ MeshGroup<T> MeshGroup<T>::CopySubset(unsigned int indexOfMeshToCopy)
 	dest.FinalizePushBack(true); 
 	return dest;
 }
+
 template<typename T>
 requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
 MeshGroup<T> MeshGroup<T>::CopySubset(std::span<unsigned int> indicesOfMeshesToCopy)
@@ -545,7 +555,8 @@ MeshGroup<T> MeshGroup<T>::CopySubset(std::span<unsigned int> indicesOfMeshesToC
 class DynamicMeshGroupBase : public MeshGroupBase
 {
 public:
-	inline DynamicMeshGroupBase(std::shared_ptr<DeviceResources> deviceResources) : MeshGroupBase(deviceResources) {}
+	inline DynamicMeshGroupBase(std::shared_ptr<DeviceResources> deviceResources, PRIMITIVE_TOPOLOGY topology = PRIMITIVE_TOPOLOGY::TRIANGLELIST) :
+		MeshGroupBase(deviceResources, topology) {}
 	inline DynamicMeshGroupBase(DynamicMeshGroupBase&& rhs) noexcept : MeshGroupBase(std::move(rhs)) {}
 	inline DynamicMeshGroupBase& operator=(DynamicMeshGroupBase&& rhs) noexcept
 	{
@@ -581,9 +592,10 @@ class DynamicMeshGroup : public DynamicMeshGroupBase
 public:
 	// NOTE: For Dynamic meshes, we only allow there to be a single mesh - see Note above the DynamicMeshGroup class
 	inline DynamicMeshGroup(std::shared_ptr<DeviceResources> deviceResources,
-		std::vector<T>&& vertices,
-		std::vector<std::uint16_t>&& indices) :
-		DynamicMeshGroupBase(deviceResources),
+							std::vector<T>&& vertices,
+							std::vector<std::uint16_t>&& indices,
+							PRIMITIVE_TOPOLOGY topology = PRIMITIVE_TOPOLOGY::TRIANGLELIST) :
+		DynamicMeshGroupBase(deviceResources, topology),
 		m_vertices(std::move(vertices)),
 		m_indices(std::move(indices))
 	{

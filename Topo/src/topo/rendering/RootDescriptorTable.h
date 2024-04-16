@@ -1,7 +1,7 @@
 #pragma once
 #include "topo/DeviceResources.h"
 #include "topo/utils/Timer.h"
-
+#include "Texture.h"
 
 namespace topo
 {
@@ -10,9 +10,13 @@ namespace topo
 class RootDescriptorTable
 {
 public:
-	inline RootDescriptorTable(UINT rootParameterIndex, D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle) noexcept :
+	inline RootDescriptorTable(UINT rootParameterIndex, const Texture& texture) noexcept :
 		m_rootParameterIndex(rootParameterIndex),
-		m_descriptorHandle(descriptorHandle)
+		m_texture(texture)
+	{}
+	inline RootDescriptorTable(UINT rootParameterIndex, Texture&& texture) noexcept :
+		m_rootParameterIndex(rootParameterIndex),
+		m_texture(std::move(texture))
 	{}
 	RootDescriptorTable(const RootDescriptorTable&) noexcept = default;
 	RootDescriptorTable(RootDescriptorTable&&) noexcept = default;
@@ -22,11 +26,14 @@ public:
 	std::function<void(RootDescriptorTable*, const Timer&, int)> Update = [](RootDescriptorTable*, const Timer&, int) {};
 
 	ND constexpr UINT GetRootParameterIndex() const noexcept { return m_rootParameterIndex; }
-	ND constexpr D3D12_GPU_DESCRIPTOR_HANDLE GetDescriptorHandle() const noexcept { return m_descriptorHandle; }
+	ND inline D3D12_GPU_DESCRIPTOR_HANDLE GetDescriptorHandle() const noexcept { return m_texture.GetSRVHandle(); }
 
 private:
 	UINT m_rootParameterIndex;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_descriptorHandle;
+	Texture m_texture;
+
+
+
 
 
 // In DIST builds, we don't name the object

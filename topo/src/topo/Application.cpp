@@ -13,6 +13,7 @@ Application::Application(const WindowProperties& mainWindowProperties) noexcept 
 {
 	ASSERT(s_application == nullptr, "Not allowed to create a second instance of Application");
 	s_application = this;
+	AssetManager::Initialize(m_window.GetDeviceResources());
 }
 
 int Application::Run()

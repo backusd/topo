@@ -2,16 +2,18 @@
 #include "Texture.h"
 #include "topo/utils/DDSTextureLoader.h"
 #include "topo/utils/String.h"
+#include "AssetManager.h"
 
 namespace topo
 {
-Texture::Texture(std::shared_ptr<DeviceResources> deviceResources, std::string_view filename) :
-	m_deviceResources(deviceResources)
+TextureBackingObject::TextureBackingObject(std::shared_ptr<DeviceResources> deviceResources, std::string_view filename) :
+	m_deviceResources(deviceResources),
+	m_filename(filename)
 {
 	Microsoft::WRL::ComPtr<ID3D12Resource> uploadHeap = nullptr;
 
 	// Load the texture from file
-	std::wstring w_filename = s2ws(filename);
+	std::wstring w_filename = s2ws(m_filename);
 	GFX_THROW_INFO(
 		DirectX::CreateDDSTextureFromFile12(
 			m_deviceResources->GetDevice(),
@@ -39,6 +41,35 @@ Texture::Texture(std::shared_ptr<DeviceResources> deviceResources, std::string_v
 }
 
 
+
+Texture::Texture(const Texture& rhs) :
+	m_texture(rhs.m_texture)
+{
+	AssetManager::TextureIncrementCount(m_texture->Filename());
+}
+Texture::Texture(Texture&& rhs) noexcept :
+	m_texture(rhs.m_texture)
+{
+	AssetManager::TextureIncrementCount(m_texture->Filename());
+}
+Texture& Texture::operator=(const Texture& rhs)
+{
+	m_texture = rhs.m_texture;
+	AssetManager::TextureIncrementCount(m_texture->Filename());
+	return *this;
+}
+Texture& Texture::operator=(Texture&& rhs) noexcept
+{
+	m_texture = rhs.m_texture;
+	AssetManager::TextureIncrementCount(m_texture->Filename());
+	return *this;
+}
+Texture::~Texture()
+{
+	// When a shader has been moved from, m_key will no longer hold any data
+	// Therefore, we should only decrement the count if m_key still holds a value
+	AssetManager::TextureDecrementCount(m_texture->Filename());
+}
 
 
 }

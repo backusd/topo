@@ -99,10 +99,9 @@ void Renderer::Render(int frameIndex)
 				continue;
 
 			MeshGroupBase* meshGroup = layer.GetMeshGroup();
-			meshGroup->Bind(commandList);
 
-			layer.BindTopology(commandList); 
-//			GFX_THROW_INFO_ONLY(commandList->IASetPrimitiveTopology(layer.GetTopology()));
+			// Will set vertex buffers/index buffers/topology
+			meshGroup->Bind(commandList);
 
 			for (const RenderItem& item : layer.GetRenderItems())
 			{

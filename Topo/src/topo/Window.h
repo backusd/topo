@@ -255,7 +255,6 @@ protected:
 	std::unique_ptr<ConstantBufferMapped<ObjectData>> m_objectConstantBuffer = nullptr;
 	DirectX::XMFLOAT3 m_eyePosition = {};
 	std::unique_ptr<Camera> m_camera = nullptr;
-	std::unique_ptr<Texture> m_texture = nullptr;
 
 	SamplerData m_sd0{};
 	SamplerData m_sd1{};
