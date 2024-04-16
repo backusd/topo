@@ -73,11 +73,11 @@ namespace topo
 	struct PipelineStateDesc
 	{
 		const RootSignature* RootSignature = nullptr;
-		const Shader* VertexShader = nullptr;
-		const Shader* PixelShader = nullptr;
-		const Shader* DomainShader = nullptr;
-		const Shader* HullShader = nullptr;
-		const Shader* GeometryShader = nullptr;
+		std::optional<Shader> VertexShader = std::nullopt;
+		std::optional<Shader> PixelShader = std::nullopt;
+		std::optional<Shader> DomainShader = std::nullopt;
+		std::optional<Shader> HullShader = std::nullopt;
+		std::optional<Shader> GeometryShader = std::nullopt;
 		StreamOutputDesc* StreamOutputDesc = nullptr; // NOT SUPPORTED
 		const BlendDesc& BlendDesc = {};
 		unsigned int SampleMask = 0;

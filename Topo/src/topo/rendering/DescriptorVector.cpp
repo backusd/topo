@@ -127,7 +127,7 @@ unsigned int DescriptorVector::GetNextIndexAndEnsureCapacity() noexcept
         m_releasedIndices.pop_back();
     }
 
-    // Increment the count (NOTE: This MUST be done AFTER calling GetNextIndex because that function uses m_count to compute the next index)
+    // Increment the count
     ++m_count;
 
     // If we are over capacity, resize the descriptor heaps

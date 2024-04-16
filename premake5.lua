@@ -40,6 +40,7 @@ project "Topo"
 
 	defines
 	{
+		"TOPO_CORE",
 		"DIRECTX12"
 	}
 

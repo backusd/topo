@@ -76,7 +76,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>DIRECTX12;TOPO_PLATFORM_WINDOWS;TOPO_DEBUG;TOPO_ENABLE_ASSERTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TOPO_CORE;DIRECTX12;TOPO_PLATFORM_WINDOWS;TOPO_DEBUG;TOPO_ENABLE_ASSERTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
@@ -103,7 +103,7 @@ copy /B /Y ..\bin\Debug-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>DIRECTX12;TOPO_PLATFORM_WINDOWS;TOPO_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TOPO_CORE;DIRECTX12;TOPO_PLATFORM_WINDOWS;TOPO_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -133,7 +133,7 @@ copy /B /Y ..\bin\Release-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>DIRECTX12;TOPO_PLATFORM_WINDOWS;TOPO_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TOPO_CORE;DIRECTX12;TOPO_PLATFORM_WINDOWS;TOPO_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -170,10 +170,6 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClInclude Include="src\topo\Layout.h" />
     <ClInclude Include="src\topo\Log.h" />
     <ClInclude Include="src\topo\Page.h" />
-    <ClInclude Include="src\topo\rendering\PipelineStateDesc.h" />
-    <ClInclude Include="src\topo\rendering\SamplerData.h" />
-    <ClInclude Include="src\topo\rendering\Texture.h" />
-    <ClInclude Include="src\topo\rendering\Utility.h" />
     <ClInclude Include="src\topo\TopoException.h" />
     <ClInclude Include="src\topo\Window.h" />
     <ClInclude Include="src\topo\controls\Button.h" />
@@ -186,6 +182,7 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClInclude Include="src\topo\rendering\DescriptorVector.h" />
     <ClInclude Include="src\topo\rendering\InputLayout.h" />
     <ClInclude Include="src\topo\rendering\MeshGroup.h" />
+    <ClInclude Include="src\topo\rendering\PipelineStateDesc.h" />
     <ClInclude Include="src\topo\rendering\RenderItem.h" />
     <ClInclude Include="src\topo\rendering\RenderPass.h" />
     <ClInclude Include="src\topo\rendering\RenderPassLayer.h" />
@@ -193,7 +190,10 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClInclude Include="src\topo\rendering\RootConstantBufferView.h" />
     <ClInclude Include="src\topo\rendering\RootDescriptorTable.h" />
     <ClInclude Include="src\topo\rendering\RootSignature.h" />
+    <ClInclude Include="src\topo\rendering\SamplerData.h" />
     <ClInclude Include="src\topo\rendering\Shader.h" />
+    <ClInclude Include="src\topo\rendering\Texture.h" />
+    <ClInclude Include="src\topo\rendering\Utility.h" />
     <ClInclude Include="src\topo\utils\Concepts.h" />
     <ClInclude Include="src\topo\utils\Constants.h" />
     <ClInclude Include="src\topo\utils\DDSTextureLoader.h" />
@@ -216,10 +216,6 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClCompile Include="src\topo\Layout.cpp" />
     <ClCompile Include="src\topo\Log.cpp" />
     <ClCompile Include="src\topo\Page.cpp" />
-    <ClCompile Include="src\topo\rendering\PipelineStateDesc.cpp" />
-    <ClCompile Include="src\topo\rendering\SamplerData.cpp" />
-    <ClCompile Include="src\topo\rendering\Texture.cpp" />
-    <ClCompile Include="src\topo\rendering\Utility.cpp" />
     <ClCompile Include="src\topo\TopoException.cpp" />
     <ClCompile Include="src\topo\Window.cpp" />
     <ClCompile Include="src\topo\controls\Button.cpp" />
@@ -231,6 +227,7 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClCompile Include="src\topo\rendering\DescriptorVector.cpp" />
     <ClCompile Include="src\topo\rendering\InputLayout.cpp" />
     <ClCompile Include="src\topo\rendering\MeshGroup.cpp" />
+    <ClCompile Include="src\topo\rendering\PipelineStateDesc.cpp" />
     <ClCompile Include="src\topo\rendering\RenderItem.cpp" />
     <ClCompile Include="src\topo\rendering\RenderPass.cpp" />
     <ClCompile Include="src\topo\rendering\RenderPassLayer.cpp" />
@@ -238,7 +235,10 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClCompile Include="src\topo\rendering\RootConstantBufferView.cpp" />
     <ClCompile Include="src\topo\rendering\RootDescriptorTable.cpp" />
     <ClCompile Include="src\topo\rendering\RootSignature.cpp" />
+    <ClCompile Include="src\topo\rendering\SamplerData.cpp" />
     <ClCompile Include="src\topo\rendering\Shader.cpp" />
+    <ClCompile Include="src\topo\rendering\Texture.cpp" />
+    <ClCompile Include="src\topo\rendering\Utility.cpp" />
     <ClCompile Include="src\topo\utils\Concepts.cpp" />
     <ClCompile Include="src\topo\utils\DDSTextureLoader.cpp" />
     <ClCompile Include="src\topo\utils\DxgiInfoManager.cpp" />

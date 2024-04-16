@@ -86,6 +86,9 @@
     <ClInclude Include="src\topo\rendering\MeshGroup.h">
       <Filter>topo\rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\topo\rendering\PipelineStateDesc.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\topo\rendering\RenderItem.h">
       <Filter>topo\rendering</Filter>
     </ClInclude>
@@ -107,7 +110,16 @@
     <ClInclude Include="src\topo\rendering\RootSignature.h">
       <Filter>topo\rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\topo\rendering\SamplerData.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\topo\rendering\Shader.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\Texture.h">
+      <Filter>topo\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\topo\rendering\Utility.h">
       <Filter>topo\rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\topo\utils\Concepts.h">
@@ -143,10 +155,6 @@
     <ClInclude Include="src\topo\utils\d3dx12.h">
       <Filter>topo\utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\topo\rendering\Texture.h" />
-    <ClInclude Include="src\topo\rendering\SamplerData.h" />
-    <ClInclude Include="src\topo\rendering\PipelineStateDesc.h" />
-    <ClInclude Include="src\topo\rendering\Utility.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -201,6 +209,9 @@
     <ClCompile Include="src\topo\rendering\MeshGroup.cpp">
       <Filter>topo\rendering</Filter>
     </ClCompile>
+    <ClCompile Include="src\topo\rendering\PipelineStateDesc.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\topo\rendering\RenderItem.cpp">
       <Filter>topo\rendering</Filter>
     </ClCompile>
@@ -222,7 +233,16 @@
     <ClCompile Include="src\topo\rendering\RootSignature.cpp">
       <Filter>topo\rendering</Filter>
     </ClCompile>
+    <ClCompile Include="src\topo\rendering\SamplerData.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\topo\rendering\Shader.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\Texture.cpp">
+      <Filter>topo\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\topo\rendering\Utility.cpp">
       <Filter>topo\rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\topo\utils\Concepts.cpp">
@@ -252,10 +272,6 @@
     <ClCompile Include="src\topo\utils\WindowMessageMap.cpp">
       <Filter>topo\utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\topo\rendering\Texture.cpp" />
-    <ClCompile Include="src\topo\rendering\SamplerData.cpp" />
-    <ClCompile Include="src\topo\rendering\PipelineStateDesc.cpp" />
-    <ClCompile Include="src\topo\rendering\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\topo\shaders\Control-ps.hlsl">

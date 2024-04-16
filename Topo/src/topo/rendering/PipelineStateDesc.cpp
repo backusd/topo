@@ -13,20 +13,20 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC PipelineStateDesc::ConvertToDirectX12() const
 	desc.pRootSignature = RootSignature->Get();
 
 	// Shaders
-	if (VertexShader != nullptr)
-		desc.VS = VertexShader->GetShaderByteCode();
+	if (VertexShader.has_value())
+		desc.VS = VertexShader.value().GetShaderByteCode();
 	
-	if (PixelShader != nullptr)
-		desc.PS = PixelShader->GetShaderByteCode();
+	if (PixelShader.has_value())
+		desc.PS = PixelShader.value().GetShaderByteCode();
 
-	if (DomainShader != nullptr)
-		desc.DS = DomainShader->GetShaderByteCode();
+	if (DomainShader.has_value())
+		desc.DS = DomainShader.value().GetShaderByteCode();
 
-	if (HullShader != nullptr)
-		desc.HS = HullShader->GetShaderByteCode();
+	if (HullShader.has_value())
+		desc.HS = HullShader.value().GetShaderByteCode();
 
-	if (GeometryShader != nullptr)
-		desc.GS = GeometryShader->GetShaderByteCode();
+	if (GeometryShader.has_value())
+		desc.GS = GeometryShader.value().GetShaderByteCode();
 
 	// StreamOutputDesc
 	ASSERT(StreamOutputDesc == nullptr, "Haven't added support for StreamOutputDesc yet");
@@ -81,7 +81,8 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC PipelineStateDesc::ConvertToDirectX12() const
 	desc.DepthStencilState.BackFace.StencilFunc = static_cast<D3D12_COMPARISON_FUNC>(DepthStencilDesc.BackFace.StencilFunc);
 
 	// Input Layout
-	desc.InputLayout = VertexShader->GetInputLayoutDesc();
+	if (VertexShader.has_value())
+		desc.InputLayout = VertexShader.value().GetInputLayoutDesc();
 
 	// IBStripCutValue
 	desc.IBStripCutValue = static_cast<D3D12_INDEX_BUFFER_STRIP_CUT_VALUE>(IBStripCutValue);

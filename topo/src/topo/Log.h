@@ -128,10 +128,10 @@ namespace topo
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);
 #endif
 		if constexpr (sizeof...(T) == 0)
-			std::println("[WARNING {0}] {1}", app_current_time_and_date(), msg);
+			std::println("[ERROR {0}] {1}", app_current_time_and_date(), msg);
 		else
 		{
-			std::print("[WARNING {0}] ", app_current_time_and_date());
+			std::print("[ERROR {0}] ", app_current_time_and_date());
 			std::vprint_nonunicode(std::cout, msg, std::make_format_args(std::forward<T>(args)...));
 			std::println("");
 	}
@@ -146,7 +146,7 @@ namespace topo
 #define LOG_WARN(...)
 #define LOG_ERROR(...)
 
-#elif TOPO_BUILD_DLL // If building the DLL, use CORE logging
+#elif TOPO_CORE // If building the core library, use CORE logging
 
 #define LOG_TRACE(...) ::topo::LogCoreTrace(__VA_ARGS__)
 #define LOG_INFO(...) ::topo::LogCoreInfo(__VA_ARGS__)

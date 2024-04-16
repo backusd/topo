@@ -10,6 +10,11 @@ class Texture
 {
 public:
 	Texture(std::shared_ptr<DeviceResources> deviceResources, std::string_view filename);
+	inline ~Texture() noexcept
+	{
+		m_deviceResources->GetDescriptorVector()->ReleaseAt(m_srvDescriptorIndex);
+		m_deviceResources->DelayedDelete(m_textureResource);
+	}
 
 	ND inline D3D12_GPU_DESCRIPTOR_HANDLE GetSRVHandle() const noexcept 
 	{

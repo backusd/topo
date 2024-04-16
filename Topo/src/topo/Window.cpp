@@ -420,8 +420,8 @@ void Window::InitializeRenderer()
 		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
-	AssetManager::AddShader("Crate-vs.cso", std::move(il));
-	AssetManager::AddShader("Crate-ps.cso");
+//	AssetManager::AddShader("Crate-vs.cso", std::move(il));
+//	AssetManager::AddShader("Crate-ps.cso");
 
 
 	GeometryGenerator geoGen;
@@ -563,13 +563,13 @@ void Window::InitializeRenderer()
 	pass1.EmplaceBackRootConstantBufferView(2, m_passConstantBufferCrate.get());
 	pass1.EmplaceBackRootConstantBufferView(3, m_materialConstantBuffer.get());
 
-	const Shader& vs = AssetManager::GetShader("Crate-vs.cso");
-	const Shader& ps = AssetManager::GetShader("Crate-ps.cso");
+	Shader vs = AssetManager::CheckoutShader("Crate-vs.cso", std::move(il));
+	Shader ps = AssetManager::CheckoutShader("Crate-ps.cso");
 
 	PipelineStateDesc psDesc{};
 	psDesc.RootSignature = pass1.GetRootSignature();
-	psDesc.VertexShader = &vs;
-	psDesc.PixelShader = &ps;
+	psDesc.VertexShader = std::move(vs);
+	psDesc.PixelShader = std::move(ps);
 	psDesc.SampleMask = UINT_MAX; /// ??? Why?
 	psDesc.NumRenderTargets = 1;
 	psDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
