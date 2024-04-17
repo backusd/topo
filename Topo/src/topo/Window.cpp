@@ -435,8 +435,9 @@ void Window::InitializeRenderer()
 		crateVertices[iii].TexC = box.Vertices[iii].TexC;
 	}
 	Mesh<CrateVertex> crateMesh(std::move(crateVertices), std::move(crateIndices));
-	m_meshGroupCrate = std::make_unique<MeshGroup<CrateVertex>>(m_deviceResources, PRIMITIVE_TOPOLOGY::TRIANGLELIST);
-	m_meshGroupCrate->PushBack(std::move(crateMesh));
+	m_meshGroupCrate = std::make_unique<MeshGroup<CrateVertex>>(m_deviceResources,
+		crateMesh, PRIMITIVE_TOPOLOGY::TRIANGLELIST);
+//	m_meshGroupCrate->PushBack(std::move(crateMesh));
 
 	m_passConstantBufferCrate = std::make_unique<ConstantBufferMapped<CratePassConstants>>(m_deviceResources);
 	m_passConstantBufferCrate->Update = [this](const Timer& timer, int frameIndex)

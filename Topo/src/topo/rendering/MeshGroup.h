@@ -227,9 +227,26 @@ requires HasMemberFunctionPositionThatReturnsXMFLOAT3<T>
 class MeshGroup : public MeshGroupBase
 {
 public:
-	MeshGroup(std::shared_ptr<DeviceResources> deviceResources, PRIMITIVE_TOPOLOGY topology = PRIMITIVE_TOPOLOGY::TRIANGLELIST) noexcept :
+	inline MeshGroup(std::shared_ptr<DeviceResources> deviceResources, PRIMITIVE_TOPOLOGY topology = PRIMITIVE_TOPOLOGY::TRIANGLELIST) noexcept :
 		MeshGroupBase(deviceResources, topology) 
 	{}
+	inline MeshGroup(std::shared_ptr<DeviceResources> deviceResources, const Mesh<T>& mesh,
+					 PRIMITIVE_TOPOLOGY topology = PRIMITIVE_TOPOLOGY::TRIANGLELIST) :
+		MeshGroupBase(deviceResources, topology)
+	{
+		PushBack(mesh);
+	}
+	inline MeshGroup(std::shared_ptr<DeviceResources> deviceResources, Mesh<T>&& mesh, PRIMITIVE_TOPOLOGY topology = PRIMITIVE_TOPOLOGY::TRIANGLELIST) :
+		MeshGroupBase(deviceResources, topology)
+	{
+		PushBack(std::move(mesh));
+	}
+	inline MeshGroup(std::shared_ptr<DeviceResources> deviceResources, std::vector<T>&& vertices, std::vector<std::uint16_t>&& indices,
+					 PRIMITIVE_TOPOLOGY topology = PRIMITIVE_TOPOLOGY::TRIANGLELIST) :
+		MeshGroupBase(deviceResources, topology)
+	{
+		PushBack({ std::move(vertices), std::move(indices) });
+	}
 	inline MeshGroup(MeshGroup&& rhs) noexcept :
 		MeshGroupBase(std::move(rhs)), // See this SO post above calling std::move(rhs) but then proceding to use the rhs object: https://stackoverflow.com/questions/22977230/move-constructors-in-inheritance-hierarchy
 		m_vertices(std::move(rhs.m_vertices)),

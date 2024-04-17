@@ -218,7 +218,7 @@ std::vector<unsigned int> DescriptorVector::EmplaceBackShaderResourceViews(std::
 {
     ASSERT(data.size() > 0, "No data");
 
-    std::vector<unsigned int> indicesIntoHeap = GetNextIndicesAndEnsureCapacity(data.size());
+    std::vector<unsigned int> indicesIntoHeap = GetNextIndicesAndEnsureCapacity(static_cast<unsigned int>(data.size()));
 
     // Create the Shader Resource Views in both heaps
     for (unsigned int iii = 0; iii < data.size(); ++iii)
@@ -279,7 +279,7 @@ void DescriptorVector::ReleaseAt(std::span<unsigned int> indices) noexcept
 #endif
 
     m_releasedIndices.append_range(indices);
-    m_count -= indices.size();
+    m_count -= static_cast<unsigned int>(indices.size());
 }
 
 #endif
