@@ -542,7 +542,7 @@ void Window::InitializeRenderer()
 	m_sd5.MipLODBias = 0.0f;
 	m_sd5.MaxAnisotropy = 8;
 
-
+	std::vector<Texture> vecT = AssetManager::CheckoutTextures(m_deviceResources, "bricks.dds", "bricks2.dds");
 
 	Texture t1  = AssetManager::CheckoutTexture(m_deviceResources, "bricks.dds");
 	Texture t2  = AssetManager::CheckoutTexture(m_deviceResources, "bricks2.dds");
@@ -562,7 +562,7 @@ void Window::InitializeRenderer()
 	Texture texture3 = t12;
 
 	RenderPassSignature signature{
-		TextureParameter{ 0, 3 }, 
+		TextureParameter{ 0, 2 }, 
 //		TextureParameter{ 1, 1 },
 		ConstantBufferParameter{ 0 },
 		ConstantBufferParameter{ 1 },
@@ -601,10 +601,10 @@ void Window::InitializeRenderer()
 
 	crateRI.BindConstantBuffer(1, m_objectConstantBuffer.get());
 
-	std::array<Texture, 3> texVec = { texture1, texture2, texture3 };
+//	std::array<Texture, 3> texVec = { texture1, texture2, texture3 };
 
 //	crateRI.BindTexture(0, texture1);
-	crateRI.BindTextures(0, texVec);
+	crateRI.BindTextures(0, vecT);
 //	crateRI.BindTexture(0, texture2);
 
 

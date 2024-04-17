@@ -49,11 +49,12 @@ public:
 	static Shader CheckoutShader(std::string_view shaderFileName, std::vector<D3D12_INPUT_ELEMENT_DESC>&& inputs) { return Get().CheckoutShaderImpl(shaderFileName, std::move(inputs)); }
 
 	// Textures
-	static Texture CheckoutTexture(std::shared_ptr<DeviceResources> deviceResources, std::string_view textureFileName) { return Get().CheckoutTextureImpl(deviceResources, textureFileName); }
-
+	static inline Texture CheckoutTexture(std::shared_ptr<DeviceResources> deviceResources, std::string_view textureFileName) { return Get().CheckoutTextureImpl(deviceResources, textureFileName); }
+	template<typename... T>
+	static inline std::vector<Texture> CheckoutTextures(std::shared_ptr<DeviceResources> deviceResources, T... args) { return Get().CheckoutTexturesImpl(deviceResources, args...); }
 
 private:
-	static AssetManager& Get()
+	static inline AssetManager& Get()
 	{
 		static AssetManager am{};
 		return am;
@@ -80,6 +81,14 @@ private:
 	void TextureIncrementCountImpl(const std::string& key) noexcept;
 	void TextureDecrementCountImpl(const std::string& key) noexcept;
 	Texture CheckoutTextureImpl(std::shared_ptr<DeviceResources> deviceResources, std::string_view textureFileName);
+	template<typename... T>
+	inline std::vector<Texture> CheckoutTexturesImpl(std::shared_ptr<DeviceResources> deviceResources, T... args) 
+	{ 
+		ASSERT(sizeof...(args) >= 1, "args cannot be empty");
+		// The following will be expanded to call CheckoutTextureImpl for each argument in the parameter pack in order
+		return { CheckoutTextureImpl(deviceResources, args)... };
+	}
+
 
 
 	std::unordered_map<std::string, ShaderBackingObjectAndRefCount> m_shaders;
