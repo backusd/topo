@@ -8,6 +8,7 @@
 #include "utils/TranslateErrorCode.h"
 #include "utils/Timer.h"
 #include "rendering/Renderer.h"
+#include "rendering/OrthographicCamera.h"
 
 #include "rendering/Texture.h"
 
@@ -31,10 +32,22 @@ namespace topo
 
 #define MaxLights 16
 
-	struct PassConstants
+	struct UIPassConstants
 	{
-		float Width;
-		float Height;
+		DirectX::XMFLOAT4X4 View = MathHelper::Identity4x4();
+		DirectX::XMFLOAT4X4 InvView = MathHelper::Identity4x4();
+		DirectX::XMFLOAT4X4 Proj = MathHelper::Identity4x4();
+		DirectX::XMFLOAT4X4 InvProj = MathHelper::Identity4x4();
+		DirectX::XMFLOAT4X4 ViewProj = MathHelper::Identity4x4();
+		DirectX::XMFLOAT4X4 InvViewProj = MathHelper::Identity4x4();
+		DirectX::XMFLOAT3 EyePosW = { 0.0f, 0.0f, 0.0f };
+		float cbPerObjectPad1 = 0.0f;
+		DirectX::XMFLOAT2 RenderTargetSize = { 0.0f, 0.0f };
+		DirectX::XMFLOAT2 InvRenderTargetSize = { 0.0f, 0.0f };
+		float NearZ = 0.0f;
+		float FarZ = 0.0f;
+		float TotalTime = 0.0f;
+		float DeltaTime = 0.0f;
 	};
 	struct CratePassConstants
 	{
@@ -103,6 +116,10 @@ namespace topo
 		float Roughness = .25f;
 		DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
 	};
+	struct UIObjectData
+	{
+		DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
+	};
 	struct ObjectData
 	{
 		DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
@@ -147,8 +164,11 @@ public:
 		m_hInst(GetModuleHandle(nullptr)), // I believe GetModuleHandle should not ever throw, even though it is not marked noexcept
 		m_mouseX(0),
 		m_mouseY(0),
-		m_mouseIsInWindow(false)
+		m_mouseIsInWindow(false),
+		m_orthographicCamera(static_cast<float>(props.Width), static_cast<float>(props.Height))
 	{
+		m_orthographicCamera.SetPosition(static_cast<float>(props.Width) / 2, -1 * static_cast<float>(props.Height) / 2, 0.0f);
+
 		// Register the window class
 		WNDCLASSEX wc = { 0 };
 		wc.cbSize = sizeof(wc);
@@ -244,8 +264,10 @@ protected:
 	D3D12_RECT m_scissorRect;
 
 	// 2D Test
-	std::unique_ptr<ConstantBufferMapped<PassConstants>>	m_passConstantsBuffer = nullptr;
+	std::unique_ptr<ConstantBufferMapped<UIPassConstants>>	m_uiPassConstantsBuffer = nullptr;
 	std::unique_ptr<MeshGroup<Vertex>> m_meshGroup = nullptr;
+	OrthographicCamera m_orthographicCamera;
+	std::unique_ptr<ConstantBufferMapped<UIObjectData>> m_uiObjectConstantBuffer = nullptr;
 
 
 	// 3D Test

@@ -155,6 +155,7 @@
     <ClInclude Include="src\topo\utils\d3dx12.h">
       <Filter>topo\utils</Filter>
     </ClInclude>
+    <ClInclude Include="src\topo\rendering\OrthographicCamera.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -272,6 +273,7 @@
     <ClCompile Include="src\topo\utils\WindowMessageMap.cpp">
       <Filter>topo\utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\topo\rendering\OrthographicCamera.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\topo\shaders\Control-ps.hlsl">

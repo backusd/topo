@@ -12,10 +12,13 @@ namespace topo
 class Renderer
 {
 public:
-	Renderer(std::shared_ptr<DeviceResources> deviceResources, D3D12_VIEWPORT& viewport, D3D12_RECT& scissorRect) noexcept;
+	inline Renderer(std::shared_ptr<DeviceResources> deviceResources, D3D12_VIEWPORT& viewport, D3D12_RECT& scissorRect) noexcept :
+		m_deviceResources(deviceResources),
+		m_viewport(viewport),
+		m_scissorRect(scissorRect)
+	{}
 	inline Renderer(Renderer&& rhs) noexcept :
 		m_deviceResources(rhs.m_deviceResources),
-		m_camera(std::move(rhs.m_camera)),
 		m_viewport(rhs.m_viewport),
 		m_scissorRect(rhs.m_scissorRect),
 		m_renderPasses(std::move(rhs.m_renderPasses))
@@ -23,7 +26,6 @@ public:
 	inline Renderer& operator=(Renderer&& rhs) noexcept
 	{
 		m_deviceResources = rhs.m_deviceResources;
-		m_camera = std::move(rhs.m_camera);
 		m_viewport = rhs.m_viewport;
 		m_scissorRect = rhs.m_scissorRect;
 		m_renderPasses = std::move(rhs.m_renderPasses);
@@ -33,8 +35,6 @@ public:
 	void Update(const Timer& timer, int frameIndex);
 	void Render(int frameIndex);
 
-	ND constexpr Camera& GetCamera() noexcept { return m_camera; }
-	ND constexpr const Camera& GetCamera() const noexcept { return m_camera; }
 	ND constexpr RenderPass& GetRenderPass(unsigned int index) noexcept
 	{
 		ASSERT(index < m_renderPasses.size(), "index too large");
@@ -56,12 +56,6 @@ private:
 	void RunComputeLayer(const ComputeLayer& layer, const Timer* timer, int frameIndex);
 
 	std::shared_ptr<DeviceResources> m_deviceResources;
-
-	// Note: we do NOT allow camera to be a reference to a Camera object controlled by
-	// the application. The reason being is that we must enforce each Renderer instance to
-	// have its own camera (no sharing a camera). The application is responsible for calling
-	// GetCamera() and updating its position/orientation when necessary
-	Camera m_camera;
 
 	// Have the viewport and scissor rect be controlled by the application. We use references
 	// here because neither of these should ever be allowed to be null

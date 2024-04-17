@@ -21,7 +21,7 @@ public:
 
 	// Get/Set world camera position.
 	ND inline DirectX::XMVECTOR GetPosition() const noexcept { return DirectX::XMLoadFloat3(&m_position); }
-	ND constexpr DirectX::XMFLOAT3 GetPosition3f() const noexcept { return m_position; }
+	ND constexpr const DirectX::XMFLOAT3& GetPosition3f() const noexcept { return m_position; }
 	void SetPosition(float x, float y, float z) noexcept;
 	void SetPosition(const DirectX::XMFLOAT3& v) noexcept;
 
@@ -60,9 +60,53 @@ public:
 	// Get View/Proj matrices.
 	ND inline DirectX::XMMATRIX GetView() const noexcept { return DirectX::XMLoadFloat4x4(&m_view); }
 	ND inline DirectX::XMMATRIX GetProj() const noexcept { return DirectX::XMLoadFloat4x4(&m_proj); }
+	ND inline DirectX::XMMATRIX GetViewProj() const noexcept { return DirectX::XMMatrixMultiply(DirectX::XMLoadFloat4x4(&m_view), DirectX::XMLoadFloat4x4(&m_proj)); }
+	ND inline DirectX::XMMATRIX GetViewInverse() const noexcept
+	{
+		DirectX::XMMATRIX view = GetView();
+		DirectX::XMVECTOR viewDet = DirectX::XMMatrixDeterminant(view);
+		return DirectX::XMMatrixInverse(&viewDet, view);
+	}
+	ND inline DirectX::XMMATRIX GetProjInverse() const noexcept
+	{
+		DirectX::XMMATRIX proj = GetProj();
+		DirectX::XMVECTOR projDet = DirectX::XMMatrixDeterminant(proj);
+		return DirectX::XMMatrixInverse(&projDet, proj);
+	}
+	ND inline DirectX::XMMATRIX GetViewProjInverse() const noexcept
+	{
+		DirectX::XMMATRIX viewProj = GetViewProj();
+		DirectX::XMVECTOR viewProjDet = DirectX::XMMatrixDeterminant(viewProj);
+		return DirectX::XMMatrixInverse(&viewProjDet, viewProj);
+	}
 
-	ND constexpr DirectX::XMFLOAT4X4 GetView4x4f() const noexcept { return m_view; }
-	ND constexpr DirectX::XMFLOAT4X4 GetProj4x4f() const noexcept { return m_proj; }
+
+	ND constexpr const DirectX::XMFLOAT4X4& GetView4x4f() const noexcept { return m_view; }
+	ND constexpr const DirectX::XMFLOAT4X4& GetProj4x4f() const noexcept { return m_proj; }
+	ND inline DirectX::XMFLOAT4X4 GetViewProj4x4f() const noexcept
+	{
+		DirectX::XMFLOAT4X4 ret;
+		DirectX::XMStoreFloat4x4(&ret, GetViewProj());
+		return ret;
+	}
+	ND inline DirectX::XMFLOAT4X4 GetViewInverse4x4f() const noexcept
+	{
+		DirectX::XMFLOAT4X4 ret;
+		DirectX::XMStoreFloat4x4(&ret, GetViewInverse());
+		return ret;
+	}
+	ND inline DirectX::XMFLOAT4X4 GetProjInverse4x4f() const noexcept
+	{
+		DirectX::XMFLOAT4X4 ret;
+		DirectX::XMStoreFloat4x4(&ret, GetProjInverse());
+		return ret;
+	}
+	ND inline DirectX::XMFLOAT4X4 GetViewProjInverse4x4f() const noexcept
+	{
+		DirectX::XMFLOAT4X4 ret;
+		DirectX::XMStoreFloat4x4(&ret, GetViewProjInverse());
+		return ret;
+	}
 
 	//	// Strafe/Walk the camera a distance d.
 	//	void Strafe(float d) noexcept;

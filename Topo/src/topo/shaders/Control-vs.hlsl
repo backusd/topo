@@ -1,14 +1,25 @@
  
- 
-struct PerPassData
+cbuffer cbPerObject : register(b0)
 {
-    float Width;
-    float Height;
+    float4x4 gWorld;
 };
-
-cbuffer cbPass : register(b0)
+ 
+cbuffer cbPass : register(b1)
 {
-    PerPassData gPerPassData;
+    float4x4 gView;
+    float4x4 gInvView;
+    float4x4 gProj;
+    float4x4 gInvProj;
+    float4x4 gViewProj;
+    float4x4 gInvViewProj;
+    float3 gEyePosW;
+    float cbPerObjectPad1;
+    float2 gRenderTargetSize;
+    float2 gInvRenderTargetSize;
+    float gNearZ;
+    float gFarZ;
+    float gTotalTime;
+    float gDeltaTime;
 };
 
 struct VertexIn
@@ -25,8 +36,23 @@ struct VertexOut
 
 VertexOut main(VertexIn vin)
 {
-    VertexOut vout;
-    vout.Position = vin.Position;
+//    VertexOut vout;
+//    vout.Position = vin.Position;
+//    vout.Color = vin.Color;
+//	return vout;
+    
+    
+    VertexOut vout = (VertexOut) 0.0f;
     vout.Color = vin.Color;
-	return vout;
+	
+    // Transform to world space.
+    vin.Position.z = 1.0f;
+    float4 posW = mul(vin.Position, gWorld);
+//    vout.PosW = posW.xyz;
+
+    // Transform to homogeneous clip space.
+    vout.Position = mul(posW, gViewProj);
+	
+
+    return vout;
 }

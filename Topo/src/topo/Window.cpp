@@ -231,6 +231,9 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		m_scissorRect.right = static_cast<LONG>(m_width);
 		m_scissorRect.bottom = static_cast<LONG>(m_height);
 
+		m_orthographicCamera.SetProjection(static_cast<float>(m_width), static_cast<float>(m_height));
+		m_orthographicCamera.SetPosition(static_cast<float>(m_width) / 2, -1 * static_cast<float>(m_height) / 2, 0.0f);
+
 		if (m_page->OnWindowResized(m_height, m_width))
 			return 0;
 		break;
@@ -408,62 +411,243 @@ void Window::Present()
 
 void Window::InitializeRenderer()
 {
-	m_camera = std::make_unique<Camera>();
-	m_camera->LookAt({ 0.0f, 0.0f, -5.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
-	m_camera->SetLens(static_cast<float>(0.25 * std::numbers::pi), 
-		static_cast<float>(this->GetWidth()) / static_cast<float>(this->GetHeight()),
-		1.0f, 1000.0f);
+//	m_camera = std::make_unique<Camera>();
+//	m_camera->LookAt({ 0.0f, 0.0f, -5.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
+//	m_camera->SetLens(static_cast<float>(0.25 * std::numbers::pi), 
+//		static_cast<float>(this->GetWidth()) / static_cast<float>(this->GetHeight()),
+//		1.0f, 1000.0f);
+//
+//	auto il = std::vector<D3D12_INPUT_ELEMENT_DESC>{
+//		{ "COLOR",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+//		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+//		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+//		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+//	};
+//
+//
+//	GeometryGenerator geoGen;
+//	GeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3); 
+////	GeometryGenerator::MeshData box = geoGen.CreateSphere(1.0f, 20, 20);
+//
+//	std::vector<std::uint16_t> crateIndices = box.GetIndices16();
+//	std::vector<CrateVertex> crateVertices(box.Vertices.size());
+//	for (unsigned int iii = 0; iii < box.Vertices.size(); ++iii)
+//	{
+//		crateVertices[iii].Pos = box.Vertices[iii].Position;
+//		crateVertices[iii].Normal = box.Vertices[iii].Normal;
+//		crateVertices[iii].TexC = box.Vertices[iii].TexC;
+//	}
+//	Mesh<CrateVertex> crateMesh(std::move(crateVertices), std::move(crateIndices));
+//	m_meshGroupCrate = std::make_unique<MeshGroup<CrateVertex>>(m_deviceResources,
+//		crateMesh, PRIMITIVE_TOPOLOGY::TRIANGLELIST);
+////	m_meshGroupCrate->PushBack(std::move(crateMesh));
+//
+//	m_passConstantBufferCrate = std::make_unique<ConstantBufferMapped<CratePassConstants>>(m_deviceResources);
+//	m_passConstantBufferCrate->Update = [this](const Timer& timer, int frameIndex)
+//		{
+//			using namespace DirectX;
+//
+//			CratePassConstants pc{};
+//			XMMATRIX view = m_camera->GetView();
+//			XMMATRIX proj = m_camera->GetProj();
+//
+//			XMVECTOR viewDet = XMMatrixDeterminant(view);
+//			XMVECTOR projDet = XMMatrixDeterminant(proj);
+//
+//			XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+//			XMVECTOR viewProjDet = XMMatrixDeterminant(viewProj);
+//
+//			XMMATRIX invView = XMMatrixInverse(&viewDet, view);
+//			XMMATRIX invProj = XMMatrixInverse(&projDet, proj);
+//			XMMATRIX invViewProj = XMMatrixInverse(&viewProjDet, viewProj);
+//
+//			XMStoreFloat4x4(&pc.View, XMMatrixTranspose(view));
+//			XMStoreFloat4x4(&pc.InvView, XMMatrixTranspose(invView));
+//			XMStoreFloat4x4(&pc.Proj, XMMatrixTranspose(proj));
+//			XMStoreFloat4x4(&pc.InvProj, XMMatrixTranspose(invProj));
+//			XMStoreFloat4x4(&pc.ViewProj, XMMatrixTranspose(viewProj));
+//			XMStoreFloat4x4(&pc.InvViewProj, XMMatrixTranspose(invViewProj));
+//			pc.EyePosW = m_eyePosition;
+//			pc.RenderTargetSize = XMFLOAT2(static_cast<float>(this->GetWidth()), static_cast<float>(this->GetHeight()));
+//			pc.InvRenderTargetSize = XMFLOAT2(1.0f / static_cast<float>(this->GetWidth()), 1.0f / static_cast<float>(this->GetHeight()));
+//			pc.NearZ = 1.0f;
+//			pc.FarZ = 1000.0f;
+//			pc.TotalTime = timer.TotalTime();
+//			pc.DeltaTime = timer.DeltaTime();
+//			pc.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+//			pc.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
+//			pc.Lights[0].Strength = { 0.6f, 0.6f, 0.6f };
+//			pc.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
+//			pc.Lights[1].Strength = { 0.3f, 0.3f, 0.3f };
+//			pc.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
+//			pc.Lights[2].Strength = { 0.15f, 0.15f, 0.15f };
+//
+//			m_passConstantBufferCrate->CopyData(frameIndex, pc);
+//		};
+//
+//	m_materialConstantBuffer = std::make_unique<ConstantBufferMapped<Material>>(m_deviceResources);
+//	m_materialConstantBuffer->Update = [this](const Timer& timer, int frameIndex)
+//		{
+//			using namespace DirectX;
+//
+//			Material mat{};
+//			mat.DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+//			mat.FresnelR0 = XMFLOAT3(0.05f, 0.05f, 0.05f);
+//			mat.Roughness = 0.2f;
+//
+//			m_materialConstantBuffer->CopyData(frameIndex, mat); 
+//		};
+//
+//	m_objectConstantBuffer = std::make_unique<ConstantBufferMapped<ObjectData>>(m_deviceResources);
+//	m_objectConstantBuffer->Update = [this](const Timer& timer, int frameIndex)
+//		{
+//			using namespace DirectX;
+//
+//			ObjectData data{};
+//			XMMATRIX world = XMMatrixTranslation(0.0f, 0.0f, 0.0f) *
+//				XMMatrixScaling(1.0f, 1.0f, 1.0f) *
+//				XMMatrixRotationY(sinf(timer.TotalTime()));
+//			XMStoreFloat4x4(&data.World, XMMatrixTranspose(world)); 
+//
+//			m_objectConstantBuffer->CopyData(frameIndex, data); 
+//		};
+//
+//	m_sd0.Filter   = FILTER::MIN_MAG_MIP_POINT;
+//	m_sd0.AddressU = TEXTURE_ADDRESS_MODE::WRAP; 
+//	m_sd0.AddressV = TEXTURE_ADDRESS_MODE::WRAP;
+//	m_sd0.AddressW = TEXTURE_ADDRESS_MODE::WRAP;
+//
+//	m_sd1.Filter = FILTER::MIN_MAG_MIP_POINT; 
+//	m_sd1.AddressU = TEXTURE_ADDRESS_MODE::CLAMP;
+//	m_sd1.AddressV = TEXTURE_ADDRESS_MODE::CLAMP;
+//	m_sd1.AddressW = TEXTURE_ADDRESS_MODE::CLAMP;
+//
+//	m_sd2.Filter = FILTER::MIN_MAG_MIP_LINEAR;
+//	m_sd2.AddressU = TEXTURE_ADDRESS_MODE::WRAP;
+//	m_sd2.AddressV = TEXTURE_ADDRESS_MODE::WRAP;
+//	m_sd2.AddressW = TEXTURE_ADDRESS_MODE::WRAP;
+//
+//	m_sd3.Filter = FILTER::MIN_MAG_MIP_LINEAR;
+//	m_sd3.AddressU = TEXTURE_ADDRESS_MODE::CLAMP;
+//	m_sd3.AddressV = TEXTURE_ADDRESS_MODE::CLAMP;
+//	m_sd3.AddressW = TEXTURE_ADDRESS_MODE::CLAMP;
+//
+//	m_sd4.Filter = FILTER::ANISOTROPIC;
+//	m_sd4.AddressU = TEXTURE_ADDRESS_MODE::WRAP;
+//	m_sd4.AddressV = TEXTURE_ADDRESS_MODE::WRAP;
+//	m_sd4.AddressW = TEXTURE_ADDRESS_MODE::WRAP;
+//	m_sd4.MipLODBias = 0.0f;
+//	m_sd4.MaxAnisotropy = 8;
+//
+//	m_sd5.Filter = FILTER::ANISOTROPIC;
+//	m_sd5.AddressU = TEXTURE_ADDRESS_MODE::CLAMP;
+//	m_sd5.AddressV = TEXTURE_ADDRESS_MODE::CLAMP;
+//	m_sd5.AddressW = TEXTURE_ADDRESS_MODE::CLAMP;
+//	m_sd5.MipLODBias = 0.0f;
+//	m_sd5.MaxAnisotropy = 8;
+//
+//	std::vector<Texture> vecT = AssetManager::CheckoutTextures(m_deviceResources, "bricks.dds", "bricks2.dds");
+//
+//	Texture t1  = AssetManager::CheckoutTexture(m_deviceResources, "bricks.dds");
+//	Texture t2  = AssetManager::CheckoutTexture(m_deviceResources, "bricks2.dds");
+//	Texture t3  = AssetManager::CheckoutTexture(m_deviceResources, "bricks3.dds");
+//	Texture t4  = AssetManager::CheckoutTexture(m_deviceResources, "checkboard.dds");
+//	Texture t5  = AssetManager::CheckoutTexture(m_deviceResources, "grass.dds");
+//	Texture t6  = AssetManager::CheckoutTexture(m_deviceResources, "ice.dds");
+//	Texture t7  = AssetManager::CheckoutTexture(m_deviceResources, "stone.dds");
+//	Texture t8  = AssetManager::CheckoutTexture(m_deviceResources, "tile.dds");
+//	Texture t9  = AssetManager::CheckoutTexture(m_deviceResources, "water1.dds");
+//	Texture t10 = AssetManager::CheckoutTexture(m_deviceResources, "WireFence.dds");
+//	Texture t11 = AssetManager::CheckoutTexture(m_deviceResources, "WoodCrate01.dds");
+//	Texture t12 = AssetManager::CheckoutTexture(m_deviceResources, "WoodCrate02.dds");
+//
+//	Texture texture1 = t10;
+//	Texture texture2 = t11;
+//	Texture texture3 = t12;
+//
+//	RenderPassSignature signature{
+//		TextureParameter{ 0, 2 }, 
+////		TextureParameter{ 1, 1 },
+//		ConstantBufferParameter{ 0 },
+//		ConstantBufferParameter{ 1 },
+//		ConstantBufferParameter{ 2 },
+//		SamplerParameter{ 0, &m_sd0 },
+//		SamplerParameter{ 1, &m_sd1 },
+//		SamplerParameter{ 2, &m_sd2 },
+//		SamplerParameter{ 3, &m_sd3 },
+//		SamplerParameter{ 4, &m_sd4 },
+//		SamplerParameter{ 5, &m_sd5 }
+//	};
+//
+//	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(signature);
+//	SET_DEBUG_NAME(pass1, "Render Pass #1");
+//
+//	pass1.BindConstantBuffer(2, m_passConstantBufferCrate.get());
+//	pass1.BindConstantBuffer(3, m_materialConstantBuffer.get());
+//
+//	Shader vs = AssetManager::CheckoutShader("Crate-vs.cso", std::move(il));
+//	Shader ps = AssetManager::CheckoutShader("Crate-ps.cso");
+//
+//	PipelineStateDesc psDesc{};
+//	psDesc.RootSignature = pass1.GetRootSignature();
+//	psDesc.VertexShader = vs;
+//	psDesc.PixelShader = ps;
+//	psDesc.SampleMask = UINT_MAX; /// ??? Why?
+//	psDesc.NumRenderTargets = 1;
+//	psDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
+//	psDesc.DSVFormat = m_deviceResources->GetDepthStencilFormat();
+//
+//	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_meshGroupCrate.get(), psDesc);
+//	SET_DEBUG_NAME(layer1, "Render Pass Layer #1");
+//
+//	RenderItem& crateRI = layer1.EmplaceBackRenderItem();
+//	SET_DEBUG_NAME(crateRI, "Crate RenderItem");
+//
+//	crateRI.BindConstantBuffer(1, m_objectConstantBuffer.get());
+//
+////	std::array<Texture, 3> texVec = { texture1, texture2, texture3 };
+//
+////	crateRI.BindTexture(0, texture1);
+//	crateRI.BindTextures(0, vecT);
+////	crateRI.BindTexture(0, texture2);
 
-	auto il = std::vector<D3D12_INPUT_ELEMENT_DESC>{
-		{ "COLOR",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
 
-
-	GeometryGenerator geoGen;
-	GeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3); 
-//	GeometryGenerator::MeshData box = geoGen.CreateSphere(1.0f, 20, 20);
-
-	std::vector<std::uint16_t> crateIndices = box.GetIndices16();
-	std::vector<CrateVertex> crateVertices(box.Vertices.size());
-	for (unsigned int iii = 0; iii < box.Vertices.size(); ++iii)
-	{
-		crateVertices[iii].Pos = box.Vertices[iii].Position;
-		crateVertices[iii].Normal = box.Vertices[iii].Normal;
-		crateVertices[iii].TexC = box.Vertices[iii].TexC;
-	}
-	Mesh<CrateVertex> crateMesh(std::move(crateVertices), std::move(crateIndices));
-	m_meshGroupCrate = std::make_unique<MeshGroup<CrateVertex>>(m_deviceResources,
-		crateMesh, PRIMITIVE_TOPOLOGY::TRIANGLELIST);
-//	m_meshGroupCrate->PushBack(std::move(crateMesh));
-
-	m_passConstantBufferCrate = std::make_unique<ConstantBufferMapped<CratePassConstants>>(m_deviceResources);
-	m_passConstantBufferCrate->Update = [this](const Timer& timer, int frameIndex)
+	m_uiObjectConstantBuffer = std::make_unique<ConstantBufferMapped<UIObjectData>>(m_deviceResources);
+	m_uiObjectConstantBuffer->Update = [this](const Timer& timer, int frameIndex)
 		{
 			using namespace DirectX;
 
-			CratePassConstants pc{};
-			XMMATRIX view = m_camera->GetView();
-			XMMATRIX proj = m_camera->GetProj();
+			UIObjectData data{};
+			XMMATRIX world = XMMatrixScaling(200.0f, 100.0f, 1.0f) * XMMatrixTranslation(10.f, 0.0f, 0.0f);
+			XMStoreFloat4x4(&data.World, XMMatrixTranspose(world)); 
 
-			XMVECTOR viewDet = XMMatrixDeterminant(view);
-			XMVECTOR projDet = XMMatrixDeterminant(proj);
+			m_uiObjectConstantBuffer->CopyData(frameIndex, data); 
+		};
 
-			XMMATRIX viewProj = XMMatrixMultiply(view, proj);
-			XMVECTOR viewProjDet = XMMatrixDeterminant(viewProj);
+	std::vector<Vertex> squareVertices{
+		{{  0.0f,  0.0f, 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+		{{  1.0f,  0.0f, 0.5f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+		{{  1.0f, -1.0f, 0.5f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+		{{  0.0f, -1.0f, 0.5f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
+	};
+	std::vector<std::uint16_t> squareIndices{ 0, 1, 3, 1, 2, 3 };
+	Mesh<Vertex> mesh(std::move(squareVertices), std::move(squareIndices));
 
-			XMMATRIX invView = XMMatrixInverse(&viewDet, view);
-			XMMATRIX invProj = XMMatrixInverse(&projDet, proj);
-			XMMATRIX invViewProj = XMMatrixInverse(&viewProjDet, viewProj);
+	m_meshGroup = std::make_unique<MeshGroup<Vertex>>(m_deviceResources, PRIMITIVE_TOPOLOGY::TRIANGLELIST);
+	m_meshGroup->PushBack(std::move(mesh));
 
-			XMStoreFloat4x4(&pc.View, XMMatrixTranspose(view));
-			XMStoreFloat4x4(&pc.InvView, XMMatrixTranspose(invView));
-			XMStoreFloat4x4(&pc.Proj, XMMatrixTranspose(proj));
-			XMStoreFloat4x4(&pc.InvProj, XMMatrixTranspose(invProj));
-			XMStoreFloat4x4(&pc.ViewProj, XMMatrixTranspose(viewProj));
-			XMStoreFloat4x4(&pc.InvViewProj, XMMatrixTranspose(invViewProj));
+	m_uiPassConstantsBuffer = std::make_unique<ConstantBufferMapped<UIPassConstants>>(m_deviceResources);
+	m_uiPassConstantsBuffer->Update = [this](const Timer& timer, int frameIndex)
+		{
+			using namespace DirectX;
+
+			UIPassConstants pc{};
+			XMStoreFloat4x4(&pc.View,		 XMMatrixTranspose(m_orthographicCamera.GetView()));
+			XMStoreFloat4x4(&pc.InvView,	 XMMatrixTranspose(m_orthographicCamera.GetViewInverse()));
+			XMStoreFloat4x4(&pc.Proj,		 XMMatrixTranspose(m_orthographicCamera.GetProj()));
+			XMStoreFloat4x4(&pc.InvProj,	 XMMatrixTranspose(m_orthographicCamera.GetProjInverse()));
+			XMStoreFloat4x4(&pc.ViewProj,	 XMMatrixTranspose(m_orthographicCamera.GetViewProj()));
+			XMStoreFloat4x4(&pc.InvViewProj, XMMatrixTranspose(m_orthographicCamera.GetViewProjInverse()));
 			pc.EyePosW = m_eyePosition;
 			pc.RenderTargetSize = XMFLOAT2(static_cast<float>(this->GetWidth()), static_cast<float>(this->GetHeight()));
 			pc.InvRenderTargetSize = XMFLOAT2(1.0f / static_cast<float>(this->GetWidth()), 1.0f / static_cast<float>(this->GetHeight()));
@@ -471,122 +655,29 @@ void Window::InitializeRenderer()
 			pc.FarZ = 1000.0f;
 			pc.TotalTime = timer.TotalTime();
 			pc.DeltaTime = timer.DeltaTime();
-			pc.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
-			pc.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
-			pc.Lights[0].Strength = { 0.6f, 0.6f, 0.6f };
-			pc.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
-			pc.Lights[1].Strength = { 0.3f, 0.3f, 0.3f };
-			pc.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
-			pc.Lights[2].Strength = { 0.15f, 0.15f, 0.15f };
 
-			m_passConstantBufferCrate->CopyData(frameIndex, pc);
+			m_uiPassConstantsBuffer->CopyData(frameIndex, pc);
 		};
 
-	m_materialConstantBuffer = std::make_unique<ConstantBufferMapped<Material>>(m_deviceResources);
-	m_materialConstantBuffer->Update = [this](const Timer& timer, int frameIndex)
-		{
-			using namespace DirectX;
-
-			Material mat{};
-			mat.DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-			mat.FresnelR0 = XMFLOAT3(0.05f, 0.05f, 0.05f);
-			mat.Roughness = 0.2f;
-
-			m_materialConstantBuffer->CopyData(frameIndex, mat); 
-		};
-
-	m_objectConstantBuffer = std::make_unique<ConstantBufferMapped<ObjectData>>(m_deviceResources);
-	m_objectConstantBuffer->Update = [this](const Timer& timer, int frameIndex)
-		{
-			using namespace DirectX;
-
-			ObjectData data{};
-			XMMATRIX world = XMMatrixTranslation(0.0f, 0.0f, 0.0f) *
-				XMMatrixScaling(1.0f, 1.0f, 1.0f) *
-				XMMatrixRotationY(sinf(timer.TotalTime()));
-			XMStoreFloat4x4(&data.World, XMMatrixTranspose(world)); 
-
-			m_objectConstantBuffer->CopyData(frameIndex, data); 
-		};
-
-	m_sd0.Filter   = FILTER::MIN_MAG_MIP_POINT;
-	m_sd0.AddressU = TEXTURE_ADDRESS_MODE::WRAP; 
-	m_sd0.AddressV = TEXTURE_ADDRESS_MODE::WRAP;
-	m_sd0.AddressW = TEXTURE_ADDRESS_MODE::WRAP;
-
-	m_sd1.Filter = FILTER::MIN_MAG_MIP_POINT; 
-	m_sd1.AddressU = TEXTURE_ADDRESS_MODE::CLAMP;
-	m_sd1.AddressV = TEXTURE_ADDRESS_MODE::CLAMP;
-	m_sd1.AddressW = TEXTURE_ADDRESS_MODE::CLAMP;
-
-	m_sd2.Filter = FILTER::MIN_MAG_MIP_LINEAR;
-	m_sd2.AddressU = TEXTURE_ADDRESS_MODE::WRAP;
-	m_sd2.AddressV = TEXTURE_ADDRESS_MODE::WRAP;
-	m_sd2.AddressW = TEXTURE_ADDRESS_MODE::WRAP;
-
-	m_sd3.Filter = FILTER::MIN_MAG_MIP_LINEAR;
-	m_sd3.AddressU = TEXTURE_ADDRESS_MODE::CLAMP;
-	m_sd3.AddressV = TEXTURE_ADDRESS_MODE::CLAMP;
-	m_sd3.AddressW = TEXTURE_ADDRESS_MODE::CLAMP;
-
-	m_sd4.Filter = FILTER::ANISOTROPIC;
-	m_sd4.AddressU = TEXTURE_ADDRESS_MODE::WRAP;
-	m_sd4.AddressV = TEXTURE_ADDRESS_MODE::WRAP;
-	m_sd4.AddressW = TEXTURE_ADDRESS_MODE::WRAP;
-	m_sd4.MipLODBias = 0.0f;
-	m_sd4.MaxAnisotropy = 8;
-
-	m_sd5.Filter = FILTER::ANISOTROPIC;
-	m_sd5.AddressU = TEXTURE_ADDRESS_MODE::CLAMP;
-	m_sd5.AddressV = TEXTURE_ADDRESS_MODE::CLAMP;
-	m_sd5.AddressW = TEXTURE_ADDRESS_MODE::CLAMP;
-	m_sd5.MipLODBias = 0.0f;
-	m_sd5.MaxAnisotropy = 8;
-
-	std::vector<Texture> vecT = AssetManager::CheckoutTextures(m_deviceResources, "bricks.dds", "bricks2.dds");
-
-	Texture t1  = AssetManager::CheckoutTexture(m_deviceResources, "bricks.dds");
-	Texture t2  = AssetManager::CheckoutTexture(m_deviceResources, "bricks2.dds");
-	Texture t3  = AssetManager::CheckoutTexture(m_deviceResources, "bricks3.dds");
-	Texture t4  = AssetManager::CheckoutTexture(m_deviceResources, "checkboard.dds");
-	Texture t5  = AssetManager::CheckoutTexture(m_deviceResources, "grass.dds");
-	Texture t6  = AssetManager::CheckoutTexture(m_deviceResources, "ice.dds");
-	Texture t7  = AssetManager::CheckoutTexture(m_deviceResources, "stone.dds");
-	Texture t8  = AssetManager::CheckoutTexture(m_deviceResources, "tile.dds");
-	Texture t9  = AssetManager::CheckoutTexture(m_deviceResources, "water1.dds");
-	Texture t10 = AssetManager::CheckoutTexture(m_deviceResources, "WireFence.dds");
-	Texture t11 = AssetManager::CheckoutTexture(m_deviceResources, "WoodCrate01.dds");
-	Texture t12 = AssetManager::CheckoutTexture(m_deviceResources, "WoodCrate02.dds");
-
-	Texture texture1 = t10;
-	Texture texture2 = t11;
-	Texture texture3 = t12;
-
-	RenderPassSignature signature{
-		TextureParameter{ 0, 2 }, 
-//		TextureParameter{ 1, 1 },
+	RenderPassSignature sig{ 
 		ConstantBufferParameter{ 0 },
-		ConstantBufferParameter{ 1 },
-		ConstantBufferParameter{ 2 },
-		SamplerParameter{ 0, &m_sd0 },
-		SamplerParameter{ 1, &m_sd1 },
-		SamplerParameter{ 2, &m_sd2 },
-		SamplerParameter{ 3, &m_sd3 },
-		SamplerParameter{ 4, &m_sd4 },
-		SamplerParameter{ 5, &m_sd5 }
+		ConstantBufferParameter{ 1 }
 	};
 
-	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(signature);
-	SET_DEBUG_NAME(pass1, "Render Pass #1");
+	RenderPass& uiPass = m_renderer->EmplaceBackRenderPass(sig);
+	SET_DEBUG_NAME(uiPass, "UI Render Pass");
+	uiPass.BindConstantBuffer(1, m_uiPassConstantsBuffer.get());
 
-	pass1.BindConstantBuffer(2, m_passConstantBufferCrate.get());
-	pass1.BindConstantBuffer(3, m_materialConstantBuffer.get());
 
-	Shader vs = AssetManager::CheckoutShader("Crate-vs.cso", std::move(il));
-	Shader ps = AssetManager::CheckoutShader("Crate-ps.cso");
+	auto il = std::vector<D3D12_INPUT_ELEMENT_DESC>{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+	const Shader& vs = AssetManager::CheckoutShader("Control-vs.cso", std::move(il));
+	const Shader& ps = AssetManager::CheckoutShader("Control-ps.cso");
 
 	PipelineStateDesc psDesc{};
-	psDesc.RootSignature = pass1.GetRootSignature();
+	psDesc.RootSignature = uiPass.GetRootSignature();
 	psDesc.VertexShader = vs;
 	psDesc.PixelShader = ps;
 	psDesc.SampleMask = UINT_MAX; /// ??? Why?
@@ -594,92 +685,13 @@ void Window::InitializeRenderer()
 	psDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
 	psDesc.DSVFormat = m_deviceResources->GetDepthStencilFormat();
 
-	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_meshGroupCrate.get(), psDesc);
+	RenderPassLayer& layer1 = uiPass.EmplaceBackRenderPassLayer(m_meshGroup.get(), psDesc);
 	SET_DEBUG_NAME(layer1, "Render Pass Layer #1");
 
-	RenderItem& crateRI = layer1.EmplaceBackRenderItem();
-	SET_DEBUG_NAME(crateRI, "Crate RenderItem");
-
-	crateRI.BindConstantBuffer(1, m_objectConstantBuffer.get());
-
-//	std::array<Texture, 3> texVec = { texture1, texture2, texture3 };
-
-//	crateRI.BindTexture(0, texture1);
-	crateRI.BindTextures(0, vecT);
-//	crateRI.BindTexture(0, texture2);
-
-
-
-
-
-
-	/*
-	std::vector<Vertex> squareVertices{
-		{{ -0.5f, 0.5f, 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
-		{{ 0.5f, 0.5f, 0.5f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
-		{{ 0.5f, -0.5f, 0.5f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
-		{{ -0.5f, -0.5f, 0.5f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
-	};
-	std::vector<std::uint16_t> squareIndices{ 0, 1, 3, 1, 2, 3 };
-	Mesh<Vertex> mesh(std::move(squareVertices), std::move(squareIndices));
-
-	std::unique_ptr<MeshGroup<Vertex>> meshGroup = std::make_unique<MeshGroup<Vertex>>(m_deviceResources);
-	meshGroup->PushBack(std::move(mesh));
-
-	std::vector<unsigned int> indices = { 0, 2 };
-	MeshGroup<Vertex> meshGroupCopy = meshGroup->CopySubset(indices);
-	m_meshGroup = std::make_unique<MeshGroup<Vertex>>(std::move(meshGroupCopy));
-	SET_DEBUG_NAME_PTR(m_meshGroup, "MeshGroup");
-	unsigned int meshIndex = 0;
-
-	m_passConstantsBuffer = std::make_unique<ConstantBufferMapped<PassConstants>>(m_deviceResources);
-	m_passConstantsBuffer->Update = [this](const Timer& timer, int frameIndex)
-		{
-			PassConstants pc{ static_cast<float>(this->GetWidth()), static_cast<float>(this->GetHeight()) };
-			m_passConstantsBuffer->CopyData(frameIndex, pc);
-		};
-
-	RenderPassSignature sig{ 
-		ConstantBufferDescription{ 0, m_passConstantsBuffer.get() } 
-	};
-
-	RenderPass& pass1 = m_renderer->EmplaceBackRenderPass(m_deviceResources, sig);
-	SET_DEBUG_NAME(pass1, "Render Pass #1");
-
-
-
-
-	const Shader& vs = AssetManager::GetShader("Control-vs.cso");
-	const Shader& ps = AssetManager::GetShader("Control-ps.cso");
-
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
-	ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-	psoDesc.InputLayout = vs.GetInputLayoutDesc();
-	psoDesc.pRootSignature = pass1.GetRootSignature()->Get();
-	psoDesc.VS = vs.GetShaderByteCode();
-	psoDesc.PS = ps.GetShaderByteCode();
-	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	psoDesc.RasterizerState.FrontCounterClockwise = false;
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
-	psoDesc.SampleDesc.Count = 1;
-	psoDesc.SampleDesc.Quality = 0;
-	psoDesc.DSVFormat = m_deviceResources->GetDepthStencilFormat();
-
-	psoDesc.DepthStencilState.DepthEnable = FALSE; 
-	psoDesc.DepthStencilState.StencilEnable = FALSE; 
-
-	RenderPassLayer& layer1 = pass1.EmplaceBackRenderPassLayer(m_deviceResources, m_meshGroup.get(), psoDesc, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	SET_DEBUG_NAME(layer1, "Render Pass Layer #1");
-
-	RenderItem& squareRI = layer1.EmplaceBackRenderItem(meshIndex);
+	RenderItem& squareRI = layer1.EmplaceBackRenderItem(0);
 	SET_DEBUG_NAME(squareRI, "Square RenderItem"); 
 
-	*/
+	squareRI.BindConstantBuffer(0, m_uiObjectConstantBuffer.get());
 }
 
 #else
