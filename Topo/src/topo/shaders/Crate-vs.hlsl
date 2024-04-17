@@ -21,6 +21,10 @@
 #include "LightingUtil.hlsli"
 
 Texture2D gDiffuseMap : register(t0);
+Texture2D gDiffuseMap2 : register(t1);
+Texture2D gDiffuseMap3 : register(t1);
+
+
 SamplerState gsamLinear : register(s0);
 
 

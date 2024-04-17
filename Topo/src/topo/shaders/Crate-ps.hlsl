@@ -21,6 +21,9 @@
 #include "LightingUtil.hlsli"
 
 Texture2D gDiffuseMap : register(t0);
+Texture2D gDiffuseMap2 : register(t1);
+Texture2D gDiffuseMap3 : register(t1);
+
 SamplerState gsamLinear : register(s0);
 
 
@@ -82,7 +85,7 @@ struct VertexOut
 
 float4 main(VertexOut pin) : SV_Target
 {
-    float4 diffuseAlbedo = gDiffuseMap.Sample(gsamLinear, pin.TexC) * gDiffuseAlbedo;
+    float4 diffuseAlbedo = gDiffuseMap2.Sample(gsamLinear, pin.TexC) * gDiffuseAlbedo;
     
     // Interpolating normal can unnormalize it, so renormalize it.
     pin.NormalW = normalize(pin.NormalW);

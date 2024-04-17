@@ -557,10 +557,13 @@ void Window::InitializeRenderer()
 	Texture t11 = AssetManager::CheckoutTexture(m_deviceResources, "WoodCrate01.dds");
 	Texture t12 = AssetManager::CheckoutTexture(m_deviceResources, "WoodCrate02.dds");
 
-	Texture t = t12;
+	Texture texture1 = t10;
+	Texture texture2 = t11;
+	Texture texture3 = t12;
 
 	RenderPassSignature signature{
-		TextureParameter{ 0 }, 
+		TextureParameter{ 0, 3 }, 
+//		TextureParameter{ 1, 1 },
 		ConstantBufferParameter{ 0 },
 		ConstantBufferParameter{ 1 },
 		ConstantBufferParameter{ 2 },
@@ -597,7 +600,12 @@ void Window::InitializeRenderer()
 	SET_DEBUG_NAME(crateRI, "Crate RenderItem");
 
 	crateRI.BindConstantBuffer(1, m_objectConstantBuffer.get());
-	crateRI.BindTexture(0, t);
+
+	std::array<Texture, 3> texVec = { texture1, texture2, texture3 };
+
+//	crateRI.BindTexture(0, texture1);
+	crateRI.BindTextures(0, texVec);
+//	crateRI.BindTexture(0, texture2);
 
 
 

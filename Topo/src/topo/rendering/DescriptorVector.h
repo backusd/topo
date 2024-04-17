@@ -57,6 +57,7 @@ public:
     ND inline ID3D12DescriptorHeap* GetRawHeapPointer() const noexcept { return m_descriptorHeapShaderVisible.Get(); }
 
     unsigned int EmplaceBackShaderResourceView(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* desc);
+    std::vector<unsigned int> EmplaceBackShaderResourceViews(std::span<std::pair<ID3D12Resource*, D3D12_SHADER_RESOURCE_VIEW_DESC>> data);
     unsigned int EmplaceBackConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc);
     unsigned int EmplaceBackUnorderedAccessView(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc);
 
@@ -64,6 +65,7 @@ public:
     constexpr void DecrementCount() noexcept { --m_count; }
 
     void ReleaseAt(unsigned int index) noexcept;
+    void ReleaseAt(std::span<unsigned int> indices) noexcept;
 
 private:
     // Delete copy constructor/assignment because these don't really make sense for the use case of DescriptorVector which,
@@ -73,8 +75,9 @@ private:
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetCPUCopyableHandleAt(UINT index) const noexcept;
     D3D12_GPU_DESCRIPTOR_HANDLE GetGPUCopyableHandleAt(UINT index) const noexcept;
-    void DoubleTheCapacity();
+    void EnsureCapacity();
     unsigned int GetNextIndexAndEnsureCapacity() noexcept;
+    std::vector<unsigned int> GetNextIndicesAndEnsureCapacity(unsigned int count) noexcept;
 
     unsigned int m_count;
     unsigned int m_capacity;

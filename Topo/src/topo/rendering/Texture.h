@@ -15,23 +15,13 @@ public:
 	TextureBackingObject(TextureBackingObject&& rhs) noexcept = default;
 	TextureBackingObject& operator=(const TextureBackingObject& rhs) = default;
 	TextureBackingObject& operator=(TextureBackingObject&& rhs) noexcept = default;
-	inline ~TextureBackingObject() noexcept
-	{
-		m_deviceResources->GetDescriptorVector()->ReleaseAt(m_srvDescriptorIndex);
-		m_deviceResources->DelayedDelete(m_textureResource);
-	}
-
-	ND inline D3D12_GPU_DESCRIPTOR_HANDLE GetSRVHandle() const noexcept 
-	{
-		return m_deviceResources->GetDescriptorVector()->GetGPUHandleAt(m_srvDescriptorIndex);
-	}
+	inline ~TextureBackingObject() noexcept { m_deviceResources->DelayedDelete(m_textureResource); }
 
 	ND inline const std::string& Filename() const noexcept { return m_filename; }
 
 private:
 	std::shared_ptr<DeviceResources>		m_deviceResources;
 	std::string								m_filename;
-	unsigned int							m_srvDescriptorIndex = 0;
 	Microsoft::WRL::ComPtr<ID3D12Resource>	m_textureResource = nullptr;
 
 
@@ -73,15 +63,15 @@ public:
 	Texture& operator=(Texture&& rhs) noexcept;
 	~Texture();
 
-	ND inline D3D12_GPU_DESCRIPTOR_HANDLE GetSRVHandle() const noexcept
-	{
-		return m_texture->GetSRVHandle();
-	}
 	void SetBackingObject(TextureBackingObject* obj)
 	{
 		ASSERT(m_texture == nullptr, "Invalid to manually reset backing object.");
 		m_texture = obj;
 	}
+	ND constexpr bool HasData() const noexcept { return m_texture != nullptr; }
+	ND inline DXGI_FORMAT GetFormat() const noexcept { return m_texture->m_textureResource->GetDesc().Format; }
+	ND inline std::shared_ptr<DeviceResources> GetDeviceResources() const noexcept { return m_texture->m_deviceResources; }
+	ND inline ID3D12Resource* GetResource() const noexcept { return m_texture->m_textureResource.Get(); }
 
 private:
 	TextureBackingObject* m_texture;

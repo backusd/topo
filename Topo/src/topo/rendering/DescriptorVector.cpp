@@ -33,14 +33,21 @@ DescriptorVector::DescriptorVector(Microsoft::WRL::ComPtr<ID3D12Device> d3dDevic
     m_gpuHeapStart = m_descriptorHeapShaderVisible->GetGPUDescriptorHandleForHeapStart();
 }
 
-void DescriptorVector::DoubleTheCapacity()
+void DescriptorVector::EnsureCapacity()
 {
+    if (m_count <= m_capacity)
+        return;
+
+    unsigned int newCapacity = m_capacity * 2;
+    while (newCapacity < m_count)
+        newCapacity *= 2;
+
     // Create new descriptor heaps with doubled capacity
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> newDescriptorHeapCopyable;
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> newDescriptorHeapShaderVisible;
 
     D3D12_DESCRIPTOR_HEAP_DESC desc;
-    desc.NumDescriptors = m_capacity * 2;
+    desc.NumDescriptors = newCapacity;
     desc.Type = m_type;
     desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     desc.NodeMask = 0;
@@ -75,7 +82,7 @@ void DescriptorVector::DoubleTheCapacity()
     m_gpuHeapStart = m_descriptorHeapShaderVisible->GetGPUDescriptorHandleForHeapStart();
 
     // Update the capacity
-    m_capacity *= 2;
+    m_capacity = newCapacity;
 
 // Reset the debug names for the heaps
 #ifndef TOPO_DIST
@@ -130,11 +137,68 @@ unsigned int DescriptorVector::GetNextIndexAndEnsureCapacity() noexcept
     // Increment the count
     ++m_count;
 
-    // If we are over capacity, resize the descriptor heaps
-    if (m_count > m_capacity)
-        DoubleTheCapacity();
+    // Make sure there is enough capacity before returning
+    EnsureCapacity();
 
     return indexIntoHeap;
+}
+std::vector<unsigned int> DescriptorVector::GetNextIndicesAndEnsureCapacity(unsigned int count) noexcept
+{
+    std::vector<unsigned int> indicesIntoHeap(count);
+
+    // Faster route if only needing one index
+    if (count == 1)
+    {
+        indicesIntoHeap[0] = GetNextIndexAndEnsureCapacity();
+        return indicesIntoHeap;
+    }
+
+    unsigned int firstIndex = m_count;
+
+    // Search the released indices for a set of consecutive indices with size of count
+    bool found = true;
+    for (unsigned int iii = 0; iii < m_releasedIndices.size(); ++iii)
+    {
+        found = true;
+        for (unsigned int jjj = 1; jjj < count; ++jjj)
+        {
+            // Do not search past the end of the vector
+            if (iii + jjj >= m_releasedIndices.size())
+            {
+                found = false;
+                break;
+            }
+
+            // Released indices must be consecutive
+            if (m_releasedIndices[iii + jjj - 1] != m_releasedIndices[iii + jjj] - 1)
+            {
+                found = false;
+                break;
+            }
+        }
+
+        if (found)
+        {
+            firstIndex = m_releasedIndices[iii];
+
+            // Remove the released indices that we are going to re-use
+            m_releasedIndices.erase(m_releasedIndices.begin() + iii, m_releasedIndices.begin() + iii + count);
+
+            break;
+        }
+    }
+
+    // Populate the return vector
+    for (unsigned int iii = 0; iii < count; ++iii)
+        indicesIntoHeap[iii] = firstIndex + iii;
+
+    // Increase the count
+    m_count += count;
+
+    // Make sure there is enough capacity before returning
+    EnsureCapacity();
+
+    return indicesIntoHeap;
 }
 
 unsigned int DescriptorVector::EmplaceBackShaderResourceView(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* desc)
@@ -149,6 +213,21 @@ unsigned int DescriptorVector::EmplaceBackShaderResourceView(ID3D12Resource* pRe
     m_device->CreateShaderResourceView(pResource, desc, GetCPUHandleAt(indexIntoHeap));
 
     return indexIntoHeap;
+}
+std::vector<unsigned int> DescriptorVector::EmplaceBackShaderResourceViews(std::span<std::pair<ID3D12Resource*, D3D12_SHADER_RESOURCE_VIEW_DESC>> data)
+{
+    ASSERT(data.size() > 0, "No data");
+
+    std::vector<unsigned int> indicesIntoHeap = GetNextIndicesAndEnsureCapacity(data.size());
+
+    // Create the Shader Resource Views in both heaps
+    for (unsigned int iii = 0; iii < data.size(); ++iii)
+    {
+        m_device->CreateShaderResourceView(data[iii].first, &data[iii].second, GetCPUCopyableHandleAt(indicesIntoHeap[iii]));
+        m_device->CreateShaderResourceView(data[iii].first, &data[iii].second, GetCPUHandleAt(indicesIntoHeap[iii]));
+    }
+
+    return indicesIntoHeap;
 }
 unsigned int DescriptorVector::EmplaceBackConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc)
 {
@@ -188,6 +267,19 @@ void DescriptorVector::ReleaseAt(unsigned int index) noexcept
     ASSERT(std::find(m_releasedIndices.begin(), m_releasedIndices.end(), index) == m_releasedIndices.end(), "Index has already been released");
     m_releasedIndices.push_back(index);
     --m_count;
+}
+void DescriptorVector::ReleaseAt(std::span<unsigned int> indices) noexcept
+{
+#ifdef TOPO_DEBUG
+    for (unsigned int iii : indices)
+    {
+        ASSERT(iii < m_capacity, "Index is too large");
+        ASSERT(std::find(m_releasedIndices.begin(), m_releasedIndices.end(), iii) == m_releasedIndices.end(), "Index has already been released");
+    }
+#endif
+
+    m_releasedIndices.append_range(indices);
+    m_count -= indices.size();
 }
 
 #endif

@@ -63,7 +63,13 @@ public:
 
 		const auto& signatureParams = signature.GetSignatureParameters();
 
-		std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
+		// It is helpful to use an array here instead of a vector, because InitAsDescriptorTable takes a pointer, 
+		// so if the vector changes size when future descriptor tables are added, previous descriptor tables will
+		// no longer point to valid data
+		static const unsigned int maxPossibleRanges = 16;
+		unsigned int currentRange = 0;
+		std::array<CD3DX12_DESCRIPTOR_RANGE, maxPossibleRanges> ranges;
+
 		std::vector<D3D12_STATIC_SAMPLER_DESC> samplerDescriptions;
 		std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameters;
 
@@ -71,15 +77,16 @@ public:
 		{
 			if (std::holds_alternative<TextureParameter>(sigParam))
 			{
-				ranges.clear();
-
+				ASSERT(currentRange <= maxPossibleRanges, "We don't account for having so many ranges - probably just need to up the maxPossibleRanges");
+				
 				const TextureParameter& texDesc = std::get<TextureParameter>(sigParam);
 
-				auto& range = ranges.emplace_back();
-				range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, texDesc.Count, texDesc.BaseRegister, texDesc.RegisterSpace);
+				ranges[currentRange].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, texDesc.Count, texDesc.BaseRegister, texDesc.RegisterSpace);
 
 				auto& param = slotRootParameters.emplace_back();
-				param.InitAsDescriptorTable(1, &range);
+				param.InitAsDescriptorTable(1, &ranges[currentRange]);
+
+				++currentRange;
 			}
 			else if (std::holds_alternative<ConstantBufferParameter>(sigParam))
 			{

@@ -26,7 +26,71 @@ public:
 	constexpr void BindConstantBuffer(UINT rootParameterIndex, ConstantBufferBase* cb) noexcept { m_constantBufferViews.emplace_back(rootParameterIndex, cb); }
 	constexpr void BindTexture(UINT rootParameterIndex, const Texture& texture) noexcept
 	{
+		// When binding a new Texture, we must make sure no two descriptor tables reference the same root parameter index
+		// Therefore, if a table already exists for a given root parameter index, we add the new Texture to the existing
+		// descriptor table
+		for (auto& table : m_descriptorTables)
+		{
+			if (table.GetRootParameterIndex() == rootParameterIndex)
+			{
+				table.AddTexture(texture);
+				return;
+			}
+		}
+
+		// If we reach here, no existing table exists, so create a new one
 		m_descriptorTables.emplace_back(rootParameterIndex, texture);
+	}
+	constexpr void BindTexture(UINT rootParameterIndex, Texture&& texture) noexcept
+	{
+		// When binding a new Texture, we must make sure no two descriptor tables reference the same root parameter index
+		// Therefore, if a table already exists for a given root parameter index, we add the new Texture to the existing
+		// descriptor table
+		for (auto& table : m_descriptorTables)
+		{
+			if (table.GetRootParameterIndex() == rootParameterIndex)
+			{
+				table.AddTexture(std::move(texture));
+				return;
+			}
+		}
+
+		// If we reach here, no existing table exists, so create a new one
+		m_descriptorTables.emplace_back(rootParameterIndex, std::move(texture));
+	}
+	constexpr void BindTextures(UINT rootParameterIndex, std::span<Texture> textures) noexcept
+	{
+		// When binding a new Texture, we must make sure no two descriptor tables reference the same root parameter index
+		// Therefore, if a table already exists for a given root parameter index, we add the new Texture to the existing
+		// descriptor table
+		for (auto& table : m_descriptorTables)
+		{
+			if (table.GetRootParameterIndex() == rootParameterIndex)
+			{
+				table.AddTextures(textures);
+				return;
+			}
+		}
+
+		// If we reach here, no existing table exists, so create a new one
+		m_descriptorTables.emplace_back(rootParameterIndex, textures);
+	}
+	constexpr void BindTextures(UINT rootParameterIndex, std::vector<Texture>&& textures) noexcept
+	{
+		// When binding a new Texture, we must make sure no two descriptor tables reference the same root parameter index
+		// Therefore, if a table already exists for a given root parameter index, we add the new Texture to the existing
+		// descriptor table
+		for (auto& table : m_descriptorTables)
+		{
+			if (table.GetRootParameterIndex() == rootParameterIndex)
+			{
+				table.AddTextures(std::move(textures));
+				return;
+			}
+		}
+
+		// If we reach here, no existing table exists, so create a new one
+		m_descriptorTables.emplace_back(rootParameterIndex, std::move(textures));
 	}
 
 //	constexpr void PushBackRootDescriptorTable(RootDescriptorTable&& rdt) noexcept { m_descriptorTables.push_back(std::move(rdt)); }
