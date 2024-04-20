@@ -618,7 +618,7 @@ void Window::InitializeRenderer()
 			using namespace DirectX;
 
 			UIObjectData data{};
-			XMMATRIX world = XMMatrixScaling(200.0f, 100.0f, 1.0f) * XMMatrixTranslation(10.f, 0.0f, 0.0f);
+			XMMATRIX world = XMMatrixScaling(200.0f, 200.0f, 1.0f) * XMMatrixTranslation(10.f, -10.0f, 0.0f);
 			XMStoreFloat4x4(&data.World, XMMatrixTranspose(world)); 
 
 			m_uiObjectConstantBuffer->CopyData(frameIndex, data); 

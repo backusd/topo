@@ -344,10 +344,10 @@ public:
 
 	ND inline std::shared_ptr<DeviceResources> GetDeviceResources() noexcept { return m_deviceResources; }
 
-	template<typename T>
+	template<typename T> requires std::derived_from<T, ::topo::Page>
 	void InitializePage()
 	{
-		m_page = std::make_unique<T>(m_height, m_width);
+		m_page = std::make_unique<T>(m_width, m_height);
 		InitializeRenderer();
 	}
 

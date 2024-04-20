@@ -8,19 +8,17 @@ namespace topo
 class Button : public Control
 {
 public:
-	Button();
+	Button(float left, float top, float right, float bottom);
 	Button(const Button&) {}
 	Button(Button&&) noexcept {}
 	Button& operator=(const Button&) { return *this; }
 	Button& operator=(Button&&) noexcept { return *this; }
 
+	ND virtual float GetAutoHeight() const noexcept override { return 20.0f; }
+	ND virtual float GetAutoWidth() const noexcept override { return 20.0f; }
+
 private:
 	void OneTimeInitialization();
-
-	float m_top = 10.0f;
-	float m_left = 50.0f;
-	float m_width = 100.0f;
-	float m_height = 200.0f;
 
 private:
 	static bool m_isInitialized;

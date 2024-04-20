@@ -172,6 +172,7 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClInclude Include="src\topo\Page.h" />
     <ClInclude Include="src\topo\rendering\OrthographicCamera.h" />
     <ClInclude Include="src\topo\TopoException.h" />
+    <ClInclude Include="src\topo\utils\Rect.h" />
     <ClInclude Include="src\topo\Window.h" />
     <ClInclude Include="src\topo\controls\Button.h" />
     <ClInclude Include="src\topo\controls\Control.h" />
@@ -219,6 +220,7 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClCompile Include="src\topo\Page.cpp" />
     <ClCompile Include="src\topo\rendering\OrthographicCamera.cpp" />
     <ClCompile Include="src\topo\TopoException.cpp" />
+    <ClCompile Include="src\topo\utils\Rect.cpp" />
     <ClCompile Include="src\topo\Window.cpp" />
     <ClCompile Include="src\topo\controls\Button.cpp" />
     <ClCompile Include="src\topo\controls\Control.cpp" />

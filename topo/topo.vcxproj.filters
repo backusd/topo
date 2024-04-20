@@ -156,6 +156,7 @@
       <Filter>topo\utils</Filter>
     </ClInclude>
     <ClInclude Include="src\topo\rendering\OrthographicCamera.h" />
+    <ClInclude Include="src\topo\utils\Rect.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -274,6 +275,7 @@
       <Filter>topo\utils</Filter>
     </ClCompile>
     <ClCompile Include="src\topo\rendering\OrthographicCamera.cpp" />
+    <ClCompile Include="src\topo\utils\Rect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\topo\shaders\Control-ps.hlsl">

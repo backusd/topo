@@ -6,7 +6,8 @@ namespace topo
 {
 bool Button::m_isInitialized = false;
 
-Button::Button() : Control() 
+Button::Button(float left, float top, float right, float bottom) : 
+	Control(left, top, right, bottom)
 {
 	if (!m_isInitialized)
 		OneTimeInitialization();

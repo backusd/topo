@@ -17,13 +17,13 @@ public:
 		
 	ND constexpr bool ApplicationShutdownRequested() const noexcept { return m_applicationShutdownRequested; }
 
-	template<DerivedFromPage T>
+	template<typename T> requires std::derived_from<T, ::topo::Page>
 	bool LaunchWindow(const WindowProperties& props) noexcept;
 
 	static Application* Get() noexcept { return s_application; }
 
 protected:
-	template<DerivedFromPage T>
+	template<typename T> requires std::derived_from<T, ::topo::Page>
 	void InitializeMainWindowPage()
 	{
 		m_window.InitializePage<T>();
@@ -41,7 +41,7 @@ private:
 	static Application* s_application;
 };
 
-template<DerivedFromPage T>
+template<typename T> requires std::derived_from<T, ::topo::Page>
 bool Application::LaunchWindow(const WindowProperties& props) noexcept
 {
 	try

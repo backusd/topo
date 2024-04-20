@@ -4,7 +4,7 @@
 namespace topo
 {
 Page::Page(float width, float height) :
-	m_layout(width, height)
+	m_layout(0.0f, 0.0f, width, height)
 {
 
 }

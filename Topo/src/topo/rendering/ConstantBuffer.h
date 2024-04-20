@@ -1,6 +1,7 @@
 #pragma once
 #include "topo/DeviceResources.h"
 #include "topo/Log.h"
+#include "topo/utils/Timer.h"
 
 
 namespace topo

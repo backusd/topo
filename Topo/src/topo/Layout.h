@@ -1,31 +1,208 @@
 #pragma once
 #include "Core.h"
 #include "controls/Control.h"
+#include "topo/Log.h"
+#include "topo/utils/Concepts.h"
+#include "topo/utils/Rect.h"
 
 namespace topo
 {
+enum class RowColumnType
+{
+	FIXED, STAR, PERCENT, AUTO
+};
+struct Row
+{
+	RowColumnType		 Type = RowColumnType::STAR;
+	float				 Value = 1.0f;
+	Rect				 Rect = {};
+	bool				 Visible = true;
+	bool				 Adjustable = true;
+	std::optional<float> MinHeight = std::nullopt;
+	std::optional<float> MaxHeight = std::nullopt;
+};
+struct Column
+{
+	RowColumnType		 Type = RowColumnType::STAR;
+	float				 Value = 1.0f;
+	Rect				 Rect = {};
+	bool				 Visible = true;
+	bool				 Adjustable = true;
+	std::optional<float> MinWidth = std::nullopt;
+	std::optional<float> MaxWidth = std::nullopt;
+};
+struct ControlPosition
+{
+	unsigned int RowIndex = 0;
+	unsigned int ColumnIndex = 0;
+	unsigned int RowSpan = 1;
+	unsigned int ColumnSpan = 1;
+};
+
+
 class Layout
 {
 public:
-	Layout(float width, float height) : m_height(height), m_width(width) 
+	Layout(float left, float top, float right, float bottom) : 
+		m_rect{ left, top, right, bottom }
 	{}
 	Layout(Layout&&) = default;
 	Layout& operator=(Layout&&) = default;
 
-	template<typename T>
-	void AddControl()
+	template<typename T> requires std::derived_from<T, ::topo::Control>
+	T* AddControl(unsigned int rowIndex = 0, unsigned int columnIndex = 0, unsigned int rowSpan = 1, unsigned int columnSpan = 1);
+	Layout* AddSubLayout(unsigned int rowIndex = 0, unsigned int columnIndex = 0, unsigned int rowSpan = 1, unsigned int columnSpan = 1);
+
+	inline void SetPosition(float left, float top, float right, float bottom) noexcept { m_rect = { left, top, right, bottom }; ReadjustRowsAndColumns(); }
+
+	// Rows
+	inline void AddRow(RowColumnType type, float value, bool adjustable = false, std::optional<float> minHeight = std::nullopt, std::optional<float> maxHeight = std::nullopt) noexcept
 	{
-		m_controls.push_back(std::make_unique<T>());
+		m_rows.emplace_back(type, value, Rect(), true, adjustable, minHeight, maxHeight);
+		// If no columns have been added yet, then don't re-adjust anything
+		ReadjustRows(m_columns.size() > 0);
 	}
+	inline void AddRow(const Row& row) noexcept { m_rows.push_back(row); ReadjustRows(m_columns.size() > 0); }
+	inline void AddRow(std::span<Row> rows) noexcept { m_rows.append_range(rows); ReadjustRows(m_columns.size() > 0); }	
+	void ResetRows(std::span<Row> rows) noexcept;
+	void ResetRows(std::vector<Row>&& rows) noexcept;
+
+	// Columns
+	inline void AddColumn(RowColumnType type, float value, bool adjustable = false, std::optional<float> minWidth = std::nullopt, std::optional<float> maxWidth = std::nullopt) noexcept
+	{
+		m_columns.emplace_back(type, value, Rect(), true, adjustable, minWidth, maxWidth);
+		// If no columns have been added yet, then don't re-adjust anything
+		ReadjustColumns(m_rows.size() > 0);
+	}
+	inline void AddColumn(const Column& column) noexcept { m_columns.push_back(column); ReadjustColumns(m_rows.size() > 0); }
+	inline void AddColumn(std::span<Column> columns) noexcept { m_columns.append_range(columns); ReadjustColumns(m_rows.size() > 0); }
+	void ResetColumns(std::span<Column> columns) noexcept;
+	void ResetColumns(std::vector<Column>&& columns) noexcept;
+
+	// TODO: Implement these functions
+	ND float GetAutoHeight() const noexcept { return 50.0f; }
+	ND float GetAutoWidth() const noexcept { return 50.0f; }
 
 private:
 	Layout(const Layout&) = delete;
 	Layout& operator=(const Layout&) = delete;
 
-	float m_height;
-	float m_width;
+	inline void ReadjustRowsAndColumns() noexcept
+	{
+		ReadjustRows(false);
+		ReadjustColumns(false);
+		ReadjustControlsAndSublayouts();
+	}
+	void ReadjustRows(bool readjustControlsAndSublayouts = true) noexcept;
+	void ReadjustColumns(bool readjustControlsAndSublayouts = true) noexcept;
+	void ReadjustControlsAndSublayouts() noexcept;
+	ND float CalculateRowStarHeight() const noexcept;
+	ND float CalculateColumnStarWidth() const noexcept;
+	void UpdateAutoRowHeights() noexcept;
+	void UpdateAutoColumnWidths() noexcept;
 
-	std::vector<std::unique_ptr<Control>> m_controls;
+	bool AdjustControlAndSublayoutRowPositioning() noexcept;
+	bool AdjustControlAndSublayoutColumnPositioning() noexcept;
+
+	Rect m_rect;
+	std::vector<std::pair<std::unique_ptr<Control>, ControlPosition>> m_controls;
+	std::vector<std::pair<std::unique_ptr<Layout>, ControlPosition>> m_sublayouts;
+	std::vector<Row> m_rows;
+	std::vector<Column> m_columns;
+	
+
+
+// In DIST builds, we don't name the object
+#ifndef TOPO_DIST
+public:
+	void SetDebugName(std::string_view name) noexcept { m_name = name; }
+	ND const std::string& GetDebugName() const noexcept { return m_name; }
+private:
+	std::string m_name = "Unnamed Layout";
+#endif
 };
+
+template<typename T> requires std::derived_from<T, ::topo::Control>
+T* Layout::AddControl(unsigned int rowIndex, unsigned int columnIndex, unsigned int rowSpan, unsigned int columnSpan)
+{
+	// First, make sure we have at least one row and column
+	if (m_rows.size() == 0) [[unlikely]]
+	{
+		LOG_ERROR("[Layout: {0}] Attempting to add a sublayout, but no rows have been established.", m_name);
+		LOG_ERROR("[Layout: {0}] Adding a default STAR row to avoid crashing", m_name);
+		AddRow(RowColumnType::STAR, 1.0f);
+	}
+	if (m_columns.size() == 0) [[unlikely]]
+	{
+		LOG_ERROR("[Layout: {0}] Attempting to add a sublayout, but no columns have been established.", m_name);
+		LOG_ERROR("[Layout: {0}] Adding a default STAR column to avoid crashing", m_name);
+		AddColumn(RowColumnType::STAR, 1.0f);
+	}
+
+	// Make sure row/column locations are valid
+	if (rowIndex >= m_rows.size()) [[unlikely]]
+	{
+		LOG_WARN("[Layout: {0}] Cannot add control to row index {1} - max index is {2}.", m_name, rowIndex, m_rows.size() - 1);
+		rowIndex = static_cast<unsigned int>(m_rows.size()) - 1;
+	}
+	if (columnIndex >= m_columns.size()) [[unlikely]]
+	{
+		LOG_WARN("[Layout: {0}] Cannot add control to column index {1} - max index is {2}.", m_name, columnIndex, m_columns.size() - 1);
+		columnIndex = static_cast<unsigned int>(m_columns.size()) - 1;
+	}
+	if (rowSpan == 0) [[unlikely]]
+	{
+		LOG_WARN("[Layout: {0}] Cannot add control with a row span of 0.", m_name);
+		rowSpan = 1;
+	}
+	if (columnSpan == 0) [[unlikely]]
+	{
+		LOG_WARN("[Layout: {0}] Cannot add control with a column span of 0.", m_name);
+		columnSpan = 1;
+	}
+	if (rowIndex + rowSpan > m_rows.size()) [[unlikely]]
+	{
+		LOG_WARN("[Layout: {0}] Cannot add control with row index {1} and row span of {2} because it would go beyond the max row index of {3}.", m_name, rowIndex, rowSpan, m_rows.size() - 1);
+		rowSpan = static_cast<unsigned int>(m_rows.size()) - rowIndex;
+	}
+	if (columnIndex + columnSpan > m_columns.size()) [[unlikely]]
+	{
+		LOG_WARN("[Layout: {0}] Cannot add control with column index {1} and column span of {2} because it would go beyond the max column index of {3}.", m_name, columnIndex, columnSpan, m_columns.size() - 1);
+		columnSpan = static_cast<unsigned int>(m_columns.size()) - columnIndex;
+	}
+
+	ControlPosition cp = { rowIndex, columnIndex, rowSpan, columnSpan };
+
+	Control* control = new T(
+		m_columns[columnIndex].Rect.Left,
+		m_rows[rowIndex].Rect.Top,
+		m_columns[columnIndex + columnSpan - 1].Rect.Right,
+		m_rows[rowIndex + rowSpan - 1].Rect.Bottom
+	);
+
+	m_controls.emplace_back(control, cp);
+
+	// If the control resides (either partially or completely) within an AUTO row/column
+	// the layout needs updating
+	for (unsigned int iii = rowIndex; iii < rowIndex + rowSpan; ++iii)
+	{
+		if (m_rows[iii].Type == RowColumnType::AUTO)
+		{
+			ReadjustRows();
+			break;
+		}
+	}
+	for (unsigned int iii = columnIndex; iii < columnIndex + columnSpan; ++iii)
+	{
+		if (m_columns[iii].Type == RowColumnType::AUTO)
+		{
+			ReadjustColumns();
+			break;
+		}
+	}
+
+	return static_cast<T*>(control);
+}
+
 
 }
