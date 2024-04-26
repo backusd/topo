@@ -85,7 +85,7 @@ public:
 	}	
 	void ResetRows(std::span<Row> rows) noexcept;
 	void ResetRows(std::vector<Row>&& rows) noexcept;
-//	void RemoveRow(unsigned int rowIndex, bool deleteContainedControlsAndSublayouts = true, bool deleteOverlappingControlsAndSublayouts = false) noexcept;
+	void RemoveRow(unsigned int rowIndex, bool deleteContainedControlsAndSublayouts = true, bool deleteOverlappingControlsAndSublayouts = false) noexcept;
 
 	// Columns
 	inline void AddColumn(RowColumnType type, float value, bool adjustable = false, std::optional<float> minWidth = std::nullopt, std::optional<float> maxWidth = std::nullopt) noexcept
@@ -117,6 +117,8 @@ public:
 	}
 	void ResetColumns(std::span<Column> columns) noexcept;
 	void ResetColumns(std::vector<Column>&& columns) noexcept;
+	void RemoveColumn(unsigned int columnIndex, bool deleteContainedControlsAndSublayouts = true, bool deleteOverlappingControlsAndSublayouts = false) noexcept;
+
 
 	ND float GetAutoHeight() const noexcept;
 	ND float GetAutoWidth() const noexcept;

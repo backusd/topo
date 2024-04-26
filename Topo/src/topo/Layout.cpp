@@ -344,58 +344,100 @@ void Layout::ResetRows(std::vector<Row>&& rows) noexcept
 	ReadjustRows(true);
 }
 
-//void Layout::RemoveRow(unsigned int rowIndex, bool deleteContainedControlsAndSublayouts, bool deleteOverlappingControlsAndSublayouts) noexcept
-//{
-//	// Delete any controls/sublayouts that reside soley within the row
-//	if (deleteContainedControlsAndSublayouts)
-//	{
-//		std::vector<unsigned int> indicesToDelete;
-//		for (unsigned int iii = 0; iii < m_controls.size(); ++iii)
-//		{
-//			const ControlPosition& cp = std::get<1>(m_controls[iii]);
-//			if (cp.RowIndex == rowIndex && cp.RowSpan == 1)
-//				indicesToDelete.push_back(iii);
-//		}
-//
-//		for (std::vector<unsigned int>::reverse_iterator riter = indicesToDelete.rbegin(); riter != indicesToDelete.rend(); ++riter)
-//			m_controls.erase(m_controls.begin() + *riter);
-//
-//		indicesToDelete.clear();
-//
-//		for (unsigned int iii = 0; iii < m_sublayouts.size(); ++iii)
-//		{
-//			const ControlPosition& cp = std::get<1>(m_sublayouts[iii]);
-//			if (cp.RowIndex == rowIndex && cp.RowSpan == 1)
-//				indicesToDelete.push_back(iii);
-//		}
-//
-//		for (std::vector<unsigned int>::reverse_iterator riter = indicesToDelete.rbegin(); riter != indicesToDelete.rend(); ++riter)
-//			m_sublayouts.erase(m_sublayouts.begin() + *riter);
-//
-//	}
-//
-//
-//
-//
-//
-//
-//
-//
-//	// For all remaining controls/sublayouts, we must decrement their RowIndex value if it was at or greater than the row being deleted
-//	for (auto& pair : m_controls)
-//	{
-//		ControlPosition& cp = std::get<1>(pair);
-//		if (cp.RowIndex >= rowIndex)
-//			cp.RowIndex -= 1;
-//	}
-//	for (auto& pair : m_sublayouts)
-//	{
-//		ControlPosition& cp = std::get<1>(pair);
-//		if (cp.RowIndex >= rowIndex)
-//			cp.RowIndex -= 1;
-//	}
-//
-//}
+void Layout::RemoveRow(unsigned int rowIndex, bool deleteContainedControlsAndSublayouts, bool deleteOverlappingControlsAndSublayouts) noexcept
+{
+	if (rowIndex >= m_rows.size())
+	{
+		LOG_ERROR("[Layout: {0}] Cannot delete row at index {1} - there are only {2} rows.", m_name, rowIndex, m_rows.size());
+		return;
+	}
+
+	std::vector<unsigned int> indicesToDelete;
+
+	// Delete any controls/sublayouts that reside soley within the row
+	if (deleteContainedControlsAndSublayouts)
+	{
+		for (unsigned int iii = 0; iii < m_controls.size(); ++iii)
+		{
+			const ControlPosition& cp = std::get<1>(m_controls[iii]);
+			if (cp.RowIndex == rowIndex && cp.RowSpan == 1)
+				indicesToDelete.push_back(iii);
+		}
+
+		for (std::vector<unsigned int>::reverse_iterator riter = indicesToDelete.rbegin(); riter != indicesToDelete.rend(); ++riter)
+			m_controls.erase(m_controls.begin() + *riter);
+
+		indicesToDelete.clear();
+
+		for (unsigned int iii = 0; iii < m_sublayouts.size(); ++iii)
+		{
+			const ControlPosition& cp = std::get<1>(m_sublayouts[iii]);
+			if (cp.RowIndex == rowIndex && cp.RowSpan == 1)
+				indicesToDelete.push_back(iii);
+		}
+
+		for (std::vector<unsigned int>::reverse_iterator riter = indicesToDelete.rbegin(); riter != indicesToDelete.rend(); ++riter)
+			m_sublayouts.erase(m_sublayouts.begin() + *riter);
+	}
+
+	indicesToDelete.clear();
+
+	// Delete any controls/sublayouts that have a rowspan > 2 and are partially in the row OR modify their rowspan/row index value to
+	// make sure they don't bleed into other rows
+	for (unsigned int iii = 0; iii < m_controls.size(); ++iii)
+	{
+		ControlPosition& cp = std::get<1>(m_controls[iii]);
+		if (cp.RowIndex <= rowIndex && cp.RowIndex + cp.RowSpan > rowIndex)
+		{
+			if (deleteOverlappingControlsAndSublayouts)
+				indicesToDelete.push_back(iii);
+			else if (cp.RowSpan > 1)
+				--cp.RowSpan;
+		}
+	}
+	if (deleteOverlappingControlsAndSublayouts)
+	{
+		for (std::vector<unsigned int>::reverse_iterator riter = indicesToDelete.rbegin(); riter != indicesToDelete.rend(); ++riter)
+			m_controls.erase(m_controls.begin() + *riter);
+
+		indicesToDelete.clear();
+	}
+
+	for (unsigned int iii = 0; iii < m_sublayouts.size(); ++iii)
+	{
+		ControlPosition& cp = std::get<1>(m_sublayouts[iii]);
+		if (cp.RowIndex <= rowIndex && cp.RowIndex + cp.RowSpan > rowIndex)
+		{
+			if (deleteOverlappingControlsAndSublayouts)
+				indicesToDelete.push_back(iii);
+			else if (cp.RowSpan > 1)
+				--cp.RowSpan;
+		}
+	}
+
+	if (deleteOverlappingControlsAndSublayouts)
+	{
+		for (std::vector<unsigned int>::reverse_iterator riter = indicesToDelete.rbegin(); riter != indicesToDelete.rend(); ++riter)
+			m_sublayouts.erase(m_sublayouts.begin() + *riter);
+	}
+
+	// For all remaining controls/sublayouts, we must decrement their RowIndex value if it was greater than the row being deleted
+	for (auto& pair : m_controls)
+	{
+		ControlPosition& cp = std::get<1>(pair);
+		if (cp.RowIndex > rowIndex)
+			cp.RowIndex -= 1;
+	}
+	for (auto& pair : m_sublayouts)
+	{
+		ControlPosition& cp = std::get<1>(pair);
+		if (cp.RowIndex > rowIndex)
+			cp.RowIndex -= 1;
+	}
+
+	// Delete the row
+	m_rows.erase(m_rows.begin() + rowIndex);
+}
 
 
 void Layout::ResetColumns(std::span<Column> columns) noexcept
@@ -448,6 +490,102 @@ void Layout::ResetColumns(std::vector<Column>&& columns) noexcept
 	// Adjust the row sizing (and controls/sublayouts)
 	ReadjustColumns(true);
 }
+void Layout::RemoveColumn(unsigned int columnIndex, bool deleteContainedControlsAndSublayouts, bool deleteOverlappingControlsAndSublayouts) noexcept
+{
+	if (columnIndex >= m_columns.size())
+	{
+		LOG_ERROR("[Layout: {0}] Cannot delete column at index {1} - there are only {2} columns.", m_name, columnIndex, m_columns.size());
+		return;
+	}
+
+	std::vector<unsigned int> indicesToDelete;
+
+	// Delete any controls/sublayouts that reside soley within the column
+	if (deleteContainedControlsAndSublayouts)
+	{
+		for (unsigned int iii = 0; iii < m_controls.size(); ++iii)
+		{
+			const ControlPosition& cp = std::get<1>(m_controls[iii]);
+			if (cp.ColumnIndex == columnIndex && cp.ColumnSpan == 1)
+				indicesToDelete.push_back(iii);
+		}
+
+		for (std::vector<unsigned int>::reverse_iterator riter = indicesToDelete.rbegin(); riter != indicesToDelete.rend(); ++riter)
+			m_controls.erase(m_controls.begin() + *riter);
+
+		indicesToDelete.clear();
+
+		for (unsigned int iii = 0; iii < m_sublayouts.size(); ++iii)
+		{
+			const ControlPosition& cp = std::get<1>(m_sublayouts[iii]);
+			if (cp.ColumnIndex == columnIndex && cp.ColumnSpan == 1)
+				indicesToDelete.push_back(iii);
+		}
+
+		for (std::vector<unsigned int>::reverse_iterator riter = indicesToDelete.rbegin(); riter != indicesToDelete.rend(); ++riter)
+			m_sublayouts.erase(m_sublayouts.begin() + *riter);
+	}
+
+	indicesToDelete.clear();
+
+	// Delete any controls/sublayouts that have a columnspan > 2 and are partially in the column OR modify their columnspan/column index value to
+	// make sure they don't bleed into other columns
+	for (unsigned int iii = 0; iii < m_controls.size(); ++iii)
+	{
+		ControlPosition& cp = std::get<1>(m_controls[iii]);
+		if (cp.ColumnIndex <= columnIndex && cp.ColumnIndex + cp.ColumnSpan > columnIndex)
+		{
+			if (deleteOverlappingControlsAndSublayouts)
+				indicesToDelete.push_back(iii);
+			else if (cp.ColumnSpan > 1)
+				--cp.ColumnSpan;
+		}
+	}
+	if (deleteOverlappingControlsAndSublayouts)
+	{
+		for (std::vector<unsigned int>::reverse_iterator riter = indicesToDelete.rbegin(); riter != indicesToDelete.rend(); ++riter)
+			m_controls.erase(m_controls.begin() + *riter);
+
+		indicesToDelete.clear();
+	}
+
+	for (unsigned int iii = 0; iii < m_sublayouts.size(); ++iii)
+	{
+		ControlPosition& cp = std::get<1>(m_sublayouts[iii]);
+		if (cp.ColumnIndex <= columnIndex && cp.ColumnIndex + cp.ColumnSpan > columnIndex)
+		{
+			if (deleteOverlappingControlsAndSublayouts)
+				indicesToDelete.push_back(iii);
+			else if (cp.ColumnSpan > 1)
+				--cp.ColumnSpan;
+		}
+	}
+
+	if (deleteOverlappingControlsAndSublayouts)
+	{
+		for (std::vector<unsigned int>::reverse_iterator riter = indicesToDelete.rbegin(); riter != indicesToDelete.rend(); ++riter)
+			m_sublayouts.erase(m_sublayouts.begin() + *riter);
+	}
+
+	// For all remaining controls/sublayouts, we must decrement their ColumnIndex value if it was greater than the column being deleted
+	for (auto& pair : m_controls)
+	{
+		ControlPosition& cp = std::get<1>(pair);
+		if (cp.ColumnIndex > columnIndex)
+			cp.ColumnIndex -= 1;
+	}
+	for (auto& pair : m_sublayouts)
+	{
+		ControlPosition& cp = std::get<1>(pair);
+		if (cp.ColumnIndex > columnIndex)
+			cp.ColumnIndex -= 1;
+	}
+
+	// Delete the row
+	m_columns.erase(m_columns.begin() + columnIndex);
+}
+
+
 void Layout::UpdateAutoRowHeights() noexcept
 {
 	// Create a vector the same size as the number of total rows that will hold the required
