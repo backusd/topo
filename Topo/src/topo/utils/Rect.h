@@ -13,5 +13,7 @@ struct Rect
 	ND constexpr float Height() const noexcept { return Bottom - Top; }
 	constexpr void Width(float width) noexcept { Right = Left + width; }
 	constexpr void Height(float height) noexcept { Bottom = Top + height; }
+	ND constexpr bool ContainsPoint(float x, float y) const noexcept { return Left <= x && Right >= x && Top <= y && Bottom >= y; }
+
 };
 }

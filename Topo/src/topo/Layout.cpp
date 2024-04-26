@@ -3,18 +3,7 @@
 
 
 
-// NOTE: When rows/columns are dragged, we need a way to make sure the layout doesn't snap back to original values. 
-// For example, suppose we have two rows, each with height 100, then we drag the dividing line so that they become 
-// 110 and 90. If we then resize the window, we need to make sure we have actually set the rows' "Value" field to the
-// new values and not have just resized the "Rect" field, otherwise, the resizing of the window will use the "Value"
-// and the rows will snap back to their original sizes.
-// Also consider the scenario where we have three rows, each with a height of 100, but the first row is a Fixed row, and 
-// the other two each have a star value of 1. Now suppose we drag the dividing line between rows 1 and 2 such that the first row
-// has a new height of 110 and the second has a height of 90. We need to make sure we also update the star row's
-// "Value" field so that it has a star value of 90 / 190. This is necessary because suppose the layout was immediately 
-// readjusted - the 190 pixels available to the star rows would get divided equally to 95 each. So adjusting rows 1 & 2
-// could later have the effect of resizing any other star rows. (Note: the only time this is not necessary is if there is
-// only a single star row amoung all the rows, in which case, the star value should probably just be 1)
+
 
 
 namespace topo
@@ -109,7 +98,7 @@ void Layout::ReadjustRows(bool readjustControlsAndSublayouts) noexcept
 	// make sure all AUTO sized rows have the correct height
 	UpdateAutoRowHeights();
 
-	// Only need to calculate rowStarHeight if star rows exist, and they should only exist if vertical scrollability is false
+	// Layout::Only need to calculate rowStarHeight if star rows exist, and they should only exist if vertical scrollability is false
 	float rowStarHeight = 0.0f;
 	if (!m_canScrollVertically)
 		rowStarHeight = CalculateRowStarHeight();
@@ -161,7 +150,7 @@ void Layout::ReadjustColumns(bool readjustControlsAndSublayouts) noexcept
 	// make sure all AUTO sized rows have the correct height
 	UpdateAutoColumnWidths();
 
-	// Only need to calculate rowStarWidth if star column exist, and they should only exist if horizontal scrollability is false
+	// Layout::Only need to calculate rowStarWidth if star column exist, and they should only exist if horizontal scrollability is false
 	float rowStarWidth = 0.0f;
 	if (!m_canScrollHorizontally)
 		rowStarWidth = CalculateColumnStarWidth();
@@ -293,6 +282,79 @@ void Layout::ReadjustControlsAndSublayouts() noexcept
 		);
 	}
 }
+void Layout::ReadjustControlsAndSublayoutsInRow(unsigned int rowIndex) noexcept
+{
+	// Adjust controls
+	for (std::pair<std::unique_ptr<Control>, ControlPosition>& pair : m_controls)
+	{
+		Control* control = std::get<0>(pair).get();
+		ControlPosition& cp = std::get<1>(pair);
+
+		if (cp.RowIndex <= rowIndex && cp.RowIndex + cp.RowSpan > rowIndex)
+		{
+			control->SetPositionRect(
+				m_columns[cp.ColumnIndex].Rect.Left,
+				m_rows[cp.RowIndex].Rect.Top,
+				m_columns[cp.ColumnIndex + cp.ColumnSpan - 1].Rect.Right,
+				m_rows[cp.RowIndex + cp.RowSpan - 1].Rect.Bottom
+			);
+		}
+	}
+
+	// Adjust sublayouts
+	for (std::pair<std::unique_ptr<Layout>, ControlPosition>& pair : m_sublayouts)
+	{
+		Layout* layout = std::get<0>(pair).get();
+		ControlPosition& cp = std::get<1>(pair);
+
+		if (cp.RowIndex <= rowIndex && cp.RowIndex + cp.RowSpan > rowIndex)
+		{
+			layout->SetPosition(
+				m_columns[cp.ColumnIndex].Rect.Left,
+				m_rows[cp.RowIndex].Rect.Top,
+				m_columns[cp.ColumnIndex + cp.ColumnSpan - 1].Rect.Right,
+				m_rows[cp.RowIndex + cp.RowSpan - 1].Rect.Bottom
+			);
+		}
+	}
+}
+void Layout::ReadjustControlsAndSublayoutsInColumn(unsigned int columnIndex) noexcept
+{
+	// Adjust controls
+	for (std::pair<std::unique_ptr<Control>, ControlPosition>& pair : m_controls)
+	{
+		Control* control = std::get<0>(pair).get();
+		ControlPosition& cp = std::get<1>(pair);
+
+		if (cp.ColumnIndex <= columnIndex && cp.ColumnIndex + cp.ColumnSpan > columnIndex)
+		{
+			control->SetPositionRect(
+				m_columns[cp.ColumnIndex].Rect.Left,
+				m_rows[cp.RowIndex].Rect.Top,
+				m_columns[cp.ColumnIndex + cp.ColumnSpan - 1].Rect.Right,
+				m_rows[cp.RowIndex + cp.RowSpan - 1].Rect.Bottom
+			);
+		}
+	}
+
+	// Adjust sublayouts
+	for (std::pair<std::unique_ptr<Layout>, ControlPosition>& pair : m_sublayouts)
+	{
+		Layout* layout = std::get<0>(pair).get();
+		ControlPosition& cp = std::get<1>(pair);
+
+		if (cp.ColumnIndex <= columnIndex && cp.ColumnIndex + cp.ColumnSpan > columnIndex)
+		{
+			layout->SetPosition(
+				m_columns[cp.ColumnIndex].Rect.Left,
+				m_rows[cp.RowIndex].Rect.Top,
+				m_columns[cp.ColumnIndex + cp.ColumnSpan - 1].Rect.Right,
+				m_rows[cp.RowIndex + cp.RowSpan - 1].Rect.Bottom
+			);
+		}
+	}
+}
+
 void Layout::ResetRows(std::span<Row> rows) noexcept
 {
 	// If their are fewer new rows, then we need to adjust any controls that reside in
@@ -343,7 +405,6 @@ void Layout::ResetRows(std::vector<Row>&& rows) noexcept
 	// Adjust the row sizing (and controls/sublayouts
 	ReadjustRows(true);
 }
-
 void Layout::RemoveRow(unsigned int rowIndex, bool deleteContainedControlsAndSublayouts, bool deleteOverlappingControlsAndSublayouts) noexcept
 {
 	if (rowIndex >= m_rows.size())
@@ -438,7 +499,6 @@ void Layout::RemoveRow(unsigned int rowIndex, bool deleteContainedControlsAndSub
 	// Delete the row
 	m_rows.erase(m_rows.begin() + rowIndex);
 }
-
 
 void Layout::ResetColumns(std::span<Column> columns) noexcept
 {
@@ -690,7 +750,7 @@ void Layout::UpdateAutoRowHeights() noexcept
 			}
 		}
 
-		// Once we reach here, we are done adjusting this row, so go ahead and assign its final value
+		// Layout::Once we reach here, we are done adjusting this row, so go ahead and assign its final value
 		m_rows[iii].Value = autoRowHeights[iii];
 	}
 }
@@ -798,7 +858,7 @@ void Layout::UpdateAutoColumnWidths() noexcept
 			}
 		}
 
-		// Once we reach here, we are done adjusting this column, so go ahead and assign its final value
+		// Layout::Once we reach here, we are done adjusting this column, so go ahead and assign its final value
 		m_columns[iii].Value = autoColumnWidths[iii];
 	}
 }
@@ -879,6 +939,40 @@ bool Layout::AdjustControlAndSublayoutColumnPositioning() noexcept
 	return changeMade;
 }
 
+bool Layout::CheckMouseOverDraggableRowOrColumn(float x, float y) noexcept
+{
+	ASSERT(m_rows.size() > 0, "Invalid to have 0 rows");
+	ASSERT(m_columns.size() > 0, "Invalid to have 0 columns");
+
+	m_rowDraggingIndex = std::nullopt; 
+	m_columnDraggingIndex = std::nullopt;
+
+	for (unsigned int iii = 0; iii < m_rows.size() - 1; ++iii)
+	{
+		if (m_rows[iii].Adjustable && m_rows[iii + 1].Adjustable)
+		{
+			Rect rect{ m_rect.Left, m_rows[iii].Rect.Bottom - 2.0f, m_rect.Right, m_rows[iii].Rect.Bottom + 2.0f };
+			if (rect.ContainsPoint(x, y))
+			{
+				m_rowDraggingIndex = iii;
+				return true;
+			}
+		}
+	}
+	for (unsigned int iii = 0; iii < m_columns.size() - 1; ++iii)
+	{
+		if (m_columns[iii].Adjustable && m_columns[iii + 1].Adjustable)
+		{
+			Rect rect{ m_columns[iii].Rect.Right - 2.0f, m_rect.Top, m_columns[iii].Rect.Right + 2.0f, m_rect.Bottom };
+			if (rect.ContainsPoint(x, y))
+			{
+				m_columnDraggingIndex = iii;
+				return true;
+			}
+		}
+	}
+	return false;
+}
 
 float Layout::GetAutoHeight() const noexcept 
 { 
@@ -1034,5 +1128,348 @@ float Layout::GetAutoWidth() const noexcept
 
 	return requiredWidth;
 }
+
+
+// Window Event Methods
+void Layout::OnWindowClosed() 
+{ 
+	// Send event to all controls and sublayouts
+	for (auto& pair : m_controls)
+		std::get<0>(pair)->OnWindowClosed();
+
+	for (auto& pair : m_sublayouts)
+		std::get<0>(pair)->OnWindowClosed();
+}
+void Layout::OnKillFocus() 
+{ 
+	// Send event to all controls and sublayouts
+	for (auto& pair : m_controls)
+		std::get<0>(pair)->OnKillFocus();
+
+	for (auto& pair : m_sublayouts)
+		std::get<0>(pair)->OnKillFocus();
+}
+
+// Mouse Event Methods
+IEventReceiver* Layout::OnLButtonDown(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	// First, check if we are hovering over a row or column that can be adjusted
+	if (m_rowDraggingIndex.has_value() || m_columnDraggingIndex.has_value())
+	{
+		m_activelyDragging = true;
+		return this;
+	}
+
+	// Don't pass event to child controls/sublayouts if the mouse is not over the layout
+	if (ContainsPoint(mouseX, mouseY))
+	{
+		IEventReceiver* ret = nullptr;
+		for (auto& pair : m_controls)
+		{
+			ret = std::get<0>(pair)->OnLButtonDown(mouseX, mouseY, keyStates);
+			if (ret != nullptr)
+				return ret;
+		}
+		for (auto& pair : m_sublayouts)
+		{
+			ret = std::get<0>(pair)->OnLButtonDown(mouseX, mouseY, keyStates);
+			if (ret != nullptr)
+				return ret;
+		}
+
+		return this;
+	}
+	return nullptr;
+}
+IEventReceiver* Layout::OnLButtonUp(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	// If we were actively dragging, then set to false and check if mouse still resides over a draggable row/column boundary
+	if (m_activelyDragging)
+	{
+		m_activelyDragging = false;
+		CheckMouseOverDraggableRowOrColumn(mouseX, mouseY);
+		return this;
+	}
+
+	// Don't pass event to child controls/sublayouts if the mouse is not over the layout
+	if (ContainsPoint(mouseX, mouseY))
+	{
+		IEventReceiver* ret = nullptr;
+		for (auto& pair : m_controls)
+		{
+			ret = std::get<0>(pair)->OnLButtonUp(mouseX, mouseY, keyStates);
+			if (ret != nullptr)
+				return ret;
+		}
+		for (auto& pair : m_sublayouts)
+		{
+			ret = std::get<0>(pair)->OnLButtonUp(mouseX, mouseY, keyStates);
+			if (ret != nullptr)
+				return ret;
+		}
+
+		return this;
+	}
+	return nullptr;
+}
+IEventReceiver* Layout::OnLButtonDoubleClick(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnMButtonDown(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnMButtonUp(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnMButtonDoubleClick(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnRButtonDown(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnRButtonUp(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnRButtonDoubleClick(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnX1ButtonDown(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnX1ButtonUp(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnX1ButtonDoubleClick(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnX2ButtonDown(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnX2ButtonUp(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnX2ButtonDoubleClick(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnMouseMoved(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	// NOTE: When rows/columns are dragged, we need a way to make sure the layout doesn't snap back to original values. 
+	// For example, suppose we have two rows, each with height 100, then we drag the dividing line so that they become 
+	// 110 and 90. If we then resize the window, we need to make sure we have actually set the rows' "Value" field to the
+	// new values and not have just resized the "Rect" field, otherwise, the resizing of the window will use the "Value"
+	// and the rows will snap back to their original sizes.
+	// Also consider the scenario where we have three rows, each with a height of 100, but the first row is a Fixed row, and 
+	// the other two each have a star value of 1. Now suppose we drag the dividing line between rows 1 and 2 such that the first row
+	// has a new height of 110 and the second has a height of 90. We need to make sure we also update the star row's
+	// "Value" field so that it has a star value of 90 / 190. This is necessary because suppose the layout was immediately 
+	// readjusted - the 190 pixels available to the star rows would get divided equally to 95 each. So adjusting rows 1 & 2
+	// could later have the effect of resizing any other star rows. (Note: the only time this is not necessary is if there is
+	// only a single star row amoung all the rows, in which case, the star value should probably just be 1)
+
+	if (m_activelyDragging)
+	{
+		if (m_rowDraggingIndex.has_value())
+		{
+			unsigned int rowIndex = m_rowDraggingIndex.value();
+			Row& topRow = m_rows[rowIndex];
+			Row& bottomRow = m_rows[rowIndex + 1];
+
+			float currentDividingLineY = topRow.Rect.Bottom;
+			float newDividingLineY = mouseY;
+			
+			// Drag is upward
+			if (mouseY < currentDividingLineY)
+			{
+				// adjust the new dividing line Y value if this move would make the top row below its minimum height
+				if (topRow.MinHeight.has_value())
+					newDividingLineY = std::max(newDividingLineY, topRow.Rect.Top + topRow.MinHeight.value());
+				
+				// adjust the new dividing line Y value if this move would make the bottom row greater than its maximum height
+				if (bottomRow.MaxHeight.has_value())
+					newDividingLineY = std::max(newDividingLineY, bottomRow.Rect.Bottom - bottomRow.MaxHeight.value());
+			}
+			// Drag is downward
+			else
+			{
+				// adjust the new dividing line Y value if this move would make the top row above its maximum height
+				if (topRow.MaxHeight.has_value())
+					newDividingLineY = std::min(newDividingLineY, topRow.Rect.Top + topRow.MaxHeight.value());
+
+				// adjust the new dividing line Y value if this move would make the bottom row less than its minimum height
+				if (bottomRow.MinHeight.has_value())
+					newDividingLineY = std::min(newDividingLineY, bottomRow.Rect.Bottom - bottomRow.MinHeight.value());
+			}
+
+			// If the new dividing line is extremely close to the current line, then no change is necessary, so just return
+			if (std::abs(newDividingLineY - currentDividingLineY) < 0.005f)
+				return this;
+
+			// Adjust the top row
+			float newHeight = newDividingLineY - topRow.Rect.Top;
+			switch (topRow.Type)
+			{
+			case RowColumnType::AUTO:
+			case RowColumnType::FIXED:   topRow.Value = newHeight; break;
+			case RowColumnType::PERCENT: topRow.Value = (newHeight / m_rect.Height()) * 100; break;
+			case RowColumnType::STAR:  	 topRow.Value = (topRow.Value / topRow.Rect.Height()) * newHeight; break;
+			}
+			ReadjustControlsAndSublayoutsInRow(rowIndex);
+
+			// Adjust the bottom row
+			newHeight = bottomRow.Rect.Bottom - newDividingLineY;
+			switch (bottomRow.Type)
+			{
+			case RowColumnType::AUTO:
+			case RowColumnType::FIXED:   bottomRow.Value = newHeight; break;
+			case RowColumnType::PERCENT: bottomRow.Value = (newHeight / m_rect.Height()) * 100; break;
+			case RowColumnType::STAR:  	 bottomRow.Value = (bottomRow.Value / bottomRow.Rect.Height()) * newHeight; break;
+			}
+			ReadjustControlsAndSublayoutsInRow(rowIndex + 1);
+		}
+		else if (m_columnDraggingIndex.has_value())
+		{
+			unsigned int columnIndex = m_columnDraggingIndex.value();
+			Column& leftColumn = m_columns[columnIndex];
+			Column& rightColumn = m_columns[columnIndex + 1];
+
+			float currentDividingLineX = leftColumn.Rect.Right;
+			float newDividingLineX = mouseX;
+
+			// Drag is left
+			if (mouseX < currentDividingLineX)
+			{
+				// adjust the new dividing line X value if this move would make the left column below its minimum width
+				if (leftColumn.MinWidth.has_value())
+					newDividingLineX = std::max(newDividingLineX, leftColumn.Rect.Left + leftColumn.MinWidth.value()); 
+
+				// adjust the new dividing line X value if this move would make the right column above its maximum width
+				if (rightColumn.MaxWidth.has_value())
+					newDividingLineX = std::max(newDividingLineX, rightColumn.Rect.Right - rightColumn.MaxWidth.value());
+			}
+			// Drag is right
+			else
+			{
+				// adjust the new dividing line X value if this move would make the left column above its maximum width
+				if (leftColumn.MaxWidth.has_value()) 
+					newDividingLineX = std::min(newDividingLineX, leftColumn.Rect.Left + leftColumn.MaxWidth.value());
+
+				// adjust the new dividing line X value if this move would make the right column below its minimum width
+				if (rightColumn.MinWidth.has_value())
+					newDividingLineX = std::min(newDividingLineX, rightColumn.Rect.Right - rightColumn.MinWidth.value());
+			}
+
+			// If the new dividing line is extremely close to the current line, then no change is necessary, so just return
+			if (std::abs(newDividingLineX - currentDividingLineX) < 0.005f)
+				return this;
+
+			// Adjust the left column
+			float newWidth = newDividingLineX - leftColumn.Rect.Left;
+			switch (leftColumn.Type)
+			{
+			case RowColumnType::AUTO:
+			case RowColumnType::FIXED:   leftColumn.Value = newWidth; break;
+			case RowColumnType::PERCENT: leftColumn.Value = (newWidth / m_rect.Width()) * 100; break;
+			case RowColumnType::STAR:  	 leftColumn.Value = (leftColumn.Value / leftColumn.Rect.Width()) * newWidth; break;
+			}
+			ReadjustControlsAndSublayoutsInColumn(columnIndex);
+
+			// Adjust the bottom row
+			newWidth = rightColumn.Rect.Right - newDividingLineX;
+			switch (rightColumn.Type)
+			{
+			case RowColumnType::AUTO:
+			case RowColumnType::FIXED:   rightColumn.Value = newWidth; break;
+			case RowColumnType::PERCENT: rightColumn.Value = (newWidth / m_rect.Width()) * 100; break;
+			case RowColumnType::STAR:  	 rightColumn.Value = (rightColumn.Value / rightColumn.Rect.Width()) * newWidth; break;
+			}
+			ReadjustControlsAndSublayoutsInColumn(columnIndex + 1);
+		}
+		else
+		{
+			LOG_ERROR("[Layout: {0}] Something went wrong. m_activelyDragging is true, but there is no row/column dragging index value", m_name);
+		}
+
+		return this;
+	}
+
+	if (CheckMouseOverDraggableRowOrColumn(mouseX, mouseY))
+		return this;
+
+	// Don't pass event to child controls/sublayouts if the mouse is not over the layout
+	if (ContainsPoint(mouseX, mouseY))
+	{
+		IEventReceiver* ret = nullptr;
+		for (auto& pair : m_controls)
+		{
+			ret = std::get<0>(pair)->OnMouseMoved(mouseX, mouseY, keyStates);
+			if (ret != nullptr)
+				return ret;
+		}
+		for (auto& pair : m_sublayouts)
+		{
+			ret = std::get<0>(pair)->OnMouseMoved(mouseX, mouseY, keyStates);
+			if (ret != nullptr)
+				return ret;
+		}
+
+		return this;
+	}
+
+	return nullptr;
+}
+IEventReceiver* Layout::OnMouseEntered(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnMouseLeave()
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnMouseWheel(float wheelDelta, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnMouseHWheel(float wheelDelta, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates)
+{
+	return nullptr;
+}
+
+// Keyboard Event Methods
+IEventReceiver* Layout::OnChar(unsigned int character, unsigned int repeatCount)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnKeyDown(KeyCode keyCode, unsigned int repeatCount)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnKeyUp(KeyCode keyCode, unsigned int repeatCount)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnSysKeyDown(KeyCode keyCode, unsigned int repeatCount)
+{
+	return nullptr;
+}
+IEventReceiver* Layout::OnSysKeyUp(KeyCode keyCode, unsigned int repeatCount)
+{
+	return nullptr;
+}
+
+
+
 
 }

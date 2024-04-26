@@ -53,10 +53,9 @@ public:
 	bool OnSysKeyUp(KeyCode keyCode, unsigned int repeatCount);	
 
 protected:
-	Layout m_layout;
-
-
-
+	Layout          m_layout;
+	IEventReceiver* m_mouseHandlingControl    = nullptr;
+	IEventReceiver* m_keyboardHandlingControl = nullptr;
 
 
 };

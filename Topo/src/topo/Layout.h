@@ -40,7 +40,7 @@ struct ControlPosition
 };
 
 
-class Layout
+class Layout : public IEventReceiver
 {
 public:
 	Layout(float left, float top, float right, float bottom) : 
@@ -123,6 +123,42 @@ public:
 	ND float GetAutoHeight() const noexcept;
 	ND float GetAutoWidth() const noexcept;
 
+	ND constexpr bool ContainsPoint(float x, float y) const noexcept { return m_rect.ContainsPoint(x, y); }
+
+
+	// Window Event Methods
+	virtual void OnWindowClosed() override;
+	virtual void OnKillFocus() override;
+
+	// Mouse Event Methods
+	virtual IEventReceiver* OnLButtonDown(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnLButtonUp(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnLButtonDoubleClick(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnMButtonDown(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnMButtonUp(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnMButtonDoubleClick(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnRButtonDown(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnRButtonUp(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnRButtonDoubleClick(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnX1ButtonDown(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnX1ButtonUp(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnX1ButtonDoubleClick(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnX2ButtonDown(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnX2ButtonUp(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnX2ButtonDoubleClick(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnMouseMoved(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnMouseEntered(float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnMouseLeave() override;
+	virtual IEventReceiver* OnMouseWheel(float wheelDelta, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+	virtual IEventReceiver* OnMouseHWheel(float wheelDelta, float mouseX, float mouseY, MouseButtonEventKeyStates keyStates) override;
+
+	// Keyboard Event Methods
+	virtual IEventReceiver* OnChar(unsigned int character, unsigned int repeatCount) override;
+	virtual IEventReceiver* OnKeyDown(KeyCode keyCode, unsigned int repeatCount) override;
+	virtual IEventReceiver* OnKeyUp(KeyCode keyCode, unsigned int repeatCount) override;
+	virtual IEventReceiver* OnSysKeyDown(KeyCode keyCode, unsigned int repeatCount) override;
+	virtual IEventReceiver* OnSysKeyUp(KeyCode keyCode, unsigned int repeatCount) override;
+
 private:
 	Layout(const Layout&) = delete;
 	Layout& operator=(const Layout&) = delete;
@@ -136,6 +172,8 @@ private:
 	void ReadjustRows(bool readjustControlsAndSublayouts = true) noexcept;
 	void ReadjustColumns(bool readjustControlsAndSublayouts = true) noexcept;
 	void ReadjustControlsAndSublayouts() noexcept;
+	void ReadjustControlsAndSublayoutsInRow(unsigned int rowIndex) noexcept;
+	void ReadjustControlsAndSublayoutsInColumn(unsigned int columnIndex) noexcept;
 	ND float CalculateRowStarHeight() const noexcept;
 	ND float CalculateColumnStarWidth() const noexcept;
 	void UpdateAutoRowHeights() noexcept;
@@ -143,6 +181,8 @@ private:
 
 	bool AdjustControlAndSublayoutRowPositioning() noexcept;
 	bool AdjustControlAndSublayoutColumnPositioning() noexcept;
+
+	bool CheckMouseOverDraggableRowOrColumn(float x, float y) noexcept;
 
 	Rect m_rect;
 	std::vector<std::pair<std::unique_ptr<Control>, ControlPosition>> m_controls;
@@ -153,6 +193,10 @@ private:
 	bool m_canScrollHorizontally = true;
 	float m_verticalScrollOffset = 0.0f;
 	float m_horizontalScrollOffset = 0.0f;
+
+	bool m_activelyDragging = false;
+	std::optional<unsigned int> m_rowDraggingIndex = std::nullopt;
+	std::optional<unsigned int> m_columnDraggingIndex = std::nullopt;
 
 
 // In DIST builds, we don't name the object

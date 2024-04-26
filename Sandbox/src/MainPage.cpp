@@ -16,6 +16,6 @@ MainPage::MainPage(float width, float height) : topo::Page(width, height)
 	SET_DEBUG_NAME_PTR(button, "Test Button");
 
 
-	topo::Layout* sublayout = m_layout.AddSubLayout(3, 0);
+//	topo::Layout* sublayout = m_layout.AddSubLayout(3, 0);
 
 }
