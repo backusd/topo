@@ -59,29 +59,67 @@ public:
 	inline void AddRow(RowColumnType type, float value, bool adjustable = false, std::optional<float> minHeight = std::nullopt, std::optional<float> maxHeight = std::nullopt) noexcept
 	{
 		m_rows.emplace_back(type, value, Rect(), true, adjustable, minHeight, maxHeight);
-		// If no columns have been added yet, then don't re-adjust anything
+		m_canScrollVertically = !(!m_canScrollVertically || (type == RowColumnType::STAR));
 		ReadjustRows(m_columns.size() > 0);
 	}
-	inline void AddRow(const Row& row) noexcept { m_rows.push_back(row); ReadjustRows(m_columns.size() > 0); }
-	inline void AddRow(std::span<Row> rows) noexcept { m_rows.append_range(rows); ReadjustRows(m_columns.size() > 0); }	
+	inline void AddRow(const Row& row) noexcept 
+	{ 
+		m_rows.push_back(row); 
+		m_canScrollVertically = !(!m_canScrollVertically || (row.Type == RowColumnType::STAR));
+		ReadjustRows(m_columns.size() > 0); 
+	}
+	inline void AddRow(std::span<Row> rows) noexcept 
+	{ 
+		m_rows.append_range(rows); ReadjustRows(m_columns.size() > 0);
+		if (m_canScrollVertically)
+		{
+			for (const Row& row : rows)
+			{
+				if (row.Type == RowColumnType::STAR)
+				{
+					m_canScrollVertically = false;
+					break;
+				}
+			}
+		}
+	}	
 	void ResetRows(std::span<Row> rows) noexcept;
 	void ResetRows(std::vector<Row>&& rows) noexcept;
+//	void RemoveRow(unsigned int rowIndex, bool deleteContainedControlsAndSublayouts = true, bool deleteOverlappingControlsAndSublayouts = false) noexcept;
 
 	// Columns
 	inline void AddColumn(RowColumnType type, float value, bool adjustable = false, std::optional<float> minWidth = std::nullopt, std::optional<float> maxWidth = std::nullopt) noexcept
 	{
 		m_columns.emplace_back(type, value, Rect(), true, adjustable, minWidth, maxWidth);
-		// If no columns have been added yet, then don't re-adjust anything
+		m_canScrollHorizontally = !(!m_canScrollHorizontally || (type == RowColumnType::STAR));
 		ReadjustColumns(m_rows.size() > 0);
 	}
-	inline void AddColumn(const Column& column) noexcept { m_columns.push_back(column); ReadjustColumns(m_rows.size() > 0); }
-	inline void AddColumn(std::span<Column> columns) noexcept { m_columns.append_range(columns); ReadjustColumns(m_rows.size() > 0); }
+	inline void AddColumn(const Column& column) noexcept 
+	{ 
+		m_columns.push_back(column); 
+		m_canScrollHorizontally = !(!m_canScrollHorizontally || (column.Type == RowColumnType::STAR));
+		ReadjustColumns(m_rows.size() > 0); 
+	}
+	inline void AddColumn(std::span<Column> columns) noexcept 
+	{ 
+		m_columns.append_range(columns); ReadjustColumns(m_rows.size() > 0); 
+		if (m_canScrollHorizontally)
+		{
+			for (const Column& column : columns)
+			{
+				if (column.Type == RowColumnType::STAR)
+				{
+					m_canScrollHorizontally = false;
+					break;
+				}
+			}
+		}
+	}
 	void ResetColumns(std::span<Column> columns) noexcept;
 	void ResetColumns(std::vector<Column>&& columns) noexcept;
 
-	// TODO: Implement these functions
-	ND float GetAutoHeight() const noexcept { return 50.0f; }
-	ND float GetAutoWidth() const noexcept { return 50.0f; }
+	ND float GetAutoHeight() const noexcept;
+	ND float GetAutoWidth() const noexcept;
 
 private:
 	Layout(const Layout&) = delete;
@@ -109,7 +147,10 @@ private:
 	std::vector<std::pair<std::unique_ptr<Layout>, ControlPosition>> m_sublayouts;
 	std::vector<Row> m_rows;
 	std::vector<Column> m_columns;
-	
+	bool m_canScrollVertically = true;
+	bool m_canScrollHorizontally = true;
+	float m_verticalScrollOffset = 0.0f;
+	float m_horizontalScrollOffset = 0.0f;
 
 
 // In DIST builds, we don't name the object
@@ -203,6 +244,7 @@ T* Layout::AddControl(unsigned int rowIndex, unsigned int columnIndex, unsigned 
 
 	return static_cast<T*>(control);
 }
+
 
 
 }

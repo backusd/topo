@@ -109,8 +109,13 @@ void Layout::ReadjustRows(bool readjustControlsAndSublayouts) noexcept
 	// make sure all AUTO sized rows have the correct height
 	UpdateAutoRowHeights();
 
-	float rowStarHeight = CalculateRowStarHeight();
-	float nextTop = m_rect.Top;
+	// Only need to calculate rowStarHeight if star rows exist, and they should only exist if vertical scrollability is false
+	float rowStarHeight = 0.0f;
+	if (!m_canScrollVertically)
+		rowStarHeight = CalculateRowStarHeight();
+
+	// offset the top by the scroll offset
+	float nextTop = m_rect.Top - m_verticalScrollOffset;
 
 	for (unsigned int iii = 0; iii < m_rows.size(); ++iii)
 	{
@@ -120,49 +125,29 @@ void Layout::ReadjustRows(bool readjustControlsAndSublayouts) noexcept
 		row.Rect.Left = m_rect.Left;
 		row.Rect.Right = m_rect.Right;
 
-		// If we have already filled the available space, just make the row not visible and their rect a single horizontal line
-		if (nextTop >= m_rect.Bottom) [[unlikely]]
-		{
-			// Set visible to false to indicate the row (and all of its contents) should not be rendered
-			row.Visible = false;
-
-			// Make the row's rectangle just a single line 
-			row.Rect.Top = m_rect.Bottom;
-			row.Rect.Bottom = m_rect.Bottom;
-			continue;
-		}
-
-		// Row values should only ever be 0 if it is an AUTO row and nothing has been placed inside it yet
-		if (row.Value <= 0.0f && row.Type != RowColumnType::AUTO) [[unlikely]]
-		{
-			LOG_ERROR("[Layout: {0}] Row #{1} has an invalid height ({2}). Non-AUTO row heights must be greater than 0.", m_name, iii, row.Value);
-
-			// Set visible to false to indicate the row (and all of its contents) should not be rendered
-			row.Visible = false;
-
-			// Make the row's rectangle just a single line 
-			row.Rect.Top = nextTop;
-			row.Rect.Bottom = nextTop;
-			continue;
-		}
-
-		// If we have made it here, the row has a valid value and will at least be partially visible
-		row.Visible = true;
+		// Set the top and then compute the height
 		row.Rect.Top = nextTop;
-
 		switch (row.Type)
 		{
 		// intentially fallthrough AUTO because it holds a fixed height value
 		case RowColumnType::AUTO:
 		case RowColumnType::FIXED:   nextTop += row.Value; break;
 		case RowColumnType::PERCENT: nextTop += ((row.Value / 100) * m_rect.Height()); break;
-		case RowColumnType::STAR:	 nextTop += (row.Value * rowStarHeight); break;
+		case RowColumnType::STAR:
+		{
+			if (m_canScrollVertically)
+				ASSERT(false, "Something went wrong - m_canScrollVertically should be false if there is a STAR row");
+			
+			nextTop += (row.Value * rowStarHeight);
+			break;
+		}
 		default:
 			ASSERT(false, "Unrecognized row type");
 		}
+		row.Rect.Bottom = nextTop;
 
-		// Set the height using the computed height value (Don't allow it to go beyond the bottom of the layout)
-		row.Rect.Bottom = std::min(nextTop, m_rect.Bottom);
+		// Row is only visible if the row does not lie completely above the layout rect or completely below it
+		row.Visible = !(row.Rect.Bottom < m_rect.Top || row.Rect.Top > m_rect.Bottom);
 	}
 
 	if (readjustControlsAndSublayouts)
@@ -176,8 +161,13 @@ void Layout::ReadjustColumns(bool readjustControlsAndSublayouts) noexcept
 	// make sure all AUTO sized rows have the correct height
 	UpdateAutoColumnWidths();
 
-	float rowStarWidth = CalculateColumnStarWidth();
-	float nextLeft = m_rect.Left;
+	// Only need to calculate rowStarWidth if star column exist, and they should only exist if horizontal scrollability is false
+	float rowStarWidth = 0.0f;
+	if (!m_canScrollHorizontally)
+		rowStarWidth = CalculateColumnStarWidth();
+
+	// offset the left by the scroll offset
+	float nextLeft = m_rect.Left - m_horizontalScrollOffset;
 
 	for (unsigned int iii = 0; iii < m_columns.size(); ++iii)
 	{
@@ -187,39 +177,11 @@ void Layout::ReadjustColumns(bool readjustControlsAndSublayouts) noexcept
 		column.Rect.Top = m_rect.Top;
 		column.Rect.Bottom = m_rect.Bottom;
 
-		// If we have already filled the available space, just make the column not visible and their rect a single vertical line
-		if (nextLeft >= m_rect.Right) [[unlikely]]
-		{
-			// Set visible to false to indicate the column (and all of its contents) should not be rendered
-			column.Visible = false;
-
-			// Make the column's rectangle just a single line 
-			column.Rect.Left = m_rect.Right;
-			column.Rect.Right = m_rect.Right;
-			continue;
-		}
-
-		// Column values should only ever be 0 if it is an AUTO column and nothing has been placed inside it yet
-		if (column.Value <= 0.0f && column.Type == RowColumnType::AUTO) [[unlikely]]
-		{
-			LOG_ERROR("[Layout: {0}] Column #{1} has an invalid width ({2}). Non-AUTO row heights must be greater than 0.", m_name, iii, column.Value);
-
-			// Set visible to false to indicate the column (and all of its contents) should not be rendered
-			column.Visible = false;
-
-			// Make the column's rectangle just a single line 
-			column.Rect.Top = nextLeft;
-			column.Rect.Bottom = nextLeft;
-			continue;
-		}
-
-		// If we have made it here, the column has a valid value and will at least be partially visible
-		column.Visible = true;
+		// Set the left and then compute the width
 		column.Rect.Left = nextLeft;
-
 		switch (column.Type)
 		{
-		// intentially fallthrough AUTO because it holds a fixed height value
+			// intentially fallthrough AUTO because it holds a fixed height value
 		case RowColumnType::AUTO:
 		case RowColumnType::FIXED:   nextLeft += column.Value; break;
 		case RowColumnType::PERCENT: nextLeft += ((column.Value / 100) * m_rect.Width()); break;
@@ -227,9 +189,10 @@ void Layout::ReadjustColumns(bool readjustControlsAndSublayouts) noexcept
 		default:
 			ASSERT(false, "Unrecognized column type");
 		}
+		column.Rect.Right = nextLeft;
 
-		// Set the width using the computed height value (Don't allow it to go beyond the right of the layout)
-		column.Rect.Right = std::min(nextLeft, m_rect.Right);
+		// Column is only visible if the column does not lie completely left of the layout rect or completely right of it
+		column.Visible = !(column.Rect.Right < m_rect.Left || column.Rect.Left > m_rect.Right);
 	}
 
 	if (readjustControlsAndSublayouts)
@@ -336,7 +299,18 @@ void Layout::ResetRows(std::span<Row> rows) noexcept
 	// rows that will no longer exist
 	bool controlLocationsNeedAdjusting = (rows.size() < m_rows.size());
 
+	m_rows.clear();
 	m_rows.assign_range(rows);
+
+	m_canScrollVertically = true;
+	for (const Row& row : m_rows)
+	{
+		if (row.Type == RowColumnType::STAR)
+		{
+			m_canScrollVertically = false;
+			break;
+		}
+	}
 
 	if (controlLocationsNeedAdjusting)
 		AdjustControlAndSublayoutRowPositioning();
@@ -350,7 +324,18 @@ void Layout::ResetRows(std::vector<Row>&& rows) noexcept
 	// rows that will no longer exist
 	bool controlLocationsNeedAdjusting = (rows.size() < m_rows.size());
 
+	m_rows.clear();
 	m_rows = std::move(rows);
+
+	m_canScrollVertically = true;
+	for (const Row& row : m_rows)
+	{
+		if (row.Type == RowColumnType::STAR)
+		{
+			m_canScrollVertically = false;
+			break;
+		}
+	}
 
 	if (controlLocationsNeedAdjusting)
 		AdjustControlAndSublayoutRowPositioning();
@@ -358,13 +343,79 @@ void Layout::ResetRows(std::vector<Row>&& rows) noexcept
 	// Adjust the row sizing (and controls/sublayouts
 	ReadjustRows(true);
 }
+
+//void Layout::RemoveRow(unsigned int rowIndex, bool deleteContainedControlsAndSublayouts, bool deleteOverlappingControlsAndSublayouts) noexcept
+//{
+//	// Delete any controls/sublayouts that reside soley within the row
+//	if (deleteContainedControlsAndSublayouts)
+//	{
+//		std::vector<unsigned int> indicesToDelete;
+//		for (unsigned int iii = 0; iii < m_controls.size(); ++iii)
+//		{
+//			const ControlPosition& cp = std::get<1>(m_controls[iii]);
+//			if (cp.RowIndex == rowIndex && cp.RowSpan == 1)
+//				indicesToDelete.push_back(iii);
+//		}
+//
+//		for (std::vector<unsigned int>::reverse_iterator riter = indicesToDelete.rbegin(); riter != indicesToDelete.rend(); ++riter)
+//			m_controls.erase(m_controls.begin() + *riter);
+//
+//		indicesToDelete.clear();
+//
+//		for (unsigned int iii = 0; iii < m_sublayouts.size(); ++iii)
+//		{
+//			const ControlPosition& cp = std::get<1>(m_sublayouts[iii]);
+//			if (cp.RowIndex == rowIndex && cp.RowSpan == 1)
+//				indicesToDelete.push_back(iii);
+//		}
+//
+//		for (std::vector<unsigned int>::reverse_iterator riter = indicesToDelete.rbegin(); riter != indicesToDelete.rend(); ++riter)
+//			m_sublayouts.erase(m_sublayouts.begin() + *riter);
+//
+//	}
+//
+//
+//
+//
+//
+//
+//
+//
+//	// For all remaining controls/sublayouts, we must decrement their RowIndex value if it was at or greater than the row being deleted
+//	for (auto& pair : m_controls)
+//	{
+//		ControlPosition& cp = std::get<1>(pair);
+//		if (cp.RowIndex >= rowIndex)
+//			cp.RowIndex -= 1;
+//	}
+//	for (auto& pair : m_sublayouts)
+//	{
+//		ControlPosition& cp = std::get<1>(pair);
+//		if (cp.RowIndex >= rowIndex)
+//			cp.RowIndex -= 1;
+//	}
+//
+//}
+
+
 void Layout::ResetColumns(std::span<Column> columns) noexcept
 {
 	// If their are fewer new columns, then we need to adjust any controls that reside in
 	// columns that will no longer exist
 	bool controlLocationsNeedAdjusting = (columns.size() < m_columns.size());
 
+	m_columns.clear();
 	m_columns.assign_range(columns);
+
+	m_canScrollHorizontally = true;
+	for (const Column& column : m_columns)
+	{
+		if (column.Type == RowColumnType::STAR)
+		{
+			m_canScrollHorizontally = false;
+			break;
+		}
+	}
 
 	if (controlLocationsNeedAdjusting)
 		AdjustControlAndSublayoutRowPositioning();
@@ -378,7 +429,18 @@ void Layout::ResetColumns(std::vector<Column>&& columns) noexcept
 	// columns that will no longer exist
 	bool controlLocationsNeedAdjusting = (columns.size() < m_columns.size());
 
+	m_columns.clear();
 	m_columns = std::move(columns);
+
+	m_canScrollHorizontally = true;
+	for (const Column& column : m_columns)
+	{
+		if (column.Type == RowColumnType::STAR)
+		{
+			m_canScrollHorizontally = false;
+			break;
+		}
+	}
 
 	if (controlLocationsNeedAdjusting)
 		AdjustControlAndSublayoutRowPositioning();
@@ -677,6 +739,162 @@ bool Layout::AdjustControlAndSublayoutColumnPositioning() noexcept
 		}
 	}
 	return changeMade;
+}
+
+
+float Layout::GetAutoHeight() const noexcept 
+{ 
+	float requiredHeight = 0.0f;
+
+	// First, loop over the rows and sum rows that have FIXED height
+	for (const Row& row : m_rows)
+	{
+		if (row.Type == RowColumnType::FIXED)
+			requiredHeight += row.Value;
+	}
+
+	// Loop over the controls and determine their required heights (but skip controls that reside in FIXED height rows)
+	for (const auto& pair : m_controls)
+	{
+		Control* control = std::get<0>(pair).get();
+		const ControlPosition& cp = std::get<1>(pair);
+
+		// Skip the control if it only resides FIXED height rows
+		bool canSkip = true;
+		for (unsigned int iii = cp.RowIndex; iii < cp.RowIndex + cp.RowSpan; ++iii) 
+		{
+			if (m_rows[iii].Type != RowColumnType::FIXED)
+			{
+				canSkip = false;
+				break;
+			}
+		}
+
+		if (canSkip)
+			continue;
+
+		// This control resides at least partially in AUTO/STAR/PERCENT rows. Therefore we need to get its required height
+		// and subtract out the amount it resides in any FIXED rows to get the remaining amount
+		float controlRequiredHeight = control->GetAutoHeight();
+		for (unsigned int iii = cp.RowIndex; iii < cp.RowIndex + cp.RowSpan; ++iii)
+		{
+			if (m_rows[iii].Type == RowColumnType::FIXED)
+				controlRequiredHeight -= m_rows[iii].Value;
+		}
+		
+		requiredHeight += std::max(0.0f, controlRequiredHeight);
+	}
+
+	// Loop over the sublayouts and determine their required heights (but skip sublayouts that reside in FIXED height rows)
+	for (const auto& pair : m_sublayouts)
+	{
+		Layout* layout = std::get<0>(pair).get();
+		const ControlPosition& cp = std::get<1>(pair);
+
+		// Skip the sublayout if it only resides FIXED height rows
+		bool canSkip = true;
+		for (unsigned int iii = cp.RowIndex; iii < cp.RowIndex + cp.RowSpan; ++iii)
+		{
+			if (m_rows[iii].Type != RowColumnType::FIXED)
+			{
+				canSkip = false;
+				break;
+			}
+		}
+
+		if (canSkip)
+			continue;
+
+		// This sublayout resides at least partially in AUTO/STAR/PERCENT rows. Therefore we need to get its required height
+		// and subtract out the amount it resides in any FIXED rows to get the remaining amount
+		float sublayoutRequiredHeight = layout->GetAutoHeight();
+		for (unsigned int iii = cp.RowIndex; iii < cp.RowIndex + cp.RowSpan; ++iii)
+		{
+			if (m_rows[iii].Type == RowColumnType::FIXED)
+				sublayoutRequiredHeight -= m_rows[iii].Value;
+		}
+
+		requiredHeight += std::max(0.0f, sublayoutRequiredHeight);
+	}
+
+	return requiredHeight; 
+}
+float Layout::GetAutoWidth() const noexcept 
+{ 
+	float requiredWidth = 0.0f;
+
+	// First, loop over the columns and sum columns that have FIXED width
+	for (const Column& column : m_columns)
+	{
+		if (column.Type == RowColumnType::FIXED)
+			requiredWidth += column.Value;
+	}
+
+	// Loop over the controls and determine their required widths (but skip controls that reside in FIXED width columns)
+	for (const auto& pair : m_controls)
+	{
+		Control* control = std::get<0>(pair).get();
+		const ControlPosition& cp = std::get<1>(pair);
+
+		// Skip the control if it only resides FIXED width columns
+		bool canSkip = true;
+		for (unsigned int iii = cp.ColumnIndex; iii < cp.ColumnIndex + cp.ColumnSpan; ++iii)
+		{
+			if (m_columns[iii].Type != RowColumnType::FIXED)
+			{
+				canSkip = false;
+				break;
+			}
+		}
+
+		if (canSkip)
+			continue;
+
+		// This control resides at least partially in AUTO/STAR/PERCENT columns. Therefore we need to get its required width
+		// and subtract out the amount it resides in any FIXED columns to get the remaining amount
+		float controlRequiredWidth = control->GetAutoWidth();
+		for (unsigned int iii = cp.ColumnIndex; iii < cp.ColumnIndex + cp.ColumnSpan; ++iii)
+		{
+			if (m_columns[iii].Type == RowColumnType::FIXED)
+				controlRequiredWidth -= m_columns[iii].Value;
+		}
+
+		requiredWidth += std::max(0.0f, controlRequiredWidth);
+	}
+
+	// Loop over the sublayouts and determine their required widths (but skip sublayouts that reside in FIXED width columns)
+	for (const auto& pair : m_sublayouts)
+	{
+		Layout* layout = std::get<0>(pair).get();
+		const ControlPosition& cp = std::get<1>(pair);
+
+		// Skip the sublayout if it only resides FIXED width columns
+		bool canSkip = true;
+		for (unsigned int iii = cp.ColumnIndex; iii < cp.ColumnIndex + cp.ColumnSpan; ++iii)
+		{
+			if (m_columns[iii].Type != RowColumnType::FIXED)
+			{
+				canSkip = false;
+				break;
+			}
+		}
+
+		if (canSkip)
+			continue;
+
+		// This sublayout resides at least partially in AUTO/STAR/PERCENT columns. Therefore we need to get its required width
+		// and subtract out the amount it resides in any FIXED columns to get the remaining amount
+		float sublayoutRequiredWidth = layout->GetAutoWidth();
+		for (unsigned int iii = cp.ColumnIndex; iii < cp.ColumnIndex + cp.ColumnSpan; ++iii)
+		{
+			if (m_columns[iii].Type == RowColumnType::FIXED)
+				sublayoutRequiredWidth -= m_columns[iii].Value;
+		}
+
+		requiredWidth += std::max(0.0f, sublayoutRequiredWidth);
+	}
+
+	return requiredWidth;
 }
 
 }
