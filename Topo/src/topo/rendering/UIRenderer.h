@@ -3,6 +3,7 @@
 #include "Renderer.h"
 #include "OrthographicCamera.h"
 #include "AssetManager.h"
+#include "topo/utils/Color.h"
 
 
 
@@ -66,7 +67,7 @@ namespace topo
 	struct Vertex
 	{
 		DirectX::XMFLOAT4 position;
-		DirectX::XMFLOAT4 color;
+//		DirectX::XMFLOAT4 color;
 		DirectX::XMFLOAT3 Position() const noexcept { return { position.x, position.y, position.z }; }
 	};
 	struct CrateVertex
@@ -108,6 +109,7 @@ namespace topo
 	struct UIObjectData
 	{
 		DirectX::XMFLOAT4X4 World;
+		DirectX::XMFLOAT4 Color;
 	};
 	struct ObjectData
 	{
@@ -160,8 +162,8 @@ public:
 	ND constexpr float GetWindowHeight() const noexcept { return m_windowHeight; }
 
 
-	void DrawRectangle(float left, float top, float right, float bottom);
-	void DrawLine(float x1, float y1, float x2, float y2, float thickness = 1.0f);
+	void DrawRectangle(float left, float top, float right, float bottom, const Color& color = {});
+	void DrawLine(float x1, float y1, float x2, float y2, const Color& color = {}, float thickness = 1.0f);
 
 
 

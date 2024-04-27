@@ -158,6 +158,7 @@
     <ClInclude Include="src\topo\rendering\OrthographicCamera.h" />
     <ClInclude Include="src\topo\utils\Rect.h" />
     <ClInclude Include="src\topo\rendering\UIRenderer.h" />
+    <ClInclude Include="src\topo\utils\Color.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />

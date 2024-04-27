@@ -33,11 +33,17 @@ void UIRenderer::InitializeRenderer()
 			m_uiObjectConstantBuffer->CopyData(frameIndex, m_rectangleRenderItemTransforms);
 		};
 
+//	std::vector<Vertex> squareVertices{
+//		{{  0.0f,  0.0f, 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+//		{{  1.0f,  0.0f, 0.5f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+//		{{  1.0f, -1.0f, 0.5f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+//		{{  0.0f, -1.0f, 0.5f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
+//	};
 	std::vector<Vertex> squareVertices{
-		{{  0.0f,  0.0f, 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
-		{{  1.0f,  0.0f, 0.5f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
-		{{  1.0f, -1.0f, 0.5f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
-		{{  0.0f, -1.0f, 0.5f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
+	{{  0.0f,  0.0f, 0.5f, 1.0f }},
+	{{  1.0f,  0.0f, 0.5f, 1.0f }},
+	{{  1.0f, -1.0f, 0.5f, 1.0f }},
+	{{  0.0f, -1.0f, 0.5f, 1.0f }}
 	};
 	std::vector<std::uint16_t> squareIndices{ 0, 1, 3, 1, 2, 3 };
 	Mesh<Vertex> mesh(std::move(squareVertices), std::move(squareIndices));
@@ -80,7 +86,7 @@ void UIRenderer::InitializeRenderer()
 
 	auto il = std::vector<D3D12_INPUT_ELEMENT_DESC>{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+//		{ "COLOR",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 	const Shader& vs = AssetManager::CheckoutShader("Control-vs.cso", std::move(il));
 	const Shader& ps = AssetManager::CheckoutShader("Control-ps.cso");
@@ -127,15 +133,20 @@ void UIRenderer::Update(const Timer& timer, int frameIndex)
 	m_rectangleRenderItemTransforms.clear();
 }
 
-void UIRenderer::DrawRectangle(float left, float top, float right, float bottom)
+void UIRenderer::DrawRectangle(float left, float top, float right, float bottom, const Color& color)
 {
 	m_rectangleRenderItemTransforms.emplace_back();
+	UIObjectData& data = m_rectangleRenderItemTransforms.back();
+
 	XMMATRIX world = XMMatrixScaling(right - left, bottom - top, 1.0f) * XMMatrixTranslation(left, -top, 0.0f);
-	XMStoreFloat4x4(&m_rectangleRenderItemTransforms.back().World, XMMatrixTranspose(world));
+	XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
+
+	data.Color = { color.R, color.G, color.B, color.A };
 }
-void UIRenderer::DrawLine(float x1, float y1, float x2, float y2, float thickness)
+void UIRenderer::DrawLine(float x1, float y1, float x2, float y2, const Color& color, float thickness)
 {
 	m_rectangleRenderItemTransforms.emplace_back();
+	UIObjectData& data = m_rectangleRenderItemTransforms.back();
 
 	// 1. translate the original rectangle up 0.5 so it is centered on the y-axis
 	// 2. scale the x direction to the length of the line and the y-direction to the thickness of the line
@@ -146,6 +157,10 @@ void UIRenderer::DrawLine(float x1, float y1, float x2, float y2, float thicknes
 		XMMatrixScaling(std::sqrt(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2)), thickness, 1.0f) *
 		XMMatrixRotationZ(-std::atan2(y2 - y1, x2 - x1)) *
 		XMMatrixTranslation(x1, -y1, 0.0f);
-	XMStoreFloat4x4(&m_rectangleRenderItemTransforms.back().World, XMMatrixTranspose(world));
+	XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
+
+	data.Color = { color.R, color.G, color.B, color.A };
 }
+
+
 }

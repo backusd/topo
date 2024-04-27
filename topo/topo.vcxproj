@@ -173,6 +173,7 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClInclude Include="src\topo\rendering\OrthographicCamera.h" />
     <ClInclude Include="src\topo\rendering\UIRenderer.h" />
     <ClInclude Include="src\topo\TopoException.h" />
+    <ClInclude Include="src\topo\utils\Color.h" />
     <ClInclude Include="src\topo\utils\Rect.h" />
     <ClInclude Include="src\topo\Window.h" />
     <ClInclude Include="src\topo\controls\Button.h" />

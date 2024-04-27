@@ -8,6 +8,21 @@
 
 namespace topo
 {
+struct Margin
+{
+	float Left = 0.0f;
+	float Top = 0.0f;
+	float Right = 0.0f;
+	float Bottom = 0.0f;
+};
+struct Padding
+{
+	float Left = 0.0f;
+	float Top = 0.0f;
+	float Right = 0.0f;
+	float Bottom = 0.0f;
+};
+
 class IEventReceiver
 {
 public:

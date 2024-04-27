@@ -25,13 +25,12 @@ void Layout::Render(UIRenderer& renderer, const Timer& timer)
 
 	for (const Row& row : m_rows)
 	{
-		renderer.DrawLine(row.Rect.Left, row.Rect.Top, row.Rect.Right, row.Rect.Top, 5.0f);
-		renderer.DrawLine(row.Rect.Left, row.Rect.Top, row.Rect.Right, row.Rect.Bottom, 3.0f);
+		renderer.DrawLine(row.Rect.Left, row.Rect.Top, row.Rect.Right, row.Rect.Top, { 0.0f, 0.0f, 0.0f, 1.0f }, 2.0f);
 	}
 
 	for (const Column& column : m_columns)
 	{
-		renderer.DrawLine(column.Rect.Left, column.Rect.Top, column.Rect.Left, column.Rect.Bottom, 5.0f);
+		renderer.DrawLine(column.Rect.Left, column.Rect.Top, column.Rect.Left, column.Rect.Bottom, { 0.0f, 0.0f, 0.0f, 1.0f }, 2.0f);
 	}
 
 }
