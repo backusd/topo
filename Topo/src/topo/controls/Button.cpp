@@ -26,4 +26,9 @@ void Button::OneTimeInitialization()
 
 }
 
+void Button::Render(UIRenderer& renderer, const Timer& timer)
+{
+	renderer.DrawRectangle(m_positionRect.Left, m_positionRect.Top, m_positionRect.Right, m_positionRect.Bottom);
+}
+
 }

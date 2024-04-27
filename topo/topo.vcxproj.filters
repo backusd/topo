@@ -157,6 +157,7 @@
     </ClInclude>
     <ClInclude Include="src\topo\rendering\OrthographicCamera.h" />
     <ClInclude Include="src\topo\utils\Rect.h" />
+    <ClInclude Include="src\topo\rendering\UIRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -276,6 +277,7 @@
     </ClCompile>
     <ClCompile Include="src\topo\rendering\OrthographicCamera.cpp" />
     <ClCompile Include="src\topo\utils\Rect.cpp" />
+    <ClCompile Include="src\topo\rendering\UIRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\topo\shaders\Control-ps.hlsl">

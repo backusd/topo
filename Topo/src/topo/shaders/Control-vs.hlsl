@@ -1,7 +1,11 @@
  
+
+// Constant buffers can hold 4096 'vectors'. A vector is a float4
+#define MAX_INSTANCES 1024
+
 cbuffer cbPerObject : register(b0)
 {
-    float4x4 gWorld;
+    float4x4 gWorld[MAX_INSTANCES];
 };
  
 cbuffer cbPass : register(b1)
@@ -26,6 +30,7 @@ struct VertexIn
 {
     float4 Position : POSITION;
     float4 Color : COLOR;
+    uint instanceID : SV_InstanceID;
 };
 
 struct VertexOut
@@ -47,12 +52,12 @@ VertexOut main(VertexIn vin)
 	
     // Transform to world space.
     vin.Position.z = 1.0f;
-    float4 posW = mul(vin.Position, gWorld);
+    float4 posW = mul(vin.Position, gWorld[vin.instanceID]);
 //    vout.PosW = posW.xyz;
 
     // Transform to homogeneous clip space.
     vout.Position = mul(posW, gViewProj);
-	
+
 
     return vout;
 }

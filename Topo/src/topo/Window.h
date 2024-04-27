@@ -7,10 +7,11 @@
 #include "utils/String.h"
 #include "utils/TranslateErrorCode.h"
 #include "utils/Timer.h"
-#include "rendering/Renderer.h"
-#include "rendering/OrthographicCamera.h"
-
-#include "rendering/Texture.h"
+#include "rendering/UIRenderer.h"
+//
+//#include "rendering/Renderer.h"
+//#include "rendering/OrthographicCamera.h"
+//#include "rendering/Texture.h"
 
 #ifdef TOPO_PLATFORM_WINDOWS
 #define THROW_WINDOW_LAST_EXCEPT() auto _err = GetLastError(); throw EXCEPTION(std::format("Window Exception\n[Error Code] {0:#x} ({0})\n[Description] {1}", _err, ::topo::TranslateErrorCode(_err)))
@@ -20,118 +21,6 @@
 
 namespace topo
 {
-	struct Light
-	{
-		DirectX::XMFLOAT3 Strength = { 0.5f, 0.5f, 0.5f };
-		float FalloffStart = 1.0f;                          // point/spot light only
-		DirectX::XMFLOAT3 Direction = { 0.0f, -1.0f, 0.0f };// directional/spot light only
-		float FalloffEnd = 10.0f;                           // point/spot light only
-		DirectX::XMFLOAT3 Position = { 0.0f, 0.0f, 0.0f };  // point/spot light only
-		float SpotPower = 64.0f;                            // spot light only
-	};
-
-#define MaxLights 16
-
-	struct UIPassConstants
-	{
-		DirectX::XMFLOAT4X4 View = MathHelper::Identity4x4();
-		DirectX::XMFLOAT4X4 InvView = MathHelper::Identity4x4();
-		DirectX::XMFLOAT4X4 Proj = MathHelper::Identity4x4();
-		DirectX::XMFLOAT4X4 InvProj = MathHelper::Identity4x4();
-		DirectX::XMFLOAT4X4 ViewProj = MathHelper::Identity4x4();
-		DirectX::XMFLOAT4X4 InvViewProj = MathHelper::Identity4x4();
-		DirectX::XMFLOAT3 EyePosW = { 0.0f, 0.0f, 0.0f };
-		float cbPerObjectPad1 = 0.0f;
-		DirectX::XMFLOAT2 RenderTargetSize = { 0.0f, 0.0f };
-		DirectX::XMFLOAT2 InvRenderTargetSize = { 0.0f, 0.0f };
-		float NearZ = 0.0f;
-		float FarZ = 0.0f;
-		float TotalTime = 0.0f;
-		float DeltaTime = 0.0f;
-	};
-	struct CratePassConstants
-	{
-		DirectX::XMFLOAT4X4 View = MathHelper::Identity4x4();
-		DirectX::XMFLOAT4X4 InvView = MathHelper::Identity4x4();
-		DirectX::XMFLOAT4X4 Proj = MathHelper::Identity4x4();
-		DirectX::XMFLOAT4X4 InvProj = MathHelper::Identity4x4();
-		DirectX::XMFLOAT4X4 ViewProj = MathHelper::Identity4x4();
-		DirectX::XMFLOAT4X4 InvViewProj = MathHelper::Identity4x4();
-		DirectX::XMFLOAT3 EyePosW = { 0.0f, 0.0f, 0.0f };
-		float cbPerObjectPad1 = 0.0f;
-		DirectX::XMFLOAT2 RenderTargetSize = { 0.0f, 0.0f };
-		DirectX::XMFLOAT2 InvRenderTargetSize = { 0.0f, 0.0f };
-		float NearZ = 0.0f;
-		float FarZ = 0.0f;
-		float TotalTime = 0.0f;
-		float DeltaTime = 0.0f;
-
-		DirectX::XMFLOAT4 AmbientLight = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-		// Indices [0, NUM_DIR_LIGHTS) are directional lights;
-		// indices [NUM_DIR_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHTS) are point lights;
-		// indices [NUM_DIR_LIGHTS+NUM_POINT_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHT+NUM_SPOT_LIGHTS)
-		// are spot lights for a maximum of MaxLights per object.
-		Light Lights[MaxLights];
-	};
-
-	struct Vertex
-	{
-		DirectX::XMFLOAT4 position;
-		DirectX::XMFLOAT4 color;
-		DirectX::XMFLOAT3 Position() const noexcept { return { position.x, position.y, position.z }; }
-	};
-	struct CrateVertex
-	{
-		DirectX::XMFLOAT4 Color = { 0.75f, 0.0f, 0.0f, 1.0f };
-
-		DirectX::XMFLOAT3 Pos;
-		DirectX::XMFLOAT3 Normal;
-		DirectX::XMFLOAT2 TexC;
-		DirectX::XMFLOAT3 Position() const noexcept { return Pos; }
-	};
-	struct Material
-	{
-//		// Unique material name for lookup.
-//		std::string Name;
-//
-//		// Index into constant buffer corresponding to this material.
-//		int MatCBIndex = -1;
-//
-//		// Index into SRV heap for diffuse texture.
-//		int DiffuseSrvHeapIndex = -1;
-//
-//		// Index into SRV heap for normal texture.
-//		int NormalSrvHeapIndex = -1;
-//
-//		// Dirty flag indicating the material has changed and we need to update the constant buffer.
-//		// Because we have a material constant buffer for each FrameResource, we have to apply the
-//		// update to each FrameResource.  Thus, when we modify a material we should set 
-//		// NumFramesDirty = gNumFrameResources so that each frame resource gets the update.
-//		int NumFramesDirty = gNumFrameResources;
-
-		// Material constant buffer data used for shading.
-		DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
-		DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
-		float Roughness = .25f;
-		DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
-	};
-	struct UIObjectData
-	{
-		DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
-	};
-	struct ObjectData
-	{
-		DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
-		DirectX::XMFLOAT4X4 TexTransform = MathHelper::Identity4x4();
-	};
-
-
-
-
-
-
-
 struct WindowProperties
 {
 	constexpr WindowProperties(std::string_view title = "Topo Window", unsigned int width = 1280, unsigned int height = 720) noexcept :
@@ -154,9 +43,7 @@ class WindowTemplate
 public:
 	WindowTemplate(const WindowProperties& props) :
 		m_deviceResources(nullptr),
-		m_renderer(nullptr),
-		m_viewport{ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f },
-		m_scissorRect{ 0, 0, 0, 0 },
+		m_uiRenderer(static_cast<float>(props.Width), static_cast<float>(props.Height)),
 		m_page(std::make_unique<Page>(static_cast<float>(props.Width), static_cast<float>(props.Height))),	// Create a default page so it is guaranteed to not be null
 		m_height(props.Height), 
 		m_width(props.Width),
@@ -164,11 +51,8 @@ public:
 		m_hInst(GetModuleHandle(nullptr)), // I believe GetModuleHandle should not ever throw, even though it is not marked noexcept
 		m_mouseX(0),
 		m_mouseY(0),
-		m_mouseIsInWindow(false),
-		m_orthographicCamera(static_cast<float>(props.Width), static_cast<float>(props.Height))
+		m_mouseIsInWindow(false)
 	{
-		m_orthographicCamera.SetPosition(static_cast<float>(props.Width) / 2, -1 * static_cast<float>(props.Height) / 2, 0.0f);
-
 		// Register the window class
 		WNDCLASSEX wc = { 0 };
 		wc.cbSize = sizeof(wc);
@@ -258,35 +142,33 @@ protected:
 
 	std::shared_ptr<DeviceResources> m_deviceResources;
 	std::unique_ptr<Page> m_page;
+	UIRenderer m_uiRenderer;
 
-	std::unique_ptr<Renderer> m_renderer;
-	D3D12_VIEWPORT m_viewport;
-	D3D12_RECT m_scissorRect;
+//	std::unique_ptr<Renderer> m_renderer;
+//	D3D12_VIEWPORT m_viewport;
+//	D3D12_RECT m_scissorRect;
 
 	// 2D Test
-	std::unique_ptr<ConstantBufferMapped<UIPassConstants>>	m_uiPassConstantsBuffer = nullptr;
-	std::unique_ptr<MeshGroup<Vertex>> m_meshGroup = nullptr;
-	OrthographicCamera m_orthographicCamera;
-	std::unique_ptr<ConstantBufferMapped<UIObjectData>> m_uiObjectConstantBuffer = nullptr;
+//	std::unique_ptr<ConstantBufferMapped<UIPassConstants>>	m_uiPassConstantsBuffer = nullptr;
+//	std::unique_ptr<MeshGroup<Vertex>> m_meshGroup = nullptr;
+//	OrthographicCamera m_orthographicCamera;
+//	std::unique_ptr<ConstantBufferMapped<UIObjectData>> m_uiObjectConstantBuffer = nullptr;
 
 
 	// 3D Test
-	std::unique_ptr<MeshGroup<CrateVertex>> m_meshGroupCrate = nullptr;
-	std::unique_ptr<ConstantBufferMapped<CratePassConstants>> m_passConstantBufferCrate = nullptr;
-	std::unique_ptr<ConstantBufferMapped<Material>> m_materialConstantBuffer = nullptr;
-	std::unique_ptr<ConstantBufferMapped<ObjectData>> m_objectConstantBuffer = nullptr;
-	DirectX::XMFLOAT3 m_eyePosition = {};
-	std::unique_ptr<Camera> m_camera = nullptr;
-
-	SamplerData m_sd0{};
-	SamplerData m_sd1{};
-	SamplerData m_sd2{};
-	SamplerData m_sd3{};
-	SamplerData m_sd4{};
-	SamplerData m_sd5{};
-
-
-
+//	std::unique_ptr<MeshGroup<CrateVertex>> m_meshGroupCrate = nullptr;
+//	std::unique_ptr<ConstantBufferMapped<CratePassConstants>> m_passConstantBufferCrate = nullptr;
+//	std::unique_ptr<ConstantBufferMapped<Material>> m_materialConstantBuffer = nullptr;
+//	std::unique_ptr<ConstantBufferMapped<ObjectData>> m_objectConstantBuffer = nullptr;
+//	DirectX::XMFLOAT3 m_eyePosition = {};
+//	std::unique_ptr<Camera> m_camera = nullptr;
+//
+//	SamplerData m_sd0{};
+//	SamplerData m_sd1{};
+//	SamplerData m_sd2{};
+//	SamplerData m_sd3{};
+//	SamplerData m_sd4{};
+//	SamplerData m_sd5{};
 
 	// Window Data
 	short		m_width;
@@ -345,10 +227,9 @@ public:
 	ND inline std::shared_ptr<DeviceResources> GetDeviceResources() noexcept { return m_deviceResources; }
 
 	template<typename T> requires std::derived_from<T, ::topo::Page>
-	void InitializePage()
+	inline void InitializePage()
 	{
 		m_page = std::make_unique<T>(m_width, m_height);
-		InitializeRenderer();
 	}
 
 	void PrepareToRun();

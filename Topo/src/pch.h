@@ -5,6 +5,7 @@
 #include <array>
 #include <bitset>
 #include <chrono>
+#include <cmath>
 #include <concepts>
 #include <deque>
 #include <exception>

@@ -51,7 +51,7 @@ public:
 	DeviceResources& operator=(DeviceResources&&) = delete;
 
 
-	void OnResize(int height, int width);
+	void OnResize(int width, int height);
 	void FlushCommandQueue();
 
 	// Getters

@@ -4,6 +4,8 @@
 #include "topo/Log.h"
 #include "topo/utils/Concepts.h"
 #include "topo/utils/Rect.h"
+#include "topo/utils/Timer.h"
+#include "topo/rendering/UIRenderer.h"
 
 namespace topo
 {
@@ -43,11 +45,13 @@ struct ControlPosition
 class Layout : public IEventReceiver
 {
 public:
-	Layout(float left, float top, float right, float bottom) : 
+	Layout(float left, float top, float right, float bottom) :
 		m_rect{ left, top, right, bottom }
 	{}
 	Layout(Layout&&) = default;
 	Layout& operator=(Layout&&) = default;
+
+	void Render(UIRenderer& renderer, const Timer& timer);
 
 	template<typename T> requires std::derived_from<T, ::topo::Control>
 	T* AddControl(unsigned int rowIndex = 0, unsigned int columnIndex = 0, unsigned int rowSpan = 1, unsigned int columnSpan = 1);

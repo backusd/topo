@@ -12,7 +12,7 @@ namespace topo
 class Renderer
 {
 public:
-	inline Renderer(std::shared_ptr<DeviceResources> deviceResources, D3D12_VIEWPORT& viewport, D3D12_RECT& scissorRect) noexcept :
+	inline Renderer(std::shared_ptr<DeviceResources> deviceResources = nullptr, const D3D12_VIEWPORT& viewport = {}, const D3D12_RECT& scissorRect = {}) noexcept :
 		m_deviceResources(deviceResources),
 		m_viewport(viewport),
 		m_scissorRect(scissorRect)
@@ -32,6 +32,8 @@ public:
 		return *this;
 	}
 
+	inline void SetDeviceResources(std::shared_ptr<DeviceResources> deviceResources) noexcept { m_deviceResources = deviceResources; }
+
 	void Update(const Timer& timer, int frameIndex);
 	void Render(int frameIndex);
 
@@ -41,8 +43,8 @@ public:
 		return m_renderPasses[index];
 	}
 
-	constexpr void SetViewport(D3D12_VIEWPORT& vp) noexcept { m_viewport = vp; }
-	constexpr void SetScissorRect(D3D12_RECT& rect) noexcept { m_scissorRect = rect; }
+	constexpr void SetViewport(const D3D12_VIEWPORT& vp) noexcept { m_viewport = vp; }
+	constexpr void SetScissorRect(const D3D12_RECT& rect) noexcept { m_scissorRect = rect; }
 
 	constexpr void PushBackRenderPass(RenderPass&& pass) noexcept { m_renderPasses.push_back(std::move(pass)); }
 
@@ -57,10 +59,8 @@ private:
 
 	std::shared_ptr<DeviceResources> m_deviceResources;
 
-	// Have the viewport and scissor rect be controlled by the application. We use references
-	// here because neither of these should ever be allowed to be null
-	D3D12_VIEWPORT& m_viewport;
-	D3D12_RECT& m_scissorRect;
+	D3D12_VIEWPORT m_viewport;
+	D3D12_RECT m_scissorRect;
 
 	std::vector<RenderPass> m_renderPasses;
 };

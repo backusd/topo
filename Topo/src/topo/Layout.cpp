@@ -8,6 +8,34 @@
 
 namespace topo
 {
+void Layout::Render(UIRenderer& renderer, const Timer& timer)
+{
+	// Update controls
+	for (auto& pair : m_controls)
+	{
+		std::get<0>(pair)->Render(renderer, timer);
+	}
+
+	// Update sublayouts
+	for (auto& pair : m_sublayouts)
+	{
+		std::get<0>(pair)->Render(renderer, timer);
+	}
+
+
+	for (const Row& row : m_rows)
+	{
+		renderer.DrawLine(row.Rect.Left, row.Rect.Top, row.Rect.Right, row.Rect.Top, 5.0f);
+		renderer.DrawLine(row.Rect.Left, row.Rect.Top, row.Rect.Right, row.Rect.Bottom, 3.0f);
+	}
+
+	for (const Column& column : m_columns)
+	{
+		renderer.DrawLine(column.Rect.Left, column.Rect.Top, column.Rect.Left, column.Rect.Bottom, 5.0f);
+	}
+
+}
+
 Layout* Layout::AddSubLayout(unsigned int rowIndex, unsigned int columnIndex, unsigned int rowSpan, unsigned int columnSpan)
 {
 	// First, make sure we have at least one row and column

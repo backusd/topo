@@ -304,7 +304,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE DeviceResources::DepthStencilView() const noexcept
 	return m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
-void DeviceResources::OnResize(int height, int width)
+void DeviceResources::OnResize(int width, int height)
 {
 	ASSERT(m_d3dDevice != nullptr, "device is null");
 	ASSERT(m_swapChain != nullptr, "swapchain is null");

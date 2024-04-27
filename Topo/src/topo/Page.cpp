@@ -9,15 +9,6 @@ Page::Page(float width, float height) :
 
 }
 
-void Page::Update(const Timer& timer)
-{
-
-}
-void Page::Render()
-{
-
-}
-
 
 
 

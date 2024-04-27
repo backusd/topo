@@ -223,18 +223,19 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		m_width = LOWORD(lParam);
 		m_height = HIWORD(lParam);
-		m_deviceResources->OnResize(m_height, m_width);
+		m_deviceResources->OnResize(m_width, m_height);
+		m_uiRenderer.OnWindowResize(m_width, m_height);
 
-		m_viewport.Width = m_width;
-		m_viewport.Height = m_height;
+//		m_viewport.Width = m_width;
+//		m_viewport.Height = m_height;
+//
+//		m_scissorRect.right = static_cast<LONG>(m_width);
+//		m_scissorRect.bottom = static_cast<LONG>(m_height);
+//
+//		m_orthographicCamera.SetProjection(static_cast<float>(m_width), static_cast<float>(m_height));
+//		m_orthographicCamera.SetPosition(static_cast<float>(m_width) / 2, -1 * static_cast<float>(m_height) / 2, 0.0f);
 
-		m_scissorRect.right = static_cast<LONG>(m_width);
-		m_scissorRect.bottom = static_cast<LONG>(m_height);
-
-		m_orthographicCamera.SetProjection(static_cast<float>(m_width), static_cast<float>(m_height));
-		m_orthographicCamera.SetPosition(static_cast<float>(m_width) / 2, -1 * static_cast<float>(m_height) / 2, 0.0f);
-
-		if (m_page->OnWindowResized(m_height, m_width))
+		if (m_page->OnWindowResized(m_width, m_height))
 			return 0;
 		break;
 	}
@@ -326,14 +327,15 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		m_height = cs->cy;
 		m_width = cs->cx;
 		m_deviceResources = std::make_shared<DeviceResources>(hWnd, m_width, m_height, m_title);
+		m_uiRenderer.SetDeviceResources(m_deviceResources);
 
-		m_viewport.Width = m_width;
-		m_viewport.Height = m_height;
-
-		m_scissorRect.right = static_cast<LONG>(m_width);
-		m_scissorRect.bottom = static_cast<LONG>(m_height);
-
-		m_renderer = std::make_unique<Renderer>(m_deviceResources, m_viewport, m_scissorRect);
+//		m_viewport.Width = m_width;
+//		m_viewport.Height = m_height;
+//
+//		m_scissorRect.right = static_cast<LONG>(m_width);
+//		m_scissorRect.bottom = static_cast<LONG>(m_height);
+//
+//		m_renderer = std::make_unique<Renderer>(m_deviceResources, m_viewport, m_scissorRect);
 
 		// Don't pass message to m_page, because InitializePage will not have been called yet
 		return 0;
@@ -392,15 +394,17 @@ void Window::Update(const Timer& timer)
 {
 	// Must call deviceResources->Update() first because it will reset the commandlist so new commands can be issued
 	m_deviceResources->Update();
-	m_page->Update(timer);
-	m_renderer->Update(timer, m_deviceResources->GetCurrentFrameIndex());
+	m_uiRenderer.Update(timer, m_deviceResources->GetCurrentFrameIndex());
+//	m_renderer->Update(timer, m_deviceResources->GetCurrentFrameIndex());
 }
 void Window::Render(const Timer& timer) 
 {
 	m_deviceResources->PreRender();
-	m_page->Render();
+	
+	m_page->Render(m_uiRenderer, timer);
+	m_uiRenderer.Render(m_deviceResources->GetCurrentFrameIndex());
 
-	m_renderer->Render(m_deviceResources->GetCurrentFrameIndex());
+//	m_renderer->Render(m_deviceResources->GetCurrentFrameIndex());
 
 	m_deviceResources->PostRender();
 }
@@ -612,86 +616,89 @@ void Window::InitializeRenderer()
 ////	crateRI.BindTexture(0, texture2);
 
 
-	m_uiObjectConstantBuffer = std::make_unique<ConstantBufferMapped<UIObjectData>>(m_deviceResources);
-	m_uiObjectConstantBuffer->Update = [this](const Timer& timer, int frameIndex)
-		{
-			using namespace DirectX;
-
-			UIObjectData data{};
-			XMMATRIX world = XMMatrixScaling(200.0f, 200.0f, 1.0f) * XMMatrixTranslation(10.f, -10.0f, 0.0f);
-			XMStoreFloat4x4(&data.World, XMMatrixTranspose(world)); 
-
-			m_uiObjectConstantBuffer->CopyData(frameIndex, data); 
-		};
-
-	std::vector<Vertex> squareVertices{
-		{{  0.0f,  0.0f, 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
-		{{  1.0f,  0.0f, 0.5f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
-		{{  1.0f, -1.0f, 0.5f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
-		{{  0.0f, -1.0f, 0.5f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
-	};
-	std::vector<std::uint16_t> squareIndices{ 0, 1, 3, 1, 2, 3 };
-	Mesh<Vertex> mesh(std::move(squareVertices), std::move(squareIndices));
-
-	m_meshGroup = std::make_unique<MeshGroup<Vertex>>(m_deviceResources, PRIMITIVE_TOPOLOGY::TRIANGLELIST);
-	m_meshGroup->PushBack(std::move(mesh));
-
-	m_uiPassConstantsBuffer = std::make_unique<ConstantBufferMapped<UIPassConstants>>(m_deviceResources);
-	m_uiPassConstantsBuffer->Update = [this](const Timer& timer, int frameIndex)
-		{
-			using namespace DirectX;
-
-			UIPassConstants pc{};
-			XMStoreFloat4x4(&pc.View,		 XMMatrixTranspose(m_orthographicCamera.GetView()));
-			XMStoreFloat4x4(&pc.InvView,	 XMMatrixTranspose(m_orthographicCamera.GetViewInverse()));
-			XMStoreFloat4x4(&pc.Proj,		 XMMatrixTranspose(m_orthographicCamera.GetProj()));
-			XMStoreFloat4x4(&pc.InvProj,	 XMMatrixTranspose(m_orthographicCamera.GetProjInverse()));
-			XMStoreFloat4x4(&pc.ViewProj,	 XMMatrixTranspose(m_orthographicCamera.GetViewProj()));
-			XMStoreFloat4x4(&pc.InvViewProj, XMMatrixTranspose(m_orthographicCamera.GetViewProjInverse()));
-			pc.EyePosW = m_eyePosition;
-			pc.RenderTargetSize = XMFLOAT2(static_cast<float>(this->GetWidth()), static_cast<float>(this->GetHeight()));
-			pc.InvRenderTargetSize = XMFLOAT2(1.0f / static_cast<float>(this->GetWidth()), 1.0f / static_cast<float>(this->GetHeight()));
-			pc.NearZ = 1.0f;
-			pc.FarZ = 1000.0f;
-			pc.TotalTime = timer.TotalTime();
-			pc.DeltaTime = timer.DeltaTime();
-
-			m_uiPassConstantsBuffer->CopyData(frameIndex, pc);
-		};
-
-	RenderPassSignature sig{ 
-		ConstantBufferParameter{ 0 },
-		ConstantBufferParameter{ 1 }
-	};
-
-	RenderPass& uiPass = m_renderer->EmplaceBackRenderPass(sig);
-	SET_DEBUG_NAME(uiPass, "UI Render Pass");
-	uiPass.BindConstantBuffer(1, m_uiPassConstantsBuffer.get());
 
 
-	auto il = std::vector<D3D12_INPUT_ELEMENT_DESC>{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
-	const Shader& vs = AssetManager::CheckoutShader("Control-vs.cso", std::move(il));
-	const Shader& ps = AssetManager::CheckoutShader("Control-ps.cso");
 
-	PipelineStateDesc psDesc{};
-	psDesc.RootSignature = uiPass.GetRootSignature();
-	psDesc.VertexShader = vs;
-	psDesc.PixelShader = ps;
-	psDesc.SampleMask = UINT_MAX; /// ??? Why?
-	psDesc.NumRenderTargets = 1;
-	psDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
-	psDesc.DSVFormat = m_deviceResources->GetDepthStencilFormat();
-
-	RenderPassLayer& layer1 = uiPass.EmplaceBackRenderPassLayer(m_meshGroup.get(), psDesc);
-	SET_DEBUG_NAME(layer1, "Render Pass Layer #1");
-
-	RenderItem& squareRI = layer1.EmplaceBackRenderItem(0);
-	SET_DEBUG_NAME(squareRI, "Square RenderItem"); 
-
-	squareRI.BindConstantBuffer(0, m_uiObjectConstantBuffer.get());
+//	m_uiObjectConstantBuffer = std::make_unique<ConstantBufferMapped<UIObjectData>>(m_deviceResources);
+//	m_uiObjectConstantBuffer->Update = [this](const Timer& timer, int frameIndex)
+//		{
+//			using namespace DirectX;
+//
+//			UIObjectData data{};
+//			XMMATRIX world = XMMatrixScaling(200.0f, 200.0f, 1.0f) * XMMatrixTranslation(10.f, -10.0f, 0.0f);
+//			XMStoreFloat4x4(&data.World, XMMatrixTranspose(world)); 
+//
+//			m_uiObjectConstantBuffer->CopyData(frameIndex, data); 
+//		};
+//
+//	std::vector<Vertex> squareVertices{
+//		{{  0.0f,  0.0f, 0.5f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+//		{{  1.0f,  0.0f, 0.5f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+//		{{  1.0f, -1.0f, 0.5f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+//		{{  0.0f, -1.0f, 0.5f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
+//	};
+//	std::vector<std::uint16_t> squareIndices{ 0, 1, 3, 1, 2, 3 };
+//	Mesh<Vertex> mesh(std::move(squareVertices), std::move(squareIndices));
+//
+//	m_meshGroup = std::make_unique<MeshGroup<Vertex>>(m_deviceResources, PRIMITIVE_TOPOLOGY::TRIANGLELIST);
+//	m_meshGroup->PushBack(std::move(mesh));
+//
+//	m_uiPassConstantsBuffer = std::make_unique<ConstantBufferMapped<UIPassConstants>>(m_deviceResources);
+//	m_uiPassConstantsBuffer->Update = [this](const Timer& timer, int frameIndex)
+//		{
+//			using namespace DirectX;
+//
+//			UIPassConstants pc{};
+//			XMStoreFloat4x4(&pc.View,		 XMMatrixTranspose(m_orthographicCamera.GetView()));
+//			XMStoreFloat4x4(&pc.InvView,	 XMMatrixTranspose(m_orthographicCamera.GetViewInverse()));
+//			XMStoreFloat4x4(&pc.Proj,		 XMMatrixTranspose(m_orthographicCamera.GetProj()));
+//			XMStoreFloat4x4(&pc.InvProj,	 XMMatrixTranspose(m_orthographicCamera.GetProjInverse()));
+//			XMStoreFloat4x4(&pc.ViewProj,	 XMMatrixTranspose(m_orthographicCamera.GetViewProj()));
+//			XMStoreFloat4x4(&pc.InvViewProj, XMMatrixTranspose(m_orthographicCamera.GetViewProjInverse()));
+//			pc.EyePosW = m_eyePosition;
+//			pc.RenderTargetSize = XMFLOAT2(static_cast<float>(this->GetWidth()), static_cast<float>(this->GetHeight()));
+//			pc.InvRenderTargetSize = XMFLOAT2(1.0f / static_cast<float>(this->GetWidth()), 1.0f / static_cast<float>(this->GetHeight()));
+//			pc.NearZ = 1.0f;
+//			pc.FarZ = 1000.0f;
+//			pc.TotalTime = timer.TotalTime();
+//			pc.DeltaTime = timer.DeltaTime();
+//
+//			m_uiPassConstantsBuffer->CopyData(frameIndex, pc);
+//		};
+//
+//	RenderPassSignature sig{ 
+//		ConstantBufferParameter{ 0 },
+//		ConstantBufferParameter{ 1 }
+//	};
+//
+//	RenderPass& uiPass = m_renderer->EmplaceBackRenderPass(sig);
+//	SET_DEBUG_NAME(uiPass, "UI Render Pass");
+//	uiPass.BindConstantBuffer(1, m_uiPassConstantsBuffer.get());
+//
+//
+//	auto il = std::vector<D3D12_INPUT_ELEMENT_DESC>{
+//		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+//		{ "COLOR",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+//	};
+//	const Shader& vs = AssetManager::CheckoutShader("Control-vs.cso", std::move(il));
+//	const Shader& ps = AssetManager::CheckoutShader("Control-ps.cso");
+//
+//	PipelineStateDesc psDesc{};
+//	psDesc.RootSignature = uiPass.GetRootSignature();
+//	psDesc.VertexShader = vs;
+//	psDesc.PixelShader = ps;
+//	psDesc.SampleMask = UINT_MAX; /// ??? Why?
+//	psDesc.NumRenderTargets = 1;
+//	psDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
+//	psDesc.DSVFormat = m_deviceResources->GetDepthStencilFormat();
+//
+//	RenderPassLayer& layer1 = uiPass.EmplaceBackRenderPassLayer(m_meshGroup.get(), psDesc);
+//	SET_DEBUG_NAME(layer1, "Render Pass Layer #1");
+//
+//	RenderItem& squareRI = layer1.EmplaceBackRenderItem(0);
+//	SET_DEBUG_NAME(squareRI, "Square RenderItem"); 
+//
+//	squareRI.BindConstantBuffer(0, m_uiObjectConstantBuffer.get());
 }
 
 #else

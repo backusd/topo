@@ -4,7 +4,7 @@
 #include "events/MouseButtonEventKeyStates.h"
 #include "KeyCode.h"
 #include "utils/Timer.h"
-
+#include "rendering/UIRenderer.h"
 
 
 namespace topo
@@ -14,8 +14,7 @@ class Page
 public:
 	Page(float width, float height);
 
-	void Update(const Timer& timer);
-	void Render();
+	inline void Render(UIRenderer& renderer, const Timer& timer) { m_layout.Render(renderer, timer); }
 
 	// Window Event Handlers
 	bool OnWindowClosed();

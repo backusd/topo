@@ -184,6 +184,13 @@ public:
 	template <class Self>
 	ND constexpr auto&& GetComputeLayers(this Self&& self) noexcept { return std::forward<Self>(self).m_computeLayers; }
 
+	template <class Self>
+	ND constexpr auto&& GetRootConstantBufferView(this Self&& self, unsigned int index) noexcept { return std::forward<Self>(self).m_constantBufferViews[index]; }
+	template <class Self>
+	ND constexpr auto&& GetRenderPassLayer(this Self&& self, unsigned int index) noexcept { return std::forward<Self>(self).m_renderPassLayers[index]; }
+	template <class Self>
+	ND constexpr auto&& GetComputeLayer(this Self&& self, unsigned int index) noexcept { return std::forward<Self>(self).m_computeLayers[index]; }
+
 
 
 	inline void SetRootSignature(std::shared_ptr<RootSignature> rs) noexcept { m_rootSignature = rs; }

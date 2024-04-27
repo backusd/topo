@@ -3,6 +3,8 @@
 #include "topo/utils/Rect.h"
 #include "topo/events/MouseButtonEventKeyStates.h"
 #include "topo/KeyCode.h"
+#include "topo/utils/Timer.h"
+#include "topo/rendering/UIRenderer.h"
 
 namespace topo
 {
@@ -47,14 +49,15 @@ public:
 class Control : public IEventReceiver
 {
 public:
-	// The default constructor should probably not be used in most cases. Rather, it is there in case we want to create a derived Control
-	// type that does not use m_positionRect for some reason
-	constexpr Control() noexcept : m_positionRect{} {}
-	constexpr Control(float left, float top, float right, float bottom) noexcept : m_positionRect{ left, top, right, bottom } {}
-	Control(const Control&) {}
-	Control(Control&&) noexcept {}
-	Control& operator=(const Control&) { return *this; }
-	Control& operator=(Control&&) noexcept { return *this; }
+	constexpr Control(float left, float top, float right, float bottom) noexcept :
+		m_positionRect{ left, top, right, bottom }
+	{}
+	Control(const Control&) = default;
+	Control(Control&&) noexcept = default;
+	Control& operator=(const Control&) = default;
+	Control& operator=(Control&&) noexcept = default;
+
+	virtual void Render(UIRenderer& renderer, const Timer& timer) = 0;
 
 	ND constexpr void SetPositionRect(float left, float top, float right, float bottom) noexcept { m_positionRect = { left, top, right, bottom }; }
 

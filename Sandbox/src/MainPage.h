@@ -23,4 +23,5 @@ public:
 
 protected:
 	topo::Button* button = nullptr;
+	topo::Button* button2 = nullptr;
 };
