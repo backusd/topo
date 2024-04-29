@@ -159,6 +159,7 @@
     <ClInclude Include="src\topo\utils\Rect.h" />
     <ClInclude Include="src\topo\rendering\UIRenderer.h" />
     <ClInclude Include="src\topo\utils\Color.h" />
+    <ClInclude Include="src\topo\controls\geometry\RenderRectangle2D.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp" />
@@ -279,6 +280,7 @@
     <ClCompile Include="src\topo\rendering\OrthographicCamera.cpp" />
     <ClCompile Include="src\topo\utils\Rect.cpp" />
     <ClCompile Include="src\topo\rendering\UIRenderer.cpp" />
+    <ClCompile Include="src\topo\controls\geometry\RenderRectangle2D.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\topo\shaders\Control-ps.hlsl">

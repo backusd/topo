@@ -1,7 +1,8 @@
 #include "MainPage.h"
 
 
-MainPage::MainPage(float width, float height) : topo::Page(width, height)
+MainPage::MainPage(const std::shared_ptr<topo::UIRenderer>& renderer, float width, float height) : 
+	topo::Page(renderer, width, height)
 {
 	SET_DEBUG_NAME(m_layout, "MainPage Layout");
 
@@ -20,7 +21,8 @@ MainPage::MainPage(float width, float height) : topo::Page(width, height)
 	button->SetMargin(10.0f);
 
 	button2 = m_layout.AddControl<topo::Button>(2, 2);
-	button->SetPadding(5.0f, 10.0f);
+	button2->SetPadding(5.0f, 10.0f);
+	button2->SetColor({ 1.0f, 0.0f, 0.0f, 1.0f });
 
 
 //	topo::Layout* sublayout = m_layout.AddSubLayout(3, 0);

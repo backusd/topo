@@ -18,7 +18,7 @@
 class MainPage : public topo::Page 
 {
 public:
-	MainPage(float width, float height);
+	MainPage(const std::shared_ptr<topo::UIRenderer>& renderer, float width, float height);
 
 
 protected:

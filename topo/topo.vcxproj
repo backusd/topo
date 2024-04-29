@@ -162,6 +162,7 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
     <ClInclude Include="src\Topo.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\topo\Application.h" />
+    <ClInclude Include="src\topo\controls\geometry\RenderRectangle2D.h" />
     <ClInclude Include="src\topo\Core.h" />
     <ClInclude Include="src\topo\DeviceResources.h" />
     <ClInclude Include="src\topo\EntryPoint.h" />
@@ -215,6 +216,7 @@ copy /B /Y ..\bin\Dist-windows-x86_64\topo\cso\* ..\Sandbox\cso</Command>
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\topo\Application.cpp" />
+    <ClCompile Include="src\topo\controls\geometry\RenderRectangle2D.cpp" />
     <ClCompile Include="src\topo\DeviceResources.cpp" />
     <ClCompile Include="src\topo\Input.cpp" />
     <ClCompile Include="src\topo\Layout.cpp" />

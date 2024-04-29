@@ -3,8 +3,9 @@
 
 namespace topo
 {
-Page::Page(float width, float height) :
-	m_layout(0.0f, 0.0f, width, height)
+Page::Page(const std::shared_ptr<UIRenderer>& renderer, float width, float height) :
+	m_renderer(renderer),
+	m_layout(renderer, 0.0f, 0.0f, width, height)
 {
 
 }

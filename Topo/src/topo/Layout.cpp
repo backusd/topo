@@ -8,30 +8,31 @@
 
 namespace topo
 {
-void Layout::Render(UIRenderer& renderer, const Timer& timer)
+void Layout::Update(const Timer& timer)
 {
+	OnUpdate(this, timer);
+
 	// Update controls
 	for (auto& pair : m_controls)
 	{
-		std::get<0>(pair)->Render(renderer, timer);
+		std::get<0>(pair)->Update(timer);
 	}
 
 	// Update sublayouts
 	for (auto& pair : m_sublayouts)
 	{
-		std::get<0>(pair)->Render(renderer, timer);
+		std::get<0>(pair)->Update(timer);
 	}
 
-
-	for (const Row& row : m_rows)
-	{
-		renderer.DrawLine(row.Rect.Left, row.Rect.Top, row.Rect.Right, row.Rect.Top, { 0.0f, 0.0f, 0.0f, 1.0f }, 2.0f);
-	}
-
-	for (const Column& column : m_columns)
-	{
-		renderer.DrawLine(column.Rect.Left, column.Rect.Top, column.Rect.Left, column.Rect.Bottom, { 0.0f, 0.0f, 0.0f, 1.0f }, 2.0f);
-	}
+//	for (const Row& row : m_rows)
+//	{
+//		renderer.DrawLine(row.Rect.Left, row.Rect.Top, row.Rect.Right, row.Rect.Top, { 0.0f, 0.0f, 0.0f, 1.0f }, 2.0f);
+//	}
+//
+//	for (const Column& column : m_columns)
+//	{
+//		renderer.DrawLine(column.Rect.Left, column.Rect.Top, column.Rect.Left, column.Rect.Bottom, { 0.0f, 0.0f, 0.0f, 1.0f }, 2.0f);
+//	}
 
 }
 
@@ -86,6 +87,7 @@ Layout* Layout::AddSubLayout(unsigned int rowIndex, unsigned int columnIndex, un
 	ControlPosition cp = { rowIndex, columnIndex, rowSpan, columnSpan };
 
 	Layout* sublayout = new Layout(
+		m_renderer,
 		m_columns[columnIndex].Rect.Left,
 		m_rows[rowIndex].Rect.Top,
 		m_columns[columnIndex + columnSpan - 1].Rect.Right,

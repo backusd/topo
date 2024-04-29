@@ -109,58 +109,5 @@ void UIRenderer::InitializeRenderer()
 	squareRI.BindConstantBuffer(0, m_uiObjectConstantBuffer.get());
 }
 
-void UIRenderer::Update(const Timer& timer, int frameIndex) 
-{ 
-	RenderPass& pass1 = m_renderer.GetRenderPass(0);
-	RenderPassLayer& opaqueLayer = pass1.GetRenderPassLayer(m_opaqueLayerIndex);
-	RenderItem& rectangleRI = opaqueLayer.GetRenderItem(m_rectangleRenderItemIndex);
-
-	unsigned int rectangleCount = m_rectangleRenderItemTransforms.size();
-	if (rectangleCount == 0)
-		opaqueLayer.SetActive(false);
-	else
-	{
-		opaqueLayer.SetActive(true);
-		rectangleRI.SetInstanceCount(rectangleCount);
-	}
-
-
-
-	m_renderer.Update(timer, frameIndex); 
-
-	// 
-
-	m_rectangleRenderItemTransforms.clear();
-}
-
-void UIRenderer::DrawRectangle(float left, float top, float right, float bottom, const Color& color)
-{
-	m_rectangleRenderItemTransforms.emplace_back();
-	UIObjectData& data = m_rectangleRenderItemTransforms.back();
-
-	XMMATRIX world = XMMatrixScaling(right - left, bottom - top, 1.0f) * XMMatrixTranslation(left, -top, 0.0f);
-	XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
-
-	data.Color = { color.R, color.G, color.B, color.A };
-}
-void UIRenderer::DrawLine(float x1, float y1, float x2, float y2, const Color& color, float thickness)
-{
-	m_rectangleRenderItemTransforms.emplace_back();
-	UIObjectData& data = m_rectangleRenderItemTransforms.back();
-
-	// 1. translate the original rectangle up 0.5 so it is centered on the y-axis
-	// 2. scale the x direction to the length of the line and the y-direction to the thickness of the line
-	// 3. rotate the line around the z-axis so it points in the direction it should
-	// 4. translate the line to its final position
-	XMMATRIX world = 
-		XMMatrixTranslation(0.0f, 0.5f, 0.0f) *
-		XMMatrixScaling(std::sqrt(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2)), thickness, 1.0f) *
-		XMMatrixRotationZ(-std::atan2(y2 - y1, x2 - x1)) *
-		XMMatrixTranslation(x1, -y1, 0.0f);
-	XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
-
-	data.Color = { color.R, color.G, color.B, color.A };
-}
-
 
 }

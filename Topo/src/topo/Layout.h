@@ -45,13 +45,14 @@ struct ControlPosition
 class Layout : public IEventReceiver
 {
 public:
-	Layout(float left, float top, float right, float bottom) :
+	Layout(const std::shared_ptr<UIRenderer>& renderer, float left, float top, float right, float bottom) :
+		m_renderer(renderer),
 		m_rect{ left, top, right, bottom }
 	{}
 	Layout(Layout&&) = default;
 	Layout& operator=(Layout&&) = default;
 
-	void Render(UIRenderer& renderer, const Timer& timer);
+	void Update(const Timer& timer);
 
 	template<typename T> requires std::derived_from<T, ::topo::Control>
 	T* AddControl(unsigned int rowIndex = 0, unsigned int columnIndex = 0, unsigned int rowSpan = 1, unsigned int columnSpan = 1);
@@ -163,6 +164,11 @@ public:
 	virtual IEventReceiver* OnSysKeyDown(KeyCode keyCode, unsigned int repeatCount) override;
 	virtual IEventReceiver* OnSysKeyUp(KeyCode keyCode, unsigned int repeatCount) override;
 
+
+	// Event Callbacks
+	std::function<void(Layout*, const Timer&)> OnUpdate = [](Layout*, const Timer&) {};
+
+
 private:
 	Layout(const Layout&) = delete;
 	Layout& operator=(const Layout&) = delete;
@@ -188,6 +194,7 @@ private:
 
 	bool CheckMouseOverDraggableRowOrColumn(float x, float y) noexcept;
 
+	std::shared_ptr<UIRenderer> m_renderer;
 	Rect m_rect;
 	std::vector<std::pair<std::unique_ptr<Control>, ControlPosition>> m_controls;
 	std::vector<std::pair<std::unique_ptr<Layout>, ControlPosition>> m_sublayouts;
@@ -265,6 +272,7 @@ T* Layout::AddControl(unsigned int rowIndex, unsigned int columnIndex, unsigned 
 	ControlPosition cp = { rowIndex, columnIndex, rowSpan, columnSpan };
 
 	Control* control = new T(
+		m_renderer,
 		m_columns[columnIndex].Rect.Left,
 		m_rows[rowIndex].Rect.Top,
 		m_columns[columnIndex + columnSpan - 1].Rect.Right,

@@ -118,8 +118,26 @@ namespace topo
 	};
 
 
+enum class RenderEffect2D
+{
+	Opaque, Transparent
+};
+enum class BasicGeometry2D
+{
+	Rectangle, Circle, Triangle, Line
+};
 
+struct RenderObject2D
+{
+	// Hold information about the pass/layer/render item
+	unsigned int RenderPassIndex = 0;
+	unsigned int RenderLayerIndex = 0;
+	unsigned int RenderItemIndex = 0;
 
+	// Hold data for which vector will hold transformation data
+	std::vector<UIObjectData>* ObjectDataVector = nullptr;
+	unsigned int			   ObjectDataIndex = 0;
+};
 
 class UIRenderer
 {
@@ -154,16 +172,92 @@ public:
 
 	void SetDeviceResources(std::shared_ptr<DeviceResources> deviceResources);
 
-	void Update(const Timer& timer, int frameIndex);
+	inline void Update(const Timer& timer, int frameIndex) { m_renderer.Update(timer, frameIndex); }
 	inline void Render(int frameIndex) { m_renderer.Render(frameIndex); }
 
 	void InitializeRenderer();
 	ND constexpr float GetWindowWidth() const noexcept { return m_windowWidth; }
 	ND constexpr float GetWindowHeight() const noexcept { return m_windowHeight; }
 
+	unsigned int RegisterObject(RenderEffect2D effect, BasicGeometry2D geometry)
+	{
+		RenderObject2D& ro = m_renderObjects.emplace_back();
+		ro.RenderPassIndex = 0;
 
-	void DrawRectangle(float left, float top, float right, float bottom, const Color& color = {});
-	void DrawLine(float x1, float y1, float x2, float y2, const Color& color = {}, float thickness = 1.0f);
+		switch (effect)
+		{
+		case RenderEffect2D::Opaque:	  ro.RenderLayerIndex = 0; break;
+		case RenderEffect2D::Transparent: ro.RenderLayerIndex = 1; break;
+		}
+
+		switch (geometry)
+		{
+		case BasicGeometry2D::Line:
+		case BasicGeometry2D::Rectangle: 
+			ro.RenderItemIndex = 0; 
+			ro.ObjectDataVector = &m_rectangleRenderItemTransforms;
+			ro.ObjectDataIndex = static_cast<unsigned int>(m_rectangleRenderItemTransforms.size());
+			m_rectangleRenderItemTransforms.emplace_back();
+			break;
+		case BasicGeometry2D::Circle:	 ro.RenderItemIndex = 1; break;
+		case BasicGeometry2D::Triangle:  ro.RenderItemIndex = 2; break;
+		}
+
+		// Increment the instance count for the render item
+		RenderPass& pass = m_renderer.GetRenderPass(ro.RenderPassIndex);
+		RenderPassLayer& layer = pass.GetRenderPassLayer(ro.RenderLayerIndex);
+		RenderItem& renderItem = layer.GetRenderItem(ro.RenderItemIndex);
+		renderItem.SetInstanceCount(renderItem.GetInstanceCount() + 1);
+
+		ASSERT(m_renderObjects.size() > 0, "Should not be empty");
+		return static_cast<unsigned int>(m_renderObjects.size() - 1);
+	}
+	void UnregisterObject(unsigned int uuid)
+	{
+
+		// When we unregister an object -> need to check if render items are 0 for ALL
+		// render items in the layer, if so, it needs to be marked inactive
+
+		// Similarly, when registering an object, need to mark the layer as active if
+		// its the first object in the layer
+
+	}
+	void UpdateRectangle(unsigned int uuid, float left, float top, float right, float bottom, const Color& color)
+	{
+		using namespace DirectX;
+
+		ASSERT(uuid < m_renderObjects.size(), "UUID too large");
+
+		std::vector<UIObjectData>& vec = *m_renderObjects[uuid].ObjectDataVector;
+		UIObjectData& data = vec[m_renderObjects[uuid].ObjectDataIndex];
+
+		XMMATRIX world = XMMatrixScaling(right - left, bottom - top, 1.0f) * XMMatrixTranslation(left, -top, 0.0f);
+		XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
+
+		data.Color = { color.R, color.G, color.B, color.A };
+	}
+	void UpdateLine(unsigned int uuid, float x1, float y1, float x2, float y2, const Color& color, float thickness)
+	{
+		using namespace DirectX;
+
+		ASSERT(uuid < m_renderObjects.size(), "UUID too large");
+
+		std::vector<UIObjectData>& vec = *m_renderObjects[uuid].ObjectDataVector;
+		UIObjectData& data = vec[m_renderObjects[uuid].ObjectDataIndex];
+
+		// 1. translate the original rectangle up 0.5 so it is centered on the y-axis
+		// 2. scale the x direction to the length of the line and the y-direction to the thickness of the line
+		// 3. rotate the line around the z-axis so it points in the direction it should
+		// 4. translate the line to its final position
+		XMMATRIX world =
+			XMMatrixTranslation(0.0f, 0.5f, 0.0f) *
+			XMMatrixScaling(static_cast<float>(std::sqrt(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2))), thickness, 1.0f) *
+			XMMatrixRotationZ(-std::atan2(y2 - y1, x2 - x1)) *
+			XMMatrixTranslation(x1, -y1, 0.0f);
+		XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
+
+		data.Color = { color.R, color.G, color.B, color.A };
+	}
 
 
 
@@ -174,10 +268,12 @@ private:
 	float m_windowWidth;
 	float m_windowHeight;
 
+
+	// All Object Data
+	std::vector<RenderObject2D> m_renderObjects;
+
 	// vector of world matrices
 	std::vector<UIObjectData> m_rectangleRenderItemTransforms;
-	const unsigned int m_opaqueLayerIndex = 0;
-	const unsigned int m_rectangleRenderItemIndex = 0;
 
 	// 2D Test
 	std::unique_ptr<ConstantBufferMapped<UIPassConstants>>	m_uiPassConstantsBuffer = nullptr;

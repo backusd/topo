@@ -12,9 +12,9 @@ namespace topo
 class Page
 {
 public:
-	Page(float width, float height);
+	Page(const std::shared_ptr<UIRenderer>& renderer, float width, float height);
 
-	inline void Render(UIRenderer& renderer, const Timer& timer) { m_layout.Render(renderer, timer); }
+	inline void Update(const Timer& timer) { m_layout.Update(timer); }
 
 	// Window Event Handlers
 	bool OnWindowClosed();
@@ -52,6 +52,7 @@ public:
 	bool OnSysKeyUp(KeyCode keyCode, unsigned int repeatCount);	
 
 protected:
+	std::shared_ptr<UIRenderer> m_renderer;
 	Layout          m_layout;
 	IEventReceiver* m_mouseHandlingControl    = nullptr;
 	IEventReceiver* m_keyboardHandlingControl = nullptr;

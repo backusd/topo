@@ -72,7 +72,7 @@ public:
 	Control& operator=(const Control&) = default;
 	Control& operator=(Control&&) noexcept = default;
 
-	virtual void Render(UIRenderer& renderer, const Timer& timer) = 0;
+	virtual void Update(const Timer& timer) = 0;
 
 	ND constexpr void SetPositionRect(float left, float top, float right, float bottom) noexcept { m_positionRect = { left, top, right, bottom }; }
 
@@ -114,6 +114,7 @@ public:
 
 protected:
 	Rect m_positionRect;
+
 
 
 // In DIST builds, we don't name the object

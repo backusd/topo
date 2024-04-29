@@ -43,8 +43,8 @@ class WindowTemplate
 public:
 	WindowTemplate(const WindowProperties& props) :
 		m_deviceResources(nullptr),
-		m_uiRenderer(static_cast<float>(props.Width), static_cast<float>(props.Height)),
-		m_page(std::make_unique<Page>(static_cast<float>(props.Width), static_cast<float>(props.Height))),	// Create a default page so it is guaranteed to not be null
+		m_uiRenderer(std::make_shared<UIRenderer>(static_cast<float>(props.Width), static_cast<float>(props.Height))),
+		m_page(nullptr),
 		m_height(props.Height), 
 		m_width(props.Width),
 		m_title(props.Title), 
@@ -53,6 +53,9 @@ public:
 		m_mouseY(0),
 		m_mouseIsInWindow(false)
 	{
+		// Create a default page so it is guaranteed to not be null
+		m_page = std::make_unique<Page>(m_uiRenderer, static_cast<float>(props.Width), static_cast<float>(props.Height));
+
 		// Register the window class
 		WNDCLASSEX wc = { 0 };
 		wc.cbSize = sizeof(wc);
@@ -142,7 +145,7 @@ protected:
 
 	std::shared_ptr<DeviceResources> m_deviceResources;
 	std::unique_ptr<Page> m_page;
-	UIRenderer m_uiRenderer;
+	std::shared_ptr<UIRenderer> m_uiRenderer;
 
 //	std::unique_ptr<Renderer> m_renderer;
 //	D3D12_VIEWPORT m_viewport;
@@ -229,7 +232,7 @@ public:
 	template<typename T> requires std::derived_from<T, ::topo::Page>
 	inline void InitializePage()
 	{
-		m_page = std::make_unique<T>(m_width, m_height);
+		m_page = std::make_unique<T>(m_uiRenderer, m_width, m_height);
 	}
 
 	void PrepareToRun();

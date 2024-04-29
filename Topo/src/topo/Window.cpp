@@ -224,7 +224,7 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		m_width = LOWORD(lParam);
 		m_height = HIWORD(lParam);
 		m_deviceResources->OnResize(m_width, m_height);
-		m_uiRenderer.OnWindowResize(m_width, m_height);
+		m_uiRenderer->OnWindowResize(m_width, m_height);
 
 //		m_viewport.Width = m_width;
 //		m_viewport.Height = m_height;
@@ -327,7 +327,7 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		m_height = cs->cy;
 		m_width = cs->cx;
 		m_deviceResources = std::make_shared<DeviceResources>(hWnd, m_width, m_height, m_title);
-		m_uiRenderer.SetDeviceResources(m_deviceResources);
+		m_uiRenderer->SetDeviceResources(m_deviceResources);
 
 //		m_viewport.Width = m_width;
 //		m_viewport.Height = m_height;
@@ -394,15 +394,15 @@ void Window::Update(const Timer& timer)
 {
 	// Must call deviceResources->Update() first because it will reset the commandlist so new commands can be issued
 	m_deviceResources->Update();
-	m_uiRenderer.Update(timer, m_deviceResources->GetCurrentFrameIndex());
+	m_uiRenderer->Update(timer, m_deviceResources->GetCurrentFrameIndex());
+	m_page->Update(timer); 
 //	m_renderer->Update(timer, m_deviceResources->GetCurrentFrameIndex());
 }
 void Window::Render(const Timer& timer) 
 {
 	m_deviceResources->PreRender();
-	
-	m_page->Render(m_uiRenderer, timer);
-	m_uiRenderer.Render(m_deviceResources->GetCurrentFrameIndex());
+
+	m_uiRenderer->Render(m_deviceResources->GetCurrentFrameIndex());
 
 //	m_renderer->Render(m_deviceResources->GetCurrentFrameIndex());
 
